@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <unistd.h>
+#include <malloc.h>
 #include <math.h>
 #include "eeprom.h"
 
