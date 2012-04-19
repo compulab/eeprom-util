@@ -16,6 +16,7 @@
 /* ------------------------------------------------------------------------- */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "field.h"
 
 #define PRINT_FIELD_SEGMENT	"%-30s"

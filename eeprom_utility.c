@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <malloc.h>
 #include <linux/i2c-dev.h>
 #include "eeprom.h"
@@ -155,7 +158,7 @@ void print_i2c_accessible()
 			continue;
 
 		printf("On i2c-%d:\n", i);
-		printf("\t", i);
+		printf("\t");
 		for (j = 0; j < 128; j++) { /* Assuming 7 bit addresses here. */
 			if (ioctl(fd, I2C_SLAVE_FORCE, j) < 0)
 				continue;

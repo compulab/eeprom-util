@@ -16,6 +16,8 @@
 /* ------------------------------------------------------------------------- */
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <time.h>
 #include <linux/i2c-dev.h>
 #include <unistd.h>
 #include <malloc.h>
@@ -76,7 +78,6 @@ int eeprom_write(struct eeprom e, char *buf, int offset, int size,
 static int check_io_params(char *buf, enum eeprom_cmd function,
 			enum access_mode mode, int offset, int size)
 {
-	int fd, res = -1;
 	if (buf == NULL)
 		return EEPROM_NULL_PTR;
 
@@ -208,7 +209,7 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 
 	page_cnt = offset / EEPROM_PAGE_SIZE;
 	end_page = ceil(page_cnt + size / EEPROM_PAGE_SIZE);
-	for (page_cnt; page_cnt < end_page; page_cnt++) {
+	for (; page_cnt < end_page; page_cnt++) {
 		i2c_buf[0] = page_cnt * EEPROM_PAGE_SIZE; /* Write address */
 		for (i = 0; i < EEPROM_PAGE_SIZE && i < size; i++)
 			i2c_buf[i+1] = buf[page_cnt * EEPROM_PAGE_SIZE + i];

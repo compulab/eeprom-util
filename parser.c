@@ -29,8 +29,7 @@ static void parse_function(char *argv[], int arg_index,
 					struct cli_command *cli_command);
 static void parse_mode(char *argv[], int arg_index,
 					struct cli_command *cli_command);
-static char *extract_value(char *argv[], int arg_index,
-					struct cli_command *cli_command);
+static char *extract_value(char *argv[], int arg_index);
 static void parse_new_data(int argc, char *argv[], int arg_index,
 					struct cli_command *cli_command);
 static void usage_exit(void);
@@ -62,14 +61,14 @@ struct cli_command parse(int argc, char *argv[])
 	/* Next argument might be --addr= */
 	if (cli_cmd.mode == I2C_MODE &&
 				!strncmp(argv[cli_arg], "--addr=", 7)) {
-		tok = extract_value(argv, cli_arg, &cli_cmd);
+		tok = extract_value(argv, cli_arg);
 		cli_cmd.i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);
 	}
 
 	/* Next argument might be file path */
 	if (!strncmp(argv[cli_arg], "--path=", 7)) {
-		cli_cmd.dev_file = extract_value(argv, cli_arg, &cli_cmd);
+		cli_cmd.dev_file = extract_value(argv, cli_arg);
 		NEXT_OR_STOP(cli_arg);
 	}
 
@@ -143,7 +142,6 @@ static void parse_function(char *argv[], int arg_index,
 static void parse_mode(char *argv[], int arg_index,
 					struct cli_command *cli_command)
 {
-	char *tok;
 	if (!strcmp(argv[arg_index], "-d"))
 		cli_command->mode = DRIVER_MODE;
 	else if (!strcmp(argv[arg_index], "-i"))
@@ -156,10 +154,9 @@ static void parse_mode(char *argv[], int arg_index,
  * All of our special value passing arguments are in the form of
  * --type=values. This method extracts the values.
  */
-static char *extract_value(char *argv[], int arg_index,
-					struct cli_command *cli_command)
+static char *extract_value(char *argv[], int arg_index)
 {
-	char *tok = strtok(argv[arg_index], "=");
+	strtok(argv[arg_index], "=");
 	return strtok(NULL, "=");
 }
 
@@ -171,7 +168,6 @@ static char *extract_value(char *argv[], int arg_index,
 static void parse_new_data(int argc, char *argv[], int arg_index,
 				struct cli_command *cli_command)
 {
-	char *tok;
 	int i = 0;
 	if (!strncmp(argv[arg_index], "--change-bytes=", 15)) {
 		strtok(argv[arg_index], "=");
@@ -193,7 +189,7 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 	 * the end of argv.
 	 */
 	cli_command->new_field_data = argv + arg_index - 1;
-	for (arg_index; arg_index < argc; arg_index++, i++)
+	for (; arg_index < argc; arg_index++, i++)
 		cli_command->new_field_data[i] = argv[arg_index];
 
 	cli_command->new_field_data[i] = NULL;
