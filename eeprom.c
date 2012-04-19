@@ -30,7 +30,7 @@ static int open_device_file(struct eeprom e, enum access_mode mode, int flags);
 static int do_safe_io(int fd, char *buf, enum eeprom_cmd function, int size);
 static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 			int offset);
-static void delay5ms();
+static void msleep(unsigned int msecs);
 
 /*
  * Allocates and initializes a new eeprom struct with default values, or user
@@ -201,7 +201,7 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 
 	/* Set the read/write location */
 	while (write(fd, &offset, 1) < 0)
-		delay5ms();
+		msleep(5);
 
 	if (function == EEPROM_READ)
 		return do_safe_io(fd, buf, function, size);
@@ -217,7 +217,7 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 		do {
 			res = write(fd, i2c_buf, i + 1);
 			/* A delay is necessary, otherwise next writes fail. */
-			delay5ms();
+			msleep(5);
 		} while (res != i + 1);
 
 		bytes_written += res - 1;
@@ -232,9 +232,8 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
  * This function supplies the appropriate delay needed for consecutive writes
  * via i2c to succeed (5mS write timeout)
  */
-static void delay5ms()
+static void msleep(unsigned int msecs)
 {
-	struct timespec time = {0, 1000000 * 5};
-	while (nanosleep(&time, &time))
-		;
+	struct timespec time = {0, 1000000 * msecs};
+	nanosleep(&time, NULL);
 }
