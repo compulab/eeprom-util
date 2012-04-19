@@ -53,7 +53,8 @@ enum eeprom_cmd {
 	EEPROM_WRITE
 };
 
-struct eeprom *new_eeprom(char *driver_path, char *i2c_path, int i2c_addr);
+void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
+		       int i2c_addr);
 int eeprom_read(struct eeprom e, char *buf, int offset, int size,
 		enum access_mode mode);
 int eeprom_write(struct eeprom e, char *buf, int offset, int size,

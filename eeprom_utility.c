@@ -96,21 +96,20 @@ static void do_io(struct cli_command command)
 {
 	int res;
 	char buf[EEPROM_SIZE];
-	struct eeprom *eeprom;
+	struct eeprom eeprom;
 	struct layout *layout;
+
 	if (command.mode == DRIVER_MODE)
-		eeprom = new_eeprom(command.dev_file, NULL, -1);
+		eeprom_set_params(&eeprom, command.dev_file, NULL, -1);
 	else
-		eeprom = new_eeprom(NULL, command.dev_file, command.i2c_addr);
+		eeprom_set_params(&eeprom, NULL, command.dev_file,
+							command.i2c_addr);
 
-	if (eeprom == NULL)
-		goto out_of_memory;
-
-	res = eeprom_read(*eeprom, buf, 0, EEPROM_SIZE,
+	res = eeprom_read(eeprom, buf, 0, EEPROM_SIZE,
 						EEPROM_MODE(command.mode));
 	if (res < 0) {
 		print_eeprom_error(res);
-		goto free_eeprom;
+		return;
 	}
 
 	layout = new_layout(buf, EEPROM_SIZE);
@@ -127,15 +126,13 @@ static void do_io(struct cli_command command)
 	else if (command.new_field_data != NULL)
 		update_fields(layout, &command);
 
-	res = eeprom_write(*eeprom, layout->data, 0, EEPROM_SIZE,
+	res = eeprom_write(eeprom, layout->data, 0, EEPROM_SIZE,
 						EEPROM_MODE(command.mode));
 	if (res < 0)
 		print_eeprom_error(res);
 
 free_layout:
 	free_layout(layout);
-free_eeprom:
-	free(eeprom);
 	return;
 out_of_memory:
 	printf("Out of memory!\n");

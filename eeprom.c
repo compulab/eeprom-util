@@ -20,7 +20,6 @@
 #include <time.h>
 #include <linux/i2c-dev.h>
 #include <unistd.h>
-#include <malloc.h>
 #include <math.h>
 #include "eeprom.h"
 
@@ -35,25 +34,22 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 static void msleep(unsigned int msecs);
 
 /*
- * Allocates and initializes a new eeprom struct with default values, or user
- * specified ones.
+ * Sets fields of an eeprom struct.
  * Input:
  *	driver_path: path to driver device file. Input NULL for default value.
  *	i2c_path: path to i2c device file. Input NULL for default value.
  *	i2c_addr: address for i2c. Input <0 for default value.
  */
-struct eeprom *new_eeprom(char *driver_path, char *i2c_path, int i2c_addr)
+void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
+								int i2c_addr)
 {
-	struct eeprom *e = (struct eeprom *) malloc(sizeof(struct eeprom));
 	if (e == NULL)
-		return e;
+		return;
 
 	e->driver_devfile = (driver_path != NULL) ? driver_path :
 							DEFAULT_DRIVER_PATH;
 	e->i2c_devfile = (i2c_path != NULL) ? i2c_path : DEFAULT_I2C_PATH;
 	e->i2c_addr = (i2c_addr >= 0) ? i2c_addr : DEFAULT_I2C_ADDR;
-
-	return e;
 }
 
 /*
