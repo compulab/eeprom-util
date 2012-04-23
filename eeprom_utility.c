@@ -54,6 +54,7 @@ static void update_bytes(struct layout *layout, struct cli_command *command)
 {
 	int offset, value, res;
 	char *tok = strtok(command->new_byte_data, ",");
+
 	if (tok == NULL)
 		return;
 
@@ -82,6 +83,7 @@ static void update_fields(struct layout *layout, struct cli_command *command)
 {
 	int i, res;
 	char *field_name, *value;
+
 	for (i = 0; command->new_field_data[i] != NULL; i++) {
 		field_name = strtok(command->new_field_data[i], "=");
 		value = strtok(NULL, "=");
@@ -175,6 +177,7 @@ void print_i2c_accessible()
 int main(int argc, char *argv[])
 {
 	struct cli_command command = parse(argc, argv);
+
 	if (command.action == LIST)
 		print_i2c_accessible();
 	else /* READ/WRITE */

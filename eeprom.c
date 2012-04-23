@@ -1,4 +1,4 @@
- /*
+/*
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -75,6 +75,7 @@ static int check_io_params(char *buf, enum eeprom_cmd function,
 static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
 {
 	int fd;
+
 	if (mode == EEPROM_DRIVER_MODE)
 		fd = open(e.driver_devfile, flags);
 	else if (mode == EEPROM_I2C_MODE)
@@ -184,6 +185,7 @@ static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
 			enum access_mode mode, char *buf, int offset, int size)
 {
 	int res, fd;
+
 	res = check_io_params(buf, function, mode, offset, size);
 	if (res < 0)
 		return res;

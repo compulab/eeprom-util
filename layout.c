@@ -27,6 +27,7 @@
 static struct field *new_layout_legacy(void)
 {
 	struct field *f = (struct field *) malloc(sizeof(struct field) * 6);
+
 	if (f == NULL)
 		return f;
 
@@ -45,6 +46,7 @@ static struct field *new_layout_legacy(void)
 static struct field *new_layout_v1(void)
 {
 	struct field *f = (struct field *) malloc(sizeof(struct field) * 13);
+
 	if (f == NULL)
 		return f;
 
@@ -76,6 +78,7 @@ static struct field *new_layout_v1(void)
 static struct field *new_layout_v2(void)
 {
 	struct field *f = (struct field *) malloc(sizeof(struct field) * 16);
+
 	if (f == NULL)
 		return f;
 
@@ -111,6 +114,7 @@ static struct field *new_layout_v2(void)
 static struct field *new_layout_invalid(void)
 {
 	struct field *f = (struct field *) malloc(sizeof(struct field) * 2);
+
 	if (f == NULL)
 		return f;
 
@@ -181,6 +185,7 @@ struct layout *new_layout(char *buf, int buf_size)
 
 	l->layout_number = layout_num;
 	l->data_size = buf_size;
+
 	return l;
 
 free_deep:
@@ -201,6 +206,7 @@ void print_layout(struct layout *layout)
 {
 	int i;
 	struct field *fields = layout->fields;
+
 	for (i = 0; fields[i].size != 0; i++)
 		fields[i].print(fields[i]);
 }
@@ -210,6 +216,7 @@ enum layout_res update_field(struct layout *layout, char *field_name,
 {
 	int i;
 	struct field *fields = layout->fields;
+
 	if (layout == NULL || field_name == NULL || new_data == NULL)
 		return LAYOUT_NULL_ARGUMENTS;
 

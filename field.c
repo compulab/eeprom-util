@@ -26,11 +26,13 @@ struct field set_field(char *name, int size, char *delim,
 			void (*update)(struct field *self, char *value))
 {
 	struct field f;
+
 	f.name = name;
 	f.size = size;
 	f.delim = delim;
 	f.print = print;
 	f.update = update;
+
 	return f;
 }
 
@@ -46,6 +48,7 @@ void print_bin_ver(struct field self)
 void print_bin_rev(struct field self)
 {
 	int i;
+
 	printf(PRINT_FIELD_SEGMENT, self.name);
 	for (i = self.size - 1; i > 0; i--)
 		printf("%02x%s", self.buf[i], self.delim);
@@ -57,6 +60,7 @@ void print_bin_rev(struct field self)
 void print_bin(struct field self)
 {
 	int i;
+
 	printf(PRINT_FIELD_SEGMENT, self.name);
 	for (i = 0; i < self.size - 1; i++)
 		printf("%02x%s", self.buf[i], self.delim);
@@ -90,6 +94,7 @@ void update_binary(struct field *self, char *value)
 {
 	int i;
 	char *tok = strtok(value, " ");
+
 	for (i = 0; tok && i < self->size; i++) {
 		if (strcmp(tok, ""))
 			self->buf[i] = (char)strtol(tok, 0, 0);

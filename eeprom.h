@@ -1,4 +1,4 @@
- /*
+/*
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -21,7 +21,7 @@
 #define EEPROM_PAGE_SIZE 16
 
 #define DEFAULT_DRIVER_PATH	"/sys/bus/i2c/devices/3-0050/eeprom"
-#define DEFAULT_I2C_PATH	"/dev/i2c-3";
+#define DEFAULT_I2C_PATH	"/dev/i2c-3"
 #define DEFAULT_I2C_ADDR	0x50
 
 struct eeprom {

@@ -92,6 +92,7 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 				struct cli_command *cli_command)
 {
 	int i = 0;
+
 	if (!strncmp(argv[arg_index], "--change-bytes=", 15)) {
 		strtok(argv[arg_index], "=");
 		cli_command->new_byte_data = strtok(NULL, "=");
@@ -135,12 +136,14 @@ static char *extract_value(char *argv[], int arg_index)
 struct cli_command set_command(void)
 {
 	struct cli_command command;
+
 	command.new_field_data = NULL;
 	command.new_byte_data = NULL;
 	command.dev_file = NULL;
 	command.i2c_addr = -1;
 	command.mode = MODE_INVALID;
 	command.action = ACTION_INVALID;
+
 	return command;
 }
 
