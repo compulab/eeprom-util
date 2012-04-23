@@ -23,16 +23,6 @@
 #include <math.h>
 #include "eeprom.h"
 
-static int check_io_params(char *buf, enum eeprom_cmd function,
-			enum access_mode mode, int offset, int size);
-static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
-			enum access_mode mode, char *buf, int offset, int size);
-static int open_device_file(struct eeprom e, enum access_mode mode, int flags);
-static int do_safe_io(int fd, char *buf, enum eeprom_cmd function, int size);
-static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
-			int offset);
-static void msleep(unsigned int msecs);
-
 /*
  * Sets fields of an eeprom struct.
  * Input:
@@ -50,25 +40,6 @@ void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
 							DEFAULT_DRIVER_PATH;
 	e->i2c_devfile = (i2c_path != NULL) ? i2c_path : DEFAULT_I2C_PATH;
 	e->i2c_addr = (i2c_addr >= 0) ? i2c_addr : DEFAULT_I2C_ADDR;
-}
-
-/*
- * The following return values apply to both eeprom_read and eeprom_write.
- * On success: returns number of bytes written.
- * On failure: a value from enum eeprom_errors, sans EEPROM_IO_FAILED.
- */
-int eeprom_read(struct eeprom e, char *buf, int offset, int size,
-		enum access_mode mode)
-{
-	int res = eeprom_do_io(e, EEPROM_READ, mode, buf, offset, size);
-	return res == EEPROM_IO_FAILED ? EEPROM_READ_FAILED : res;
-}
-
-int eeprom_write(struct eeprom e, char *buf, int offset, int size,
-		enum access_mode mode)
-{
-	int res = eeprom_do_io(e, EEPROM_WRITE, mode, buf, offset, size);
-	return res == EEPROM_IO_FAILED ? EEPROM_WRITE_FAILED : res;
 }
 
 static int check_io_params(char *buf, enum eeprom_cmd function,
@@ -90,37 +61,6 @@ static int check_io_params(char *buf, enum eeprom_cmd function,
 		return EEPROM_INVAL_SIZE;
 
 	return 0;
-}
-
-/*
- * The actual I/O function (not a wrapper).
- * On success: returns number of bytes transferred.
- * On failure: returns values from eeprom_errors.
- */
-static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
-			enum access_mode mode, char *buf, int offset, int size)
-{
-	int res, fd;
-	res = check_io_params(buf, function, mode, offset, size);
-	if (res < 0)
-		return res;
-
-	fd = open_device_file(e, mode, O_RDWR);
-	if (fd < 0)
-		return fd;
-
-	if (mode == EEPROM_DRIVER_MODE) {
-		lseek(fd, offset, SEEK_SET);
-		res = do_safe_io(fd, buf + offset, function, size);
-	} else {
-		res = do_i2c_io(fd, buf + offset, function, size, offset);
-	}
-
-	close(fd);
-	if (res <= 0)
-		return EEPROM_IO_FAILED;
-
-	return res;
 }
 
 /*
@@ -153,6 +93,16 @@ static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
 	}
 
 	return fd;
+}
+
+/*
+ * This function supplies the appropriate delay needed for consecutive writes
+ * via i2c to succeed
+ */
+static void msleep(unsigned int msecs)
+{
+	struct timespec time = {0, 1000000 * msecs};
+	nanosleep(&time, NULL);
 }
 
 /*
@@ -226,11 +176,51 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 }
 
 /*
- * This function supplies the appropriate delay needed for consecutive writes
- * via i2c to succeed (5mS write timeout)
+ * The actual I/O function (not a wrapper).
+ * On success: returns number of bytes transferred.
+ * On failure: returns values from eeprom_errors.
  */
-static void msleep(unsigned int msecs)
+static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
+			enum access_mode mode, char *buf, int offset, int size)
 {
-	struct timespec time = {0, 1000000 * msecs};
-	nanosleep(&time, NULL);
+	int res, fd;
+	res = check_io_params(buf, function, mode, offset, size);
+	if (res < 0)
+		return res;
+
+	fd = open_device_file(e, mode, O_RDWR);
+	if (fd < 0)
+		return fd;
+
+	if (mode == EEPROM_DRIVER_MODE) {
+		lseek(fd, offset, SEEK_SET);
+		res = do_safe_io(fd, buf + offset, function, size);
+	} else {
+		res = do_i2c_io(fd, buf + offset, function, size, offset);
+	}
+
+	close(fd);
+	if (res <= 0)
+		return EEPROM_IO_FAILED;
+
+	return res;
+}
+
+/*
+ * eeprom_read and eeprom_write:
+ * On success: returns number of bytes written.
+ * On failure: enum eeprom_errors, sans EEPROM_IO_FAILED.
+ */
+int eeprom_read(struct eeprom e, char *buf, int offset, int size,
+		enum access_mode mode)
+{
+	int res = eeprom_do_io(e, EEPROM_READ, mode, buf, offset, size);
+	return res == EEPROM_IO_FAILED ? EEPROM_READ_FAILED : res;
+}
+
+int eeprom_write(struct eeprom e, char *buf, int offset, int size,
+		enum access_mode mode)
+{
+	int res = eeprom_do_io(e, EEPROM_WRITE, mode, buf, offset, size);
+	return res == EEPROM_IO_FAILED ? EEPROM_WRITE_FAILED : res;
 }

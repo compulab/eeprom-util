@@ -24,11 +24,114 @@
 #define RESERVED_FIELDS		0
 #define NO_LAYOUT_FIELDS	"Could not detect layout. Dumping raw data\n"
 
-static enum layout_names detect_layout(char *data);
-static struct field *new_layout_legacy();
-static struct field *new_layout_v1();
-static struct field *new_layout_v2();
-static struct field *new_layout_invalid();
+static struct field *new_layout_legacy(void)
+{
+	struct field *f = (struct field *) malloc(sizeof(struct field) * 6);
+	if (f == NULL)
+		return f;
+
+	f[0] = set_field("MAC address", 6, ":", print_bin, update_binary);
+	f[1] = set_field("Board Revision", 2, "", print_bin, update_binary);
+	f[2] = set_field("Serial Number", 8, "", print_bin, update_binary);
+	f[3] = set_field("Board Configuration", 64, "", print_ascii,
+								update_ascii);
+	f[4] = set_field(RESERVED_FIELDS, 176, "", print_reserved,
+								update_ascii);
+	f[5] = set_field(0, 0, 0, 0, 0);/* End of layout */
+
+	return f;
+}
+
+static struct field *new_layout_v1(void)
+{
+	struct field *f = (struct field *) malloc(sizeof(struct field) * 13);
+	if (f == NULL)
+		return f;
+
+	f[0] = set_field("Major Revision", 2, ".", print_bin_ver,
+								update_binary);
+	f[1] = set_field("Minor Revision", 2, ".", print_bin_ver,
+								update_binary);
+	f[2] = set_field("1st MAC addr", 6, ":", print_bin, update_binary);
+	f[3] = set_field("2nd MAC addr", 6, ":", print_bin, update_binary);
+	f[4] = set_field("Production Date", 4, "/", print_date, update_binary);
+	f[5] = set_field("Serial Number", 12, " ", print_bin_rev,
+								update_binary);
+	f[6] = set_field(RESERVED_FIELDS, 96, "", print_reserved,
+								update_binary);
+	f[7] = set_field("Product Name", 16, "", print_ascii, update_ascii);
+	f[8] = set_field("Product Options #1", 16, "", print_ascii,
+								update_ascii);
+	f[9] = set_field("Product Options #2", 16, "", print_ascii,
+								update_ascii);
+	f[10] = set_field("Product Options #3", 16, "", print_ascii,
+								update_ascii);
+	f[11] = set_field(RESERVED_FIELDS, 64, "", print_reserved,
+								update_ascii);
+	f[12] = set_field(0, 0, 0, 0, 0);/* End of layout */
+
+	return f;
+}
+
+static struct field *new_layout_v2(void)
+{
+	struct field *f = (struct field *) malloc(sizeof(struct field) * 16);
+	if (f == NULL)
+		return f;
+
+	f[0] = set_field("Major Revision", 2, ".", print_bin_ver,
+								update_binary);
+	f[1] = set_field("Minor Revision", 2, ".", print_bin_ver,
+								update_binary);
+	f[2] = set_field("1st MAC addr", 6, ":", print_bin, update_binary);
+	f[3] = set_field("2nd MAC addr", 6, ":", print_bin, update_binary);
+	f[4] = set_field("Production Date", 4, "/", print_date, update_binary);
+	f[5] = set_field("Serial Number", 12, " ", print_bin_rev,
+								update_binary);
+	f[6] = set_field("WIFI MAC Address", 6, ":", print_bin, update_binary);
+	f[7] = set_field("Bluetooth MAC Address", 6, ":", print_bin,
+								update_binary);
+	f[8] = set_field("Layout Version", 1, " ", print_bin, update_binary);
+	f[9] = set_field(RESERVED_FIELDS, 83, "", print_reserved,
+								update_binary);
+	f[10] = set_field("Product Name", 16, "", print_ascii, update_ascii);
+	f[11] = set_field("Product Options #1", 16, "", print_ascii,
+								update_ascii);
+	f[12] = set_field("Product Options #2", 16, "", print_ascii,
+								update_ascii);
+	f[13] = set_field("Product Options #3", 16, "", print_ascii,
+								update_ascii);
+	f[14] = set_field(RESERVED_FIELDS, 64, "", print_reserved,
+								update_ascii);
+	f[15] = set_field(0, 0, 0, 0, 0);/* End of layout */
+
+	return f;
+}
+
+static struct field *new_layout_invalid(void)
+{
+	struct field *f = (struct field *) malloc(sizeof(struct field) * 2);
+	if (f == NULL)
+		return f;
+
+	f[0] = set_field(NO_LAYOUT_FIELDS, 256, " ", print_bin, update_binary);
+	f[1] = set_field(0, 0, 0, 0, 0);/* End of layout */
+
+	return f;
+}
+
+static enum layout_names detect_layout(char *data)
+{
+	int check_byte = LAYOUT_CHECK_BYTE;
+
+	if (data[check_byte] == 0xff || data[check_byte] == 0)
+		return LAYOUT_VER1;
+
+	if (data[check_byte] >= 0x20)
+		return LAYOUT_LEGACY;
+
+	return LAYOUT_VER2;
+}
 
 /*
  * Allocates a new layout based on the data given in buf. The layout version
@@ -134,113 +237,4 @@ enum layout_res update_byte(struct layout *layout, int offset, char new_byte)
 
 	layout->data[offset] = new_byte;
 	return LAYOUT_SUCCESS;
-}
-
-static enum layout_names detect_layout(char *data)
-{
-	int check_byte = LAYOUT_CHECK_BYTE;
-
-	if (data[check_byte] == 0xff || data[check_byte] == 0)
-		return LAYOUT_VER1;
-
-	if (data[check_byte] >= 0x20)
-		return LAYOUT_LEGACY;
-
-	return LAYOUT_VER2;
-}
-
-static struct field *new_layout_legacy()
-{
-	struct field *f = (struct field *) malloc(sizeof(struct field) * 6);
-	if (f == NULL)
-		return f;
-
-	f[0] = set_field("MAC address", 6, ":", print_bin, update_binary);
-	f[1] = set_field("Board Revision", 2, "", print_bin, update_binary);
-	f[2] = set_field("Serial Number", 8, "", print_bin, update_binary);
-	f[3] = set_field("Board Configuration", 64, "", print_ascii,
-								update_ascii);
-	f[4] = set_field(RESERVED_FIELDS, 176, "", print_reserved,
-								update_ascii);
-	f[5] = set_field(0, 0, 0, 0, 0);/* End of layout */
-
-	return f;
-}
-
-static struct field *new_layout_v1()
-{
-	struct field *f = (struct field *) malloc(sizeof(struct field) * 13);
-	if (f == NULL)
-		return f;
-
-	f[0] = set_field("Major Revision", 2, ".", print_bin_ver,
-								update_binary);
-	f[1] = set_field("Minor Revision", 2, ".", print_bin_ver,
-								update_binary);
-	f[2] = set_field("1st MAC addr", 6, ":", print_bin, update_binary);
-	f[3] = set_field("2nd MAC addr", 6, ":", print_bin, update_binary);
-	f[4] = set_field("Production Date", 4, "/", print_date, update_binary);
-	f[5] = set_field("Serial Number", 12, " ", print_bin_rev,
-								update_binary);
-	f[6] = set_field(RESERVED_FIELDS, 96, "", print_reserved,
-								update_binary);
-	f[7] = set_field("Product Name", 16, "", print_ascii, update_ascii);
-	f[8] = set_field("Product Options #1", 16, "", print_ascii,
-								update_ascii);
-	f[9] = set_field("Product Options #2", 16, "", print_ascii,
-								update_ascii);
-	f[10] = set_field("Product Options #3", 16, "", print_ascii,
-								update_ascii);
-	f[11] = set_field(RESERVED_FIELDS, 64, "", print_reserved,
-								update_ascii);
-	f[12] = set_field(0, 0, 0, 0, 0);/* End of layout */
-
-	return f;
-}
-
-static struct field *new_layout_v2()
-{
-	struct field *f = (struct field *) malloc(sizeof(struct field) * 16);
-	if (f == NULL)
-		return f;
-
-	f[0] = set_field("Major Revision", 2, ".", print_bin_ver,
-								update_binary);
-	f[1] = set_field("Minor Revision", 2, ".", print_bin_ver,
-								update_binary);
-	f[2] = set_field("1st MAC addr", 6, ":", print_bin, update_binary);
-	f[3] = set_field("2nd MAC addr", 6, ":", print_bin, update_binary);
-	f[4] = set_field("Production Date", 4, "/", print_date, update_binary);
-	f[5] = set_field("Serial Number", 12, " ", print_bin_rev,
-								update_binary);
-	f[6] = set_field("WIFI MAC Address", 6, ":", print_bin, update_binary);
-	f[7] = set_field("Bluetooth MAC Address", 6, ":", print_bin,
-								update_binary);
-	f[8] = set_field("Layout Version", 1, " ", print_bin, update_binary);
-	f[9] = set_field(RESERVED_FIELDS, 83, "", print_reserved,
-								update_binary);
-	f[10] = set_field("Product Name", 16, "", print_ascii, update_ascii);
-	f[11] = set_field("Product Options #1", 16, "", print_ascii,
-								update_ascii);
-	f[12] = set_field("Product Options #2", 16, "", print_ascii,
-								update_ascii);
-	f[13] = set_field("Product Options #3", 16, "", print_ascii,
-								update_ascii);
-	f[14] = set_field(RESERVED_FIELDS, 64, "", print_reserved,
-								update_ascii);
-	f[15] = set_field(0, 0, 0, 0, 0);/* End of layout */
-
-	return f;
-}
-
-static struct field *new_layout_invalid()
-{
-	struct field *f = (struct field *) malloc(sizeof(struct field) * 2);
-	if (f == NULL)
-		return f;
-
-	f[0] = set_field(NO_LAYOUT_FIELDS, 256, " ", print_bin, update_binary);
-	f[1] = set_field(0, 0, 0, 0, 0);/* End of layout */
-
-	return f;
 }
