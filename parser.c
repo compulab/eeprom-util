@@ -25,6 +25,12 @@
 					return cli_cmd;\
 			} while (0);
 
+#ifdef ENABLE_WRITE
+static inline int write_enabled(void) { return 1; }
+#else
+static inline int write_enabled(void) { return 0; }
+#endif
+
 /*
  * Prints usage guide and exits. General format is:
  * <function> <mode> [--addr=num] [--path=file_path] -- [changes]
@@ -32,30 +38,43 @@
 static void usage_exit(void)
 {
 	printf("\n"
-		"Usage: eeprom_utility\n"
-		"\t-r (-d|-i [--addr=<i2c_address>]) [--path=<devfile_path>]\n"
-		"\t-w (-d|-i [--addr=<i2c_address>]) [--path=<devfile_path>] "
-		"[-- [\"<name>=<vals>\"]* | "
-		"--change-bytes=<offset>,<val>[,<offset>,<val>]*]\n"
-		"\t-l\n"
-		"\t-h\n"
-		"\n"
+		"Usage:\n"
+		"\teeprom_utility "
+		"<function> (-d|-i [--addr=<i2c_address>]) "
+		"[--path=<devfile_path>] "
+		);
+	if (write_enabled())
+		printf("[<data>]");
+
+	printf("\n\n"
 		"Flags:\n"
-		"\t-r: Read EEPROM\n"
-		"\t-w: Write EEPROM\n"
 		"\t-d: Use driver for I/O\n"
 		"\t-i: Use I2C for I/O. Can supply custom read address.\n"
-		"\t-l: List device addresses accessible via i2c device files.\n"
-		"\t-h: Help\n"
 		"\n"
-		"Write EEPROM format:\n"
-		"\tWriting fields:\n"
-		"\t\"field1=this is ascii\" or "
+		"<function>:\n"
+		"\t-h: Print help\n"
+		"\t-l: List device addresses accessible via i2c dev files.\n"
+		"\t-r: Read from EEPROM\n"
+		"\t"
+		);
+	if (write_enabled()) {
+		printf("-w: write to EEPROM\n"
+			"\n"
+			"<data>:\n"
+			"\t[-- [\"<name>=<vals>\"]* | "
+			"--change-bytes=<offset>,<val>[,<offset>,<val>]*]\n"
+			"\n"
+			"Write EEPROM format:\n"
+			"\tWriting fields:\n"
+			"\t\"field1=this is ascii\" or "
 					"\"Field 1=<byte1> <byte2> <byte3>\")\n"
-		"\tWriting bytes:\n"
-		"\tsupply a list of tuples (<offset>,val).\n"
-		"\tExample: 0,1,2,4,3,10,4,9,5,10\n"
-		"\n");
+			"\tWriting bytes:\n"
+			"\tsupply a list of tuples (offset,val).\n"
+			"\tExample: 0,1,2,4,3,10,4,9,5,10\n"
+		);
+	}
+
+	printf("\n");
 	exit(0);
 }
 
@@ -66,7 +85,7 @@ static void parse_function(char *argv[], int arg_index,
 		cli_command->action = LIST;
 	else if (!strcmp(argv[arg_index], "-r"))
 		cli_command->action = READ;
-	else if (!strcmp(argv[arg_index], "-w"))
+	else if (write_enabled() && !strcmp(argv[arg_index], "-w"))
 		cli_command->action = WRITE;
 	else
 		usage_exit();
@@ -83,6 +102,7 @@ static void parse_mode(char *argv[], int arg_index,
 		usage_exit();
 }
 
+#ifdef ENABLE_WRITE
 /*
  * This method records the location of the new data to write.
  * Currently data can come in two forms: "--change-bytes=..." and
@@ -118,6 +138,10 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 
 	cli_command->new_field_data[i] = NULL;
 }
+#else
+static inline void parse_new_data(int argc, char *argv[], int arg_index,
+				struct cli_command *cli_command) { }
+#endif
 
 /*
  * All of our special value passing arguments are in the form of
