@@ -8,5 +8,15 @@ COMPILE_CMD = $(CROSS_COMPILE)gcc $(CFLAGS) $(SOURCES) -o eeprom-util
 eeprom: $(OBJS)
 	$(COMPILE_CMD)
 
+static: CFLAGS += -static
+static: eeprom
+
 write: CFLAGS += -D ENABLE_WRITE
 write: eeprom
+
+write_static: CFLAGS += -D ENABLE_WRITE -static
+write_static: eeprom
+
+.PHONY: clean
+clean:
+	rm eeprom-util $(OBJS)
