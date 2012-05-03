@@ -46,19 +46,19 @@ static int check_io_params(char *buf, enum eeprom_cmd function,
 			enum access_mode mode, int offset, int size)
 {
 	if (buf == NULL)
-		return EEPROM_NULL_PTR;
+		return -EEPROM_NULL_PTR;
 
 	if (function != EEPROM_READ && function != EEPROM_WRITE)
-		return EEPROM_NO_SUCH_FUNCTION;
+		return -EEPROM_NO_SUCH_FUNCTION;
 
 	if (mode != EEPROM_I2C_MODE && mode != EEPROM_DRIVER_MODE)
-		return EEPROM_INVAL_MODE;
+		return -EEPROM_INVAL_MODE;
 
 	if (offset < 0)
-		return EEPROM_INVAL_OFFSET;
+		return -EEPROM_INVAL_OFFSET;
 
 	if (offset + size > EEPROM_SIZE)
-		return EEPROM_INVAL_SIZE;
+		return -EEPROM_INVAL_SIZE;
 
 	return 0;
 }
@@ -67,7 +67,7 @@ static int check_io_params(char *buf, enum eeprom_cmd function,
  * Prepares a device file fd for read or write.
  * flags are the standard file open flags.
  * On success:	returns the fd.
- * On failure:
+ * On failure: negative values of:
  *	EEPROM_OPEN_FAILED:	catchall retval for file open errors.
  *	EEPROM_NO_I2C_ACCESS:	couldn't point i2c to the given address.
  *	EEPROM_INVALID_MODE:	mode is illegal.
@@ -81,15 +81,15 @@ static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
 	else if (mode == EEPROM_I2C_MODE)
 		fd = open(e.i2c_devfile, flags);
 	else
-		return EEPROM_INVAL_MODE;
+		return -EEPROM_INVAL_MODE;
 
 	if (fd < 0)
-		return EEPROM_OPEN_FAILED;
+		return -EEPROM_OPEN_FAILED;
 
 	if (mode == EEPROM_I2C_MODE) {
 		if (ioctl(fd, I2C_SLAVE_FORCE, e.i2c_addr) < 0) {
 			close(fd);
-			return EEPROM_NO_I2C_ACCESS;
+			return -EEPROM_NO_I2C_ACCESS;
 		}
 	}
 
@@ -179,7 +179,7 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
 /*
  * The actual I/O function (not a wrapper).
  * On success: returns number of bytes transferred.
- * On failure: returns values from eeprom_errors.
+ * On failure: returns negative values of eeprom_errors.
  */
 static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
 			enum access_mode mode, char *buf, int offset, int size)
@@ -203,7 +203,7 @@ static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
 
 	close(fd);
 	if (res <= 0)
-		return EEPROM_IO_FAILED;
+		return -EEPROM_IO_FAILED;
 
 	return res;
 }
@@ -211,18 +211,18 @@ static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
 /*
  * eeprom_read and eeprom_write:
  * On success: returns number of bytes written.
- * On failure: enum eeprom_errors, sans EEPROM_IO_FAILED.
+ * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
  */
 int eeprom_read(struct eeprom e, char *buf, int offset, int size,
 		enum access_mode mode)
 {
 	int res = eeprom_do_io(e, EEPROM_READ, mode, buf, offset, size);
-	return res == EEPROM_IO_FAILED ? EEPROM_READ_FAILED : res;
+	return res == (-EEPROM_IO_FAILED) ? (-EEPROM_READ_FAILED) : res;
 }
 
 int eeprom_write(struct eeprom e, char *buf, int offset, int size,
 		enum access_mode mode)
 {
 	int res = eeprom_do_io(e, EEPROM_WRITE, mode, buf, offset, size);
-	return res == EEPROM_IO_FAILED ? EEPROM_WRITE_FAILED : res;
+	return res == (-EEPROM_IO_FAILED) ? (-EEPROM_WRITE_FAILED) : res;
 }

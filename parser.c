@@ -150,6 +150,7 @@ static inline void parse_new_data(int argc, char *argv[], int arg_index,
 static char *extract_value(char *argv[], int arg_index)
 {
 	strtok(argv[arg_index], "=");
+
 	return strtok(NULL, "=");
 }
 
@@ -210,5 +211,6 @@ struct cli_command parse(int argc, char *argv[])
 	}
 
 	parse_new_data(argc, argv, cli_arg, &cli_cmd);
+
 	return cli_cmd;
 }

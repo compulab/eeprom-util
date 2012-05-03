@@ -192,6 +192,7 @@ free_deep:
 	free(l->fields);
 free_shallow:
 	free(l);
+
 	return NULL;
 }
 
@@ -218,7 +219,7 @@ enum layout_res update_field(struct layout *layout, char *field_name,
 	struct field *fields = layout->fields;
 
 	if (layout == NULL || field_name == NULL || new_data == NULL)
-		return LAYOUT_NULL_ARGUMENTS;
+		return -LAYOUT_NULL_ARGUMENTS;
 
 	/* Advance until the field name is found. */
 	for (i = 0; fields[i].size != 0; i++) {
@@ -228,20 +229,22 @@ enum layout_res update_field(struct layout *layout, char *field_name,
 	}
 
 	if (fields[i].size == 0)
-		return LAYOUT_NO_SUCH_FIELD;
+		return -LAYOUT_NO_SUCH_FIELD;
 
 	fields[i].update(&fields[i], new_data);
+
 	return LAYOUT_SUCCESS;
 }
 
 enum layout_res update_byte(struct layout *layout, int offset, char new_byte)
 {
 	if (layout == NULL)
-		return LAYOUT_NULL_ARGUMENTS;
+		return -LAYOUT_NULL_ARGUMENTS;
 
 	if (offset >= layout->data_size || offset < 0)
-		return LAYOUT_OFFSET_OUT_OF_BOUNDS;
+		return -LAYOUT_OFFSET_OUT_OF_BOUNDS;
 
 	layout->data[offset] = new_byte;
+
 	return LAYOUT_SUCCESS;
 }

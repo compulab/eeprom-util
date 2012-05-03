@@ -31,16 +31,17 @@ struct eeprom {
 };
 
 enum eeprom_errors {
-	EEPROM_NULL_PTR		= -1,
-	EEPROM_INVAL_MODE	= -2,
-	EEPROM_INVAL_OFFSET	= -3,
-	EEPROM_INVAL_SIZE	= -4,
-	EEPROM_OPEN_FAILED	= -5,
-	EEPROM_NO_SUCH_FUNCTION	= -6,
-	EEPROM_NO_I2C_ACCESS	= -7,
-	EEPROM_IO_FAILED	= -8,
-	EEPROM_READ_FAILED	= -9, /* For wrapper function */
-	EEPROM_WRITE_FAILED	= -10 /* For wrapper function */
+	EEPROM_SUCCESS = 0,
+	EEPROM_NULL_PTR,
+	EEPROM_INVAL_MODE,
+	EEPROM_INVAL_OFFSET,
+	EEPROM_INVAL_SIZE,
+	EEPROM_OPEN_FAILED,
+	EEPROM_NO_SUCH_FUNCTION,
+	EEPROM_NO_I2C_ACCESS,
+	EEPROM_IO_FAILED,
+	EEPROM_READ_FAILED, /* For wrapper function */
+	EEPROM_WRITE_FAILED, /* For wrapper function */
 };
 
 enum access_mode {

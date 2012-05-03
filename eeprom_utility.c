@@ -28,7 +28,7 @@
 /* This function is meant to be end user friendly, not debugging friendly. */
 static void print_eeprom_error(int error)
 {
-	switch (error) {
+	switch (-error) {
 	case EEPROM_NULL_PTR:
 		printf("Out of memory!\n");
 		break;
@@ -66,7 +66,7 @@ static void update_bytes(struct layout *layout, struct cli_command *command)
 
 		value = strtol(tok, 0, 0);
 		res = update_byte(layout, offset, value);
-		if (res == LAYOUT_OFFSET_OUT_OF_BOUNDS)
+		if (res == -LAYOUT_OFFSET_OUT_OF_BOUNDS)
 			printf("Offset %d out of bounds. "
 				"Did not update.\n", offset);
 
@@ -88,7 +88,7 @@ static void update_fields(struct layout *layout, struct cli_command *command)
 		field_name = strtok(command->new_field_data[i], "=");
 		value = strtok(NULL, "=");
 		res = update_field(layout, field_name, value);
-		if (res == LAYOUT_NO_SUCH_FIELD)
+		if (res == -LAYOUT_NO_SUCH_FIELD)
 			printf("'%s' is not a valid field. "
 				"Skipping update", field_name);
 	}
@@ -135,6 +135,7 @@ static void do_io(struct cli_command command)
 
 free_layout:
 	free_layout(layout);
+
 	return;
 out_of_memory:
 	printf("Out of memory!\n");
