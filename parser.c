@@ -52,13 +52,13 @@ static void usage_exit(void)
 		"\t-i: Use I2C for I/O. Can supply custom read address.\n"
 		"\n"
 		"<function>:\n"
-		"\t-h: Print help\n"
-		"\t-l: List device addresses accessible via i2c dev files.\n"
-		"\t-r: Read from EEPROM\n"
+		"\t[-h|--help|help]: Print help\n"
+		"\tlist: List device addresses accessible via i2c dev files.\n"
+		"\tread: Read from EEPROM\n"
 		"\t"
 		);
 	if (write_enabled()) {
-		printf("-w: write to EEPROM\n"
+		printf("write: write to EEPROM\n"
 			"\n"
 			"<data>:\n"
 			"\t[-- [\"<name>=<vals>\"]* | "
@@ -81,11 +81,11 @@ static void usage_exit(void)
 static void parse_function(char *argv[], int arg_index,
 					struct cli_command *cli_command)
 {
-	if (!strcmp(argv[arg_index], "-l"))
+	if (!strcmp(argv[arg_index], "list"))
 		cli_command->action = LIST;
-	else if (!strcmp(argv[arg_index], "-r"))
+	else if (!strcmp(argv[arg_index], "read"))
 		cli_command->action = READ;
-	else if (write_enabled() && !strcmp(argv[arg_index], "-w"))
+	else if (write_enabled() && !strcmp(argv[arg_index], "write"))
 		cli_command->action = WRITE;
 	else
 		usage_exit();
