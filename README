@@ -1,0 +1,27 @@
+CompuLab EEPROM utility source code repository.
+The utility supports read/write operations from/to an EEPROM either
+via the I2C or the Linux EEPROM driver (at24).
+
+To build the utility you can type one of the following:
+make
+	Only read functionality will be supported, system default linking type.
+make write
+	Enable the write capabilities, default system linking type.
+make static
+	Only read functionality, force static linking of libraries.
+make write_static
+	Enable the write capabilities, force static linking of libraries.
+
+To extend the EEPROM layouts for your needs it should be enough to do the following:
+layout.c:
+* Create or extend an existing layout. Note that if your layout does not retain
+backward compatibility with CompuLab layouts, some features may not work correctly.
+* Update detect_layout() function to properly detect your layout.
+* Update new_layout() function to choose your layout.
+
+layout.h:
+Add your layout to enum layout_names
+
+You can also override the following defines in eeprom.h to reflect your setup:
+Redefine EEPROM_SIZE, EEPROM_PAGE_SIZE, DEFAULT_DRIVER_PATH, DEFAULT_I2C_PATH,
+and DEFAULT_I2C_ADDR if needed
