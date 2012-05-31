@@ -13,11 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <malloc.h>
-#include <linux/i2c-dev.h>
 #include "eeprom.h"
 #include "layout.h"
 #include "parser.h"
@@ -145,7 +142,6 @@ void print_i2c_accessible()
 {
 	int i, j, fd;
 	char dev_file_name[13];
-	char buf;
 
 	/*
 	 * Documentation/i2c/dev-interface: "All 256 minor device numbers are
@@ -160,10 +156,7 @@ void print_i2c_accessible()
 		printf("On i2c-%d:\n", i);
 		printf("\t");
 		for (j = 0; j < 128; j++) { /* Assuming 7 bit addresses here. */
-			if (ioctl(fd, I2C_SLAVE_FORCE, j) < 0)
-				continue;
-
-			if (read(fd, &buf, 1) < 0)
+			if (!i2c_probe(fd, j))
 				continue;
 
 			printf("0x%x ", j);

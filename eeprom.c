@@ -209,6 +209,28 @@ static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
 }
 
 /*
+ * Tries to read from i2c dev file at the given address.
+ * Returns 1 if read succeeded, 0 otherwise.
+ */
+int i2c_probe(int fd, int address)
+{
+	struct i2c_smbus_ioctl_data args;
+	union i2c_smbus_data data;
+
+	if (ioctl(fd, I2C_SLAVE_FORCE, address) < 0)
+		return 0;
+
+	args.read_write = I2C_SMBUS_READ;
+	args.command = 0;
+	args.size = I2C_SMBUS_BYTE;
+	args.data = &data;
+	if (ioctl(fd, I2C_SMBUS, &args) < 0)
+		return 0;
+
+	return 1;
+}
+
+/*
  * eeprom_read and eeprom_write:
  * On success: returns number of bytes written.
  * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
