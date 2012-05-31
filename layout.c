@@ -124,7 +124,7 @@ static struct field *new_layout_invalid(void)
 	return f;
 }
 
-static enum layout_names detect_layout(char *data)
+static enum layout_names detect_layout(unsigned char *data)
 {
 	int check_byte = LAYOUT_CHECK_BYTE;
 
@@ -142,11 +142,11 @@ static enum layout_names detect_layout(char *data)
  * is automatically detected. The resulting layout struct contains a copy of
  * the provided data.
  */
-struct layout *new_layout(char *buf, int buf_size)
+struct layout *new_layout(unsigned char *buf, int buf_size)
 {
 	int i, layout_num;
 	struct layout *l;
-	char *temp;
+	unsigned char *temp;
 
 	l = (struct layout *) malloc(sizeof(struct layout));
 	if (l == NULL)
@@ -170,7 +170,7 @@ struct layout *new_layout(char *buf, int buf_size)
 	if (l->fields == NULL)
 		goto free_shallow;
 
-	l->data = (char *) malloc(sizeof(char) * buf_size);
+	l->data = (unsigned char *) malloc(sizeof(unsigned char) * buf_size);
 	if (l->data == NULL)
 		goto free_deep;
 

@@ -97,7 +97,7 @@ void update_binary(struct field *self, char *value)
 
 	for (i = 0; tok && i < self->size; i++) {
 		if (strcmp(tok, ""))
-			self->buf[i] = (char)strtol(tok, 0, 0);
+			self->buf[i] = (unsigned char)strtol(tok, 0, 0);
 
 		tok = strtok(NULL, " ");
 	}
@@ -105,5 +105,8 @@ void update_binary(struct field *self, char *value)
 
 void update_ascii(struct field *self, char *value)
 {
-	strncpy(self->buf, value, self->size);
+	int i;
+
+	for (i = 0; i < self->size; i++)
+		self->buf[i] = value[i];
 }

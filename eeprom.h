@@ -57,9 +57,9 @@ enum eeprom_cmd {
 int i2c_probe(int fd, int address);
 void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
 		       int i2c_addr);
-int eeprom_read(struct eeprom e, char *buf, int offset, int size,
+int eeprom_read(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode);
-int eeprom_write(struct eeprom e, char *buf, int offset, int size,
+int eeprom_write(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode);
 
 #endif

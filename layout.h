@@ -22,11 +22,11 @@
 struct layout {
 	struct field *fields;
 	int layout_number;
-	char *data;
+	unsigned char *data;
 	int data_size;
 };
 
-struct layout *new_layout(char *buf, int buf_size);
+struct layout *new_layout(unsigned char *buf, int buf_size);
 void free_layout(struct layout *layout);
 void print_layout(struct layout *layout);
 enum layout_res update_field(struct layout *layout, char *field_name,

@@ -42,7 +42,7 @@ void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
 	e->i2c_addr = (i2c_addr >= 0) ? i2c_addr : DEFAULT_I2C_ADDR;
 }
 
-static int check_io_params(char *buf, enum eeprom_cmd function,
+static int check_io_params(unsigned char *buf, enum eeprom_cmd function,
 			enum access_mode mode, int offset, int size)
 {
 	if (buf == NULL)

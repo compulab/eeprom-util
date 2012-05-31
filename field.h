@@ -22,7 +22,7 @@ struct field {
 	int size;
 	/* Tells printing functions what to print between data members. */
 	char *delim;
-	char *buf;
+	unsigned char *buf;
 
 	void (*print)(struct field self);
 	void (*update)(struct field *self, char *value);

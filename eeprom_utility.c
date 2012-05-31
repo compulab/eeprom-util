@@ -94,7 +94,7 @@ static void update_fields(struct layout *layout, struct cli_command *command)
 static void do_io(struct cli_command command)
 {
 	int res;
-	char buf[EEPROM_SIZE];
+	unsigned char buf[EEPROM_SIZE];
 	struct eeprom eeprom;
 	struct layout *layout;
 
