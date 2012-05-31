@@ -39,7 +39,7 @@ static void usage_exit(void)
 {
 	printf("\n"
 		"Usage:\n"
-		"\teeprom_utility "
+		"\teeprom-util "
 		"<function> (-d|-i [--addr=<i2c_address>]) "
 		"[--path=<devfile_path>] "
 		);
