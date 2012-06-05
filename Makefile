@@ -19,4 +19,4 @@ write_static: eeprom
 
 .PHONY: clean
 clean:
-	rm eeprom-util $(OBJS)
+	rm -f eeprom-util $(OBJS)
