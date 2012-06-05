@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <time.h>
+#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <unistd.h>
 #include <math.h>
