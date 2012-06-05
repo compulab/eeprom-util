@@ -114,7 +114,8 @@ static void msleep(unsigned int msecs)
  * which always has data to be read and room for writes, so 0
  * will never be the result of a succesful read/write operation.
  */
-static int do_safe_io(int fd, char *buf, enum eeprom_cmd function, int size)
+static int do_safe_io(int fd, unsigned char *buf,
+		      enum eeprom_cmd function, int size)
 {
 	int bytes, offset = 0;
 
@@ -141,8 +142,8 @@ static int do_safe_io(int fd, char *buf, enum eeprom_cmd function, int size)
  * size. The result is that you have to change the write address manually.
  * Returns the output of the write operation.
  */
-static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
-		int offset)
+static int do_i2c_io(int fd, unsigned char *buf, enum eeprom_cmd function,
+		     int size, int offset)
 {
 	int res, page_cnt, end_page, i, bytes_written = 0;
 	char i2c_buf[EEPROM_PAGE_SIZE + 1];
@@ -182,7 +183,8 @@ static int do_i2c_io(int fd, char *buf, enum eeprom_cmd function, int size,
  * On failure: returns negative values of eeprom_errors.
  */
 static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
-			enum access_mode mode, char *buf, int offset, int size)
+			enum access_mode mode, unsigned char *buf,
+			int offset, int size)
 {
 	int res, fd;
 
@@ -235,14 +237,14 @@ int i2c_probe(int fd, int address)
  * On success: returns number of bytes written.
  * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
  */
-int eeprom_read(struct eeprom e, char *buf, int offset, int size,
+int eeprom_read(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode)
 {
 	int res = eeprom_do_io(e, EEPROM_READ, mode, buf, offset, size);
 	return res == (-EEPROM_IO_FAILED) ? (-EEPROM_READ_FAILED) : res;
 }
 
-int eeprom_write(struct eeprom e, char *buf, int offset, int size,
+int eeprom_write(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode)
 {
 	int res = eeprom_do_io(e, EEPROM_WRITE, mode, buf, offset, size);
