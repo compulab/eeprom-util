@@ -37,36 +37,44 @@ static inline int write_enabled(void) { return 0; }
  */
 static void usage_exit(void)
 {
-	printf("\n"
-		"Usage:\n"
-		"\teeprom-util "
-		"<function> (-d|-i [--addr=<i2c_address>]) "
-		"[--path=<devfile_path>] "
+	printf("Usage: eeprom-util <function> "
+		"(-d|-i [--addr=<address>]) [-p <devfile>]"
 		);
 
 	if (write_enabled())
-		printf("[<data>]");
+		printf(" [<data>]");
+
+	printf("\n\n"
+		"function:\n"
+		"help\t- Print this help and exit ([-h|--help|help])\n"
+		"list\t- List device addresses accessible via "
+				"the i2c dev files\n"
+		"read\t- Read from EEPROM\n"
+		);
+
+	if (write_enabled())
+		printf("write\t- Write to EEPROM");
 
 	printf("\n\n"
 		"Flags:\n"
-		"\t-d: Use driver for I/O\n"
-		"\t-i: Use I2C for I/O. Can supply custom read address.\n"
-		"\n"
-		"<function>:\n"
-		"\t[-h|--help|help]: Print help\n"
-		"\tlist: List device addresses accessible via i2c dev files.\n"
-		"\tread: Read from EEPROM\n"
-		"\t"
+		"-d, --driver\t\t- Use kernel eeprom driver for I/O\n"
+		"-i, --i2c\t\t- Use direct I2C access for I/O "
+			"(custom address can be supplied)\n"
+		"    --addr=<address>\t- Eeprom chip I2C address "
+					"(default: 0x50)\n"
+		"-p, --path=<devfile>\t- Path to the driver "
+					"device file (/sys/.../eeprom) "
+					"or the I2C device file (/dev/i2c-x)"
+		"\n\n"
 		);
 
 	if (write_enabled()) {
-		printf("write: write to EEPROM\n"
-			"\n"
-			"<data>:\n"
-			"\t[-- [\"<name>=<vals>\"]* | "
+		printf("data:\n"
+			"[-- [\"<name>=<vals>\"]* | "
 			"--change-bytes=<offset>,<val>[,<offset>,<val>]*]\n"
 			"\n"
-			"Write EEPROM format:\n"
+			);
+		printf("Write EEPROM format:\n"
 			"\tWriting fields:\n"
 			"\t\"field1=this is ascii\" or "
 				"\"Field 1=<byte1> <byte2> <byte3>\")\n"
@@ -78,6 +86,17 @@ static void usage_exit(void)
 
 	printf("\n");
 	exit(0);
+}
+
+/*
+ * All of our special value passing arguments are in the form of
+ * "--type=value". This method extracts the value.
+ */
+static char *extract_value(char *argv[], int arg_index)
+{
+	strtok(argv[arg_index], "=");
+
+	return strtok(NULL, "=");
 }
 
 static void parse_function(char *argv[], int arg_index,
@@ -96,12 +115,27 @@ static void parse_function(char *argv[], int arg_index,
 static void parse_mode(char *argv[], int arg_index,
 					struct cli_command *cli_command)
 {
-	if (!strcmp(argv[arg_index], "-d"))
+	if (!strcmp(argv[arg_index], "-d") ||
+	    !strcmp(argv[arg_index], "--driver"))
 		cli_command->mode = DRIVER_MODE;
-	else if (!strcmp(argv[arg_index], "-i"))
+	else if (!strcmp(argv[arg_index], "-i") ||
+		 !strcmp(argv[arg_index], "--i2c"))
 		cli_command->mode = I2C_MODE;
 	else
 		usage_exit();
+}
+
+static int parse_path(char *argv[], int *arg_index,
+					struct cli_command *cli_command)
+{
+	if (!strcmp(argv[*arg_index], "-p")) {
+		(*arg_index)++;
+		cli_command->dev_file = argv[*arg_index];
+	} else if (!strncmp(argv[*arg_index], "--path=", 7)) {
+		cli_command->dev_file = extract_value(argv, *arg_index);
+	}
+
+	return cli_command->dev_file ? 1 : 0;
 }
 
 #ifdef ENABLE_WRITE
@@ -144,17 +178,6 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 static inline void parse_new_data(int argc, char *argv[], int arg_index,
 				struct cli_command *cli_command) {}
 #endif
-
-/*
- * All of our special value passing arguments are in the form of
- * --type=values. This method extracts the values.
- */
-static char *extract_value(char *argv[], int arg_index)
-{
-	strtok(argv[arg_index], "=");
-
-	return strtok(NULL, "=");
-}
 
 /*
  * This method returns an "uninitialized" command; that is- a command
@@ -206,10 +229,8 @@ struct cli_command parse(int argc, char *argv[])
 	}
 
 	/* Next argument might be file path */
-	if (!strncmp(argv[cli_arg], "--path=", 7)) {
-		cli_cmd.dev_file = extract_value(argv, cli_arg);
+	if (parse_path(argv, &cli_arg, &cli_cmd))
 		NEXT_OR_STOP(cli_arg);
-	}
 
 	parse_new_data(argc, argv, cli_arg, &cli_cmd);
 
