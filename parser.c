@@ -43,6 +43,7 @@ static void usage_exit(void)
 		"<function> (-d|-i [--addr=<i2c_address>]) "
 		"[--path=<devfile_path>] "
 		);
+
 	if (write_enabled())
 		printf("[<data>]");
 
@@ -57,6 +58,7 @@ static void usage_exit(void)
 		"\tread: Read from EEPROM\n"
 		"\t"
 		);
+
 	if (write_enabled()) {
 		printf("write: write to EEPROM\n"
 			"\n"
@@ -67,11 +69,11 @@ static void usage_exit(void)
 			"Write EEPROM format:\n"
 			"\tWriting fields:\n"
 			"\t\"field1=this is ascii\" or "
-					"\"Field 1=<byte1> <byte2> <byte3>\")\n"
+				"\"Field 1=<byte1> <byte2> <byte3>\")\n"
 			"\tWriting bytes:\n"
 			"\tsupply a list of tuples (offset,val).\n"
 			"\tExample: 0,1,2,4,3,10,4,9,5,10\n"
-		);
+			);
 	}
 
 	printf("\n");
@@ -140,7 +142,7 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 }
 #else
 static inline void parse_new_data(int argc, char *argv[], int arg_index,
-				struct cli_command *cli_command) { }
+				struct cli_command *cli_command) {}
 #endif
 
 /*
@@ -197,8 +199,7 @@ struct cli_command parse(int argc, char *argv[])
 	parse_mode(argv, cli_arg, &cli_cmd);
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
-	if (cli_cmd.mode == I2C_MODE &&
-				!strncmp(argv[cli_arg], "--addr=", 7)) {
+	if (cli_cmd.mode == I2C_MODE && !strncmp(argv[cli_arg], "--addr=", 7)) {
 		tok = extract_value(argv, cli_arg);
 		cli_cmd.i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);
