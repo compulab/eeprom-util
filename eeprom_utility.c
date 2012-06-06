@@ -170,7 +170,9 @@ void print_i2c_accessible(void)
 /*=================================================================*/
 int main(int argc, char *argv[])
 {
-	struct cli_command command = parse(argc, argv);
+	struct cli_command command;
+
+	parse(argc, argv, &command);
 
 	if (command.action == LIST)
 		print_i2c_accessible();

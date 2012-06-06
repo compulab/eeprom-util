@@ -39,7 +39,6 @@ struct cli_command {
 	char **new_field_data;
 };
 
-struct cli_command set_command();
-struct cli_command parse(int argc, char *argv[]);
+void parse(int argc, char *argv[], struct cli_command *cli_cmd);
 
 #endif

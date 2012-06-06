@@ -19,10 +19,10 @@
 #include <string.h>
 #include "parser.h"
 
-#define NEXT_OR_STOP(i) do {\
-				(i)++;\
-				if ((i) == argc)\
-					return cli_cmd;\
+#define NEXT_OR_STOP(i) do {				\
+				(i)++;			\
+				if ((i) == argc)	\
+					return;		\
 			} while (0);
 
 #ifdef ENABLE_WRITE
@@ -183,56 +183,52 @@ static inline void parse_new_data(int argc, char *argv[], int arg_index,
  * This method returns an "uninitialized" command; that is- a command
  * initialized with the appropriate "uninitialized" values.
  */
-struct cli_command set_command(void)
+static void set_command(struct cli_command *command)
 {
-	struct cli_command command;
-
-	command.new_field_data = NULL;
-	command.new_byte_data = NULL;
-	command.dev_file = NULL;
-	command.i2c_addr = -1;
-	command.mode = MODE_INVALID;
-	command.action = ACTION_INVALID;
-
-	return command;
+	command->new_field_data = NULL;
+	command->new_byte_data = NULL;
+	command->dev_file = NULL;
+	command->i2c_addr = -1;
+	command->mode = MODE_INVALID;
+	command->action = ACTION_INVALID;
 }
 
 /*
  * This function operates in stages of user input, whose general format can
  * be seen in usage_exit.
  */
-struct cli_command parse(int argc, char *argv[])
+void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 {
 	int cli_arg = 1;
 	char *tok;
-	struct cli_command cli_cmd = set_command();
+
+	set_command(cli_cmd);
 
 	if (argc <= 1)
 		usage_exit();
 
-	parse_function(argv, cli_arg, &cli_cmd);
-	if (cli_cmd.action == LIST)
-		return cli_cmd;
+	parse_function(argv, cli_arg, cli_cmd);
+	if (cli_cmd->action == LIST)
+		return;
 
 	cli_arg++;
 	/* Reads and writes require additional parameters. */
 	if (cli_arg == argc)
 		usage_exit();
 
-	parse_mode(argv, cli_arg, &cli_cmd);
+	parse_mode(argv, cli_arg, cli_cmd);
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
-	if (cli_cmd.mode == I2C_MODE && !strncmp(argv[cli_arg], "--addr=", 7)) {
+	if (cli_cmd->mode == I2C_MODE &&
+	    !strncmp(argv[cli_arg], "--addr=", 7)) {
 		tok = extract_value(argv, cli_arg);
-		cli_cmd.i2c_addr = strtol(tok, 0, 0);
+		cli_cmd->i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);
 	}
 
 	/* Next argument might be file path */
-	if (parse_path(argv, &cli_arg, &cli_cmd))
+	if (parse_path(argv, &cli_arg, cli_cmd))
 		NEXT_OR_STOP(cli_arg);
 
-	parse_new_data(argc, argv, cli_arg, &cli_cmd);
-
-	return cli_cmd;
+	parse_new_data(argc, argv, cli_arg, cli_cmd);
 }
