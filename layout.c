@@ -91,8 +91,9 @@ static struct field *new_layout_v2(void)
 	f[4] = set_field("Production Date", 4, "/", print_date, update_binary);
 	f[5] = set_field("Serial Number", 12, " ", print_bin_rev,
 								update_binary);
-	f[6] = set_field("WIFI MAC Address", 6, ":", print_bin, update_binary);
-	f[7] = set_field("Bluetooth MAC Address", 6, ":", print_bin,
+	f[6] = set_field("3rd MAC Address (WIFI)", 6, ":", print_bin,
+								update_binary);
+	f[7] = set_field("4th MAC Address (Bluetooth)", 6, ":", print_bin,
 								update_binary);
 	f[8] = set_field("Layout Version", 1, " ", print_bin, update_binary);
 	f[9] = set_field(RESERVED_FIELDS, 83, "", print_reserved,
