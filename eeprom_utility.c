@@ -138,7 +138,7 @@ out_of_memory:
 	printf("Out of memory!\n");
 }
 
-void print_i2c_accessible()
+void print_i2c_accessible(void)
 {
 	int i, j, fd;
 	char dev_file_name[13];
