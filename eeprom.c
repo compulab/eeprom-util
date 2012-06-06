@@ -21,7 +21,8 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <unistd.h>
-#include <math.h>
+#include <stdio.h>
+#include <errno.h>
 #include "eeprom.h"
 
 /*
@@ -108,101 +109,80 @@ static void msleep(unsigned int msecs)
 }
 
 /*
- * Makes sure I/O is done despite possible interruptions.
- * Returns the output of read/write.
- * As a special case, if io_type is illegal returns 0 and
- * does nothing. It is safe to use 0 for an error since the target is an EEPROM
- * which always has data to be read and room for writes, so 0
- * will never be the result of a succesful read/write operation.
- */
-static int do_safe_io(int fd, unsigned char *buf,
-		      enum eeprom_cmd function, int size)
-{
-	int bytes, offset = 0;
-
-	do {
-		if (function == EEPROM_READ)
-			bytes = read(fd, buf + offset, size - offset);
-		else if (function == EEPROM_WRITE)
-			bytes = write(fd, buf + offset, size - offset);
-		else
-			return 0;
-
-		offset += bytes;
-	} while (bytes >= 0 && offset < size);
-
-	if (bytes < 0)
-		return bytes;
-
-	return offset;
-}
-
-/*
- * do_safe_io works fine for most cases, but i2c writes to EEPROM are a special
- * case because writes wrap around EEPROM page size boundries, not around EEPROM
- * size. The result is that you have to change the write address manually.
- * Returns the output of the write operation.
- */
-static int do_i2c_io(int fd, unsigned char *buf, enum eeprom_cmd function,
-		     int size, int offset)
-{
-	int res, page_cnt, end_page, i, bytes_written = 0;
-	char i2c_buf[EEPROM_PAGE_SIZE + 1];
-
-	/* Set the read/write location */
-	while (write(fd, &offset, 1) < 0)
-		msleep(5);
-
-	if (function == EEPROM_READ)
-		return do_safe_io(fd, buf, function, size);
-
-	page_cnt = offset / EEPROM_PAGE_SIZE;
-	end_page = ceil(page_cnt + size / EEPROM_PAGE_SIZE);
-	for (; page_cnt < end_page; page_cnt++) {
-		i2c_buf[0] = page_cnt * EEPROM_PAGE_SIZE; /* Write address */
-		for (i = 0; i < EEPROM_PAGE_SIZE && i < size; i++)
-			i2c_buf[i+1] = buf[page_cnt * EEPROM_PAGE_SIZE + i];
-
-		size -= EEPROM_PAGE_SIZE;
-		do {
-			res = write(fd, i2c_buf, i + 1);
-			/* A delay is necessary, otherwise next writes fail. */
-			msleep(5);
-		} while (res != i + 1);
-
-		bytes_written += res - 1;
-		if (res < 0)
-			return res;
-	}
-
-	return bytes_written;
-}
-
-/*
- * The actual I/O function (not a wrapper).
+ * I2C mode IO function.
  * On success: returns number of bytes transferred.
- * On failure: returns negative values of eeprom_errors.
+ * On failure: enum eeprom_errors.
  */
-static int eeprom_do_io(struct eeprom e, enum eeprom_cmd function,
-			enum access_mode mode, unsigned char *buf,
-			int offset, int size)
+static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
+			 unsigned char *buf, int offset, int size)
 {
-	int res, fd;
+	int res, fd, i, bytes_transferred = 0;
+	union i2c_smbus_data data;
+	struct i2c_smbus_ioctl_data args;
 
-	res = check_io_params(buf, function, mode, offset, size);
+	args.data = &data;
+	res = check_io_params(buf, function, EEPROM_I2C_MODE, offset, size);
 	if (res < 0)
 		return res;
 
-	fd = open_device_file(e, mode, O_RDWR);
+	fd = open_device_file(e, EEPROM_I2C_MODE, O_RDWR);
 	if (fd < 0)
 		return fd;
 
-	if (mode == EEPROM_DRIVER_MODE) {
-		lseek(fd, offset, SEEK_SET);
-		res = do_safe_io(fd, buf + offset, function, size);
-	} else {
-		res = do_i2c_io(fd, buf + offset, function, size, offset);
+	args.read_write = I2C_SMBUS_READ;
+	args.size = I2C_SMBUS_BYTE;
+	if (function == EEPROM_READ) {
+		for (i = offset; i < size; i++) {
+			args.command = i;
+			if (ioctl(fd, I2C_SMBUS, &args) < 0)
+				return -EEPROM_IO_FAILED;
+
+			buf[i] = (unsigned char)(data.byte & 0xFF);
+			bytes_transferred++;
+		}
+
+		return bytes_transferred;
 	}
+
+	/* function == EEPROM_WRITE */
+	args.read_write = I2C_SMBUS_WRITE;
+	args.size = I2C_SMBUS_BYTE_DATA;
+	for (i = offset; i < size; i++) {
+		args.command = i;
+		data.byte = buf[i];
+		if (ioctl(fd, I2C_SMBUS, &args) < 0)
+			return -EEPROM_IO_FAILED;
+
+		msleep(5);
+		bytes_transferred++;
+	}
+
+	return bytes_transferred;
+}
+
+/*
+ * Driver mode IO function.
+ * On success: returns number of bytes transferred.
+ * On failure: returns negative values of eeprom_errors.
+ */
+static int eeprom_driver_io(struct eeprom e, enum eeprom_cmd function,
+			    unsigned char *buf, int offset, int size)
+{
+	int res, fd;
+
+	res = check_io_params(buf, function, EEPROM_DRIVER_MODE, offset, size);
+	if (res < 0)
+		return res;
+
+	fd = open_device_file(e, EEPROM_DRIVER_MODE, O_RDWR);
+	if (fd < 0)
+		return fd;
+
+	lseek(fd, offset, SEEK_SET);
+	if (function == EEPROM_READ)
+		res = read(fd, buf + offset, size);
+	else if (function == EEPROM_WRITE)
+		res = write(fd, buf + offset, size);
 
 	close(fd);
 	if (res <= 0)
@@ -241,13 +221,17 @@ int i2c_probe(int fd, int address)
 int eeprom_read(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode)
 {
-	int res = eeprom_do_io(e, EEPROM_READ, mode, buf, offset, size);
-	return res == (-EEPROM_IO_FAILED) ? (-EEPROM_READ_FAILED) : res;
+	if (mode == EEPROM_DRIVER_MODE)
+		return eeprom_driver_io(e, EEPROM_READ, buf, offset, size);
+	else /* mode == EEPROM_I2C_MODE) */
+		return eeprom_i2c_io(e, EEPROM_READ, buf, offset, size);
 }
 
 int eeprom_write(struct eeprom e, unsigned char *buf, int offset, int size,
 		enum access_mode mode)
 {
-	int res = eeprom_do_io(e, EEPROM_WRITE, mode, buf, offset, size);
-	return res == (-EEPROM_IO_FAILED) ? (-EEPROM_WRITE_FAILED) : res;
+	if (mode == EEPROM_DRIVER_MODE)
+		return eeprom_driver_io(e, EEPROM_WRITE, buf, offset, size);
+	else /* mode == EEPROM_I2C_MODE) */
+		return eeprom_i2c_io(e, EEPROM_WRITE, buf, offset, size);
 }

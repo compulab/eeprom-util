@@ -36,8 +36,7 @@ static void print_eeprom_error(int error)
 		printf("I2C communication with EEPROM failed.\nThis could be "
 		"due to wrong address or wrong dev file (not an i2c file).\n");
 		break;
-	case EEPROM_READ_FAILED:
-	case EEPROM_WRITE_FAILED:
+	case EEPROM_IO_FAILED:
 		printf("I/O failed. Check your path.\n");
 	}
 }

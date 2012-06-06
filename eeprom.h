@@ -40,8 +40,6 @@ enum eeprom_errors {
 	EEPROM_NO_SUCH_FUNCTION,
 	EEPROM_NO_I2C_ACCESS,
 	EEPROM_IO_FAILED,
-	EEPROM_READ_FAILED, /* For wrapper function */
-	EEPROM_WRITE_FAILED, /* For wrapper function */
 };
 
 enum access_mode {
