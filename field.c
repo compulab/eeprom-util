@@ -40,6 +40,11 @@ struct field set_field(char *name, int size, char *delim,
 /* For printing the binary "version" field. */
 void print_bin_ver(struct field self)
 {
+	if ((self.buf[0] == 0xff) && (self.buf[1] == 0xff)) {
+		self.buf[0] = 0;
+		self.buf[1] = 0;
+	}
+
 	printf(PRINT_FIELD_SEGMENT, self.name);
 	printf("%#.2f\n", (self.buf[1] << 8 | self.buf[0]) / 100.0);
 }
