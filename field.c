@@ -112,8 +112,5 @@ void update_binary(struct field *self, char *value)
 
 void update_ascii(struct field *self, char *value)
 {
-	int i;
-
-	for (i = 0; i < self->size; i++)
-		self->buf[i] = value[i];
+	strncpy((char *)self->buf, value, self->size);
 }
