@@ -83,8 +83,11 @@ void print_date(struct field self)
 /* For printing data meant to be interpreted as an ASCII string. */
 void print_ascii(struct field self)
 {
+	char format[8];
+
+	sprintf(format, "%%.%ds\n", self.size);
 	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf("%s\n", self.buf);
+	printf(format, self.buf);
 }
 
 /* For printing the "Reserved field" section. */
