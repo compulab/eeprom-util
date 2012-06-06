@@ -91,6 +91,19 @@ static void update_fields(struct layout *layout, struct cli_command *command)
 	}
 }
 
+static void print_command(struct cli_command command, struct eeprom e)
+{
+	if (command.action == READ)
+		printf("Reading ");
+	else
+		printf("Writing ");
+
+	if (command.mode == DRIVER_MODE)
+		printf("via driver at %s\n", e.driver_devfile);
+	else
+		printf("via i2c at %s, from address 0x%x\n", e.i2c_devfile, e.i2c_addr);
+}
+
 static void do_io(struct cli_command command)
 {
 	int res;
@@ -104,6 +117,7 @@ static void do_io(struct cli_command command)
 		eeprom_set_params(&eeprom, NULL, command.dev_file,
 							command.i2c_addr);
 
+	print_command(command, eeprom);
 	res = eeprom_read(eeprom, buf, 0, EEPROM_SIZE,
 						EEPROM_MODE(command.mode));
 	if (res < 0) {
