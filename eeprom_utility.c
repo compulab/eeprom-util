@@ -21,6 +21,7 @@
 #include "eeprom.h"
 #include "layout.h"
 #include "parser.h"
+#include "auto_generated.h"
 
 #define EEPROM_MODE(mode) ((mode) == DRIVER_MODE) ? EEPROM_DRIVER_MODE : \
 								EEPROM_I2C_MODE
@@ -183,11 +184,17 @@ void print_i2c_accessible(void)
 	}
 }
 
+void print_banner(void)
+{
+	printf("CompuLab EEPROM utility version " VERSION "\n\n");
+}
+
 /*=================================================================*/
 int main(int argc, char *argv[])
 {
 	struct cli_command command;
 
+	print_banner();
 	parse(argc, argv, &command);
 
 	if (command.action == LIST)

@@ -20,3 +20,4 @@
 # Additional rules
 #
 eeprom-util
+auto_generated.h
