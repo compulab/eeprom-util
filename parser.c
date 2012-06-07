@@ -34,11 +34,11 @@ static inline int write_enabled(void) { return 0; }
  * Prints usage guide and exits. General format is:
  * <function> <mode> [--addr=num] [--path=file_path] -- [changes]
  */
-static void usage_exit(void)
+static void usage_exit(const char *message)
 {
+	printf("%s", message);
 	printf("Usage: eeprom-util <function> "
-		"(-d|-i [--addr=<address>]) [-p <devfile>]"
-		);
+		"(-d|-i [--addr=<address>]) [-p <devfile>]");
 
 	if (write_enabled())
 		printf(" [<data>]");
@@ -107,8 +107,12 @@ static void parse_function(char *argv[], int arg_index,
 		cli_command->action = READ;
 	else if (write_enabled() && !strcmp(argv[arg_index], "write"))
 		cli_command->action = WRITE;
+	else if (!strcmp(argv[arg_index], "help") ||
+		!strcmp(argv[arg_index], "-h") ||
+		!strcmp(argv[arg_index], "--help"))
+		usage_exit("");
 	else
-		usage_exit();
+		usage_exit("Unknown function specified!\n");
 }
 
 static void parse_mode(char *argv[], int arg_index,
@@ -121,7 +125,7 @@ static void parse_mode(char *argv[], int arg_index,
 		 !strcmp(argv[arg_index], "--i2c"))
 		cli_command->mode = I2C_MODE;
 	else
-		usage_exit();
+		usage_exit("Unknown I/O mode specified!\n");
 }
 
 static int parse_path(char *argv[], int *arg_index,
@@ -155,7 +159,7 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 	}
 
 	if (strcmp(argv[arg_index], "--"))
-		usage_exit();
+		usage_exit("Too many arguments! (Have you forgot the '--'?)\n");
 
 	arg_index++;
 	if (arg_index == argc)
@@ -204,7 +208,7 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 	set_command(cli_cmd);
 
 	if (argc <= 1)
-		usage_exit();
+		usage_exit("");
 
 	parse_function(argv, cli_arg, cli_cmd);
 	if (cli_cmd->action == LIST)
@@ -213,7 +217,8 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 	cli_arg++;
 	/* Reads and writes require additional parameters. */
 	if (cli_arg == argc)
-		usage_exit();
+		usage_exit("Specified function implies"
+			   "I/O mode to be specified!\n");
 
 	parse_mode(argv, cli_arg, cli_cmd);
 	NEXT_OR_STOP(cli_arg);
