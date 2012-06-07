@@ -186,7 +186,8 @@ void print_i2c_accessible(void)
 
 void print_banner(void)
 {
-	printf("CompuLab EEPROM utility version " VERSION "\n\n");
+	char *version = strnlen(VERSION, 20) ? " version " VERSION : "";
+	printf("CompuLab EEPROM utility%s\n\n", version);
 }
 
 /*=================================================================*/
