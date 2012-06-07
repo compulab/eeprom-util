@@ -74,8 +74,11 @@ void print_bin(struct field self)
 
 void print_date(struct field self)
 {
+	char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf("%d%s%d%s%d\n", self.buf[0], self.delim, self.buf[1],
+	printf("%d%s%s%s%d\n", self.buf[0], self.delim, months[self.buf[1] - 1],
 	       self.delim, self.buf[3] << 8 | self.buf[2]);
 }
 
