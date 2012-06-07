@@ -21,8 +21,9 @@ write_static: eeprom
 
 $(AUTO_GENERATED_FILE):
 	@( printf '#define VERSION "%s"\n' \
-	'$(shell ./setversion)' ) > $@.tmp
-	@cmp -s $@ $@.tmp && rm -f $@.tmp || mv -f $@.tmp $@
+	'$(shell ./setversion)' ) > $@
+	@date +'#define BUILD_DATE "%d %b %C%y"' >> $@
+	@date +'#define BUILD_TIME "%T"' >> $@
 
 .PHONY: clean
 clean:
