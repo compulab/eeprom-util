@@ -237,7 +237,7 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 	cli_arg++;
 	/* Reads and writes require additional parameters. */
 	if (cli_arg == argc)
-		usage_exit("Specified function implies"
+		usage_exit("Specified function implies "
 			   "I/O mode to be specified!\n");
 
 	parse_mode(argv, cli_arg, cli_cmd);
