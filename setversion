@@ -13,8 +13,10 @@ if head=`git rev-parse --verify HEAD 2>/dev/null`; then
 	# Do we have an untagged version?
 	if git name-rev --tags HEAD | \
 	   grep -E '^HEAD[[:space:]]+(.*[0-9]*|undefined)$' > /dev/null; then
-	        git describe --tags | awk -F- '{printf("%s-%05d", $(NF),$(NF-1))}'
+		vers=`git describe --tags | awk -F- '{printf("%s-%05d", $(NF),$(NF-1))}'`
 	fi
+
+	printf '%s' $vers | sed 's/-00000$//'
 
 	# Are there uncommitted changes?
 	git update-index --refresh --unmerged > /dev/null
