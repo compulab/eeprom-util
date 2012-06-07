@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
+#include "eeprom.h"
 
 #define NEXT_OR_STOP(i) do {				\
 				(i)++;			\
@@ -29,6 +30,33 @@ static inline int write_enabled(void) { return 1; }
 #else
 static inline int write_enabled(void) { return 0; }
 #endif
+
+static void examples_exit(void)
+{
+	printf("Reading EEPROM via driver (default address: 0x%x):\n"
+	       "\teeprom-util read -d\n", DEFAULT_I2C_ADDR);
+
+	if (write_enabled()) {
+		printf("Writing '4c' to bytes 0, 5, and 23 via I2C:\n"
+		       "\teeprom-util write -i "
+		       "--change-bytes=0,4c,5,4c,23,4c\n");
+
+		printf("Changing fields \"Bytes Field\" and \"String Field\" "
+		       "to bytes 2,3,4 and string \"Hello World!\", "
+		       "via driver:\n"
+		       "\teeprom-util write -d -- \"Bytes Field=2 3 4\" "
+		       "\"String Field=Hello World\"\n");
+
+		printf("Doing the above via I2C with "
+		       "custom device file and address:\n"
+		       "\teeprom-util write -i --addr=0x%x "
+		       "--path=/path/to/devfile -- \"Bytes Field=2 3 4\" "
+		       "\"String Field=Hello World\"\n", DEFAULT_I2C_ADDR);
+	}
+
+	printf("\n");
+	exit(0);
+}
 
 /*
  * Prints usage guide and exits. General format is:
@@ -45,14 +73,14 @@ static void usage_exit(const char *message)
 
 	printf("\n\n"
 		"function:\n"
-		"help\t- Print this help and exit ([-h|--help|help])\n"
-		"list\t- List device addresses accessible via "
+		"help\t\t- Print this help and exit ([-h|--help|help])\n"
+		"examples\t- Print usage examples and exit\n"
+		"list\t\t- List device addresses accessible via "
 				"the i2c dev files\n"
-		"read\t- Read from EEPROM\n"
-		);
+		"read\t\t- Read from EEPROM\n");
 
 	if (write_enabled())
-		printf("write\t- Write to EEPROM");
+		printf("write\t\t- Write to EEPROM");
 
 	printf("\n\n"
 		"Flags:\n"
@@ -64,23 +92,13 @@ static void usage_exit(const char *message)
 		"-p, --path=<devfile>\t- Path to the driver "
 					"device file (/sys/.../eeprom) "
 					"or the I2C device file (/dev/i2c-x)"
-		"\n\n"
-		);
+		"\n\n");
 
 	if (write_enabled()) {
 		printf("data:\n"
 			"[-- [\"<name>=<vals>\"]* | "
 			"--change-bytes=<offset>,<val>[,<offset>,<val>]*]\n"
-			"\n"
-			);
-		printf("Write EEPROM format:\n"
-			"\tWriting fields:\n"
-			"\t\"field1=this is ascii\" or "
-				"\"Field 1=<byte1> <byte2> <byte3>\")\n"
-			"\tWriting bytes:\n"
-			"\tsupply a list of tuples (offset,val).\n"
-			"\tExample: 0,1,2,4,3,10,4,9,5,10\n"
-			);
+			"\n");
 	}
 
 	printf("\n");
@@ -107,6 +125,8 @@ static void parse_function(char *argv[], int arg_index,
 		cli_command->action = READ;
 	else if (write_enabled() && !strcmp(argv[arg_index], "write"))
 		cli_command->action = WRITE;
+	else if (!strcmp(argv[arg_index], "examples"))
+		examples_exit();
 	else if (!strcmp(argv[arg_index], "help") ||
 		!strcmp(argv[arg_index], "-h") ||
 		!strcmp(argv[arg_index], "--help"))
