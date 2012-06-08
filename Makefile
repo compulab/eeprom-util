@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+VERSION = 0
+PATCHLEVEL = 9
+EEPROM_UTIL_VERSION = $(VERSION).$(PATCHLEVEL)
+
 CROSS_COMPILE ?=
 
 AUTO_GENERATED_FILE = auto_generated.h
@@ -39,7 +43,7 @@ write_static: CFLAGS += -D ENABLE_WRITE -static
 write_static: eeprom
 
 $(AUTO_GENERATED_FILE):
-	@( printf '#define VERSION "%s"\n' \
+	@( printf '#define VERSION "%s%s"\n' "$(EEPROM_UTIL_VERSION)" \
 	'$(shell ./setversion)' ) > $@
 	@date +'#define BUILD_DATE "%d %b %C%y"' >> $@
 	@date +'#define BUILD_TIME "%T"' >> $@
