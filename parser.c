@@ -84,9 +84,9 @@ static void usage_exit(const char *message)
 		"read\t\t- Read from EEPROM\n");
 
 	if (write_enabled())
-		printf("write\t\t- Write to EEPROM");
+		printf("write\t\t- Write to EEPROM\n");
 
-	printf("\n\n"
+	printf("\n"
 		"Flags:\n"
 		"-d, --driver\t\t- Use kernel eeprom driver for I/O\n"
 		"-i, --i2c\t\t- Use direct I2C access for I/O "
