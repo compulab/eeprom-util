@@ -17,8 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-VERSION = 0
-PATCHLEVEL = 9
+VERSION = 1
+PATCHLEVEL = 0
 EEPROM_UTIL_VERSION = $(VERSION).$(PATCHLEVEL)
 
 CROSS_COMPILE ?=
