@@ -82,8 +82,13 @@ void print_date(struct field self)
 			    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf("%d%s%s%s%d\n", self.buf[0], self.delim, months[self.buf[1] - 1],
-	       self.delim, self.buf[3] << 8 | self.buf[2]);
+	printf("%d%s", self.buf[0], self.delim);
+	if (self.buf[1] >= 1 && self.buf[1] <= 12)
+		printf("%s", months[self.buf[1] - 1]);
+	else
+		printf("BAD");
+
+	printf("%s%d\n", self.delim, self.buf[3] << 8 | self.buf[2]);
 }
 
 /* For printing data meant to be interpreted as an ASCII string. */
