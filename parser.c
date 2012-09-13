@@ -155,14 +155,18 @@ static void parse_mode(char *argv[], int arg_index,
 static int parse_path(char *argv[], int *arg_index,
 					struct cli_command *cli_command)
 {
+	int custom_path = 0;
+
 	if (!strcmp(argv[*arg_index], "-p")) {
 		(*arg_index)++;
 		cli_command->dev_file = argv[*arg_index];
+		custom_path = 1;
 	} else if (!strncmp(argv[*arg_index], "--path=", 7)) {
 		cli_command->dev_file = extract_value(argv, *arg_index);
+		custom_path = 1;
 	}
 
-	return cli_command->dev_file ? 1 : 0;
+	return custom_path;
 }
 
 #ifdef ENABLE_WRITE
@@ -245,6 +249,11 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 			   "I/O mode to be specified!\n");
 
 	parse_mode(argv, cli_arg, cli_cmd);
+	if (cli_cmd->mode == DRIVER_MODE)
+		cli_cmd->dev_file = DEFAULT_DRIVER_PATH;
+	else if (cli_cmd->mode == I2C_MODE)
+		cli_cmd->dev_file = DEFAULT_I2C_PATH;
+
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
 	if (cli_cmd->mode == I2C_MODE &&

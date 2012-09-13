@@ -35,15 +35,12 @@
  *	i2c_path: path to i2c device file. Input NULL for default value.
  *	i2c_addr: address for i2c. Input <0 for default value.
  */
-void eeprom_set_params(struct eeprom *e, char *driver_path, char *i2c_path,
-								int i2c_addr)
+void eeprom_set_params(struct eeprom *e, char *path, int i2c_addr)
 {
 	if (e == NULL)
 		return;
 
-	e->driver_devfile = (driver_path != NULL) ? driver_path :
-							DEFAULT_DRIVER_PATH;
-	e->i2c_devfile = (i2c_path != NULL) ? i2c_path : DEFAULT_I2C_PATH;
+	e->devfile = path;
 	e->i2c_addr = (i2c_addr >= 0) ? i2c_addr : DEFAULT_I2C_ADDR;
 }
 
@@ -81,10 +78,8 @@ static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
 {
 	int fd;
 
-	if (mode == EEPROM_DRIVER_MODE)
-		fd = open(e.driver_devfile, flags);
-	else if (mode == EEPROM_I2C_MODE)
-		fd = open(e.i2c_devfile, flags);
+	if (mode == EEPROM_I2C_MODE || mode == EEPROM_DRIVER_MODE)
+		fd = open(e.devfile, flags);
 	else
 		return -EEPROM_INVAL_MODE;
 

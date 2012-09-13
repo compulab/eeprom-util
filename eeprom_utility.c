@@ -106,9 +106,9 @@ static void print_command(struct cli_command command, struct eeprom e)
 		printf("Writing ");
 
 	if (command.mode == DRIVER_MODE)
-		printf("via driver at %s\n", e.driver_devfile);
+		printf("via driver at %s\n", e.devfile);
 	else
-		printf("via i2c at %s, from address 0x%x\n", e.i2c_devfile, e.i2c_addr);
+		printf("via i2c at %s, from address 0x%x\n", e.devfile, e.i2c_addr);
 }
 
 static void do_io(struct cli_command command)
@@ -119,10 +119,9 @@ static void do_io(struct cli_command command)
 	struct layout *layout;
 
 	if (command.mode == DRIVER_MODE)
-		eeprom_set_params(&eeprom, command.dev_file, NULL, -1);
+		eeprom_set_params(&eeprom, command.dev_file, -1);
 	else
-		eeprom_set_params(&eeprom, NULL, command.dev_file,
-							command.i2c_addr);
+		eeprom_set_params(&eeprom, command.dev_file, command.i2c_addr);
 
 	print_command(command, eeprom);
 	res = eeprom_read(eeprom, buf, 0, EEPROM_SIZE,
