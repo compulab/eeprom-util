@@ -27,9 +27,6 @@
 #include "parser.h"
 #include "auto_generated.h"
 
-#define EEPROM_MODE(mode) ((mode) == DRIVER_MODE) ? EEPROM_DRIVER_MODE : \
-								EEPROM_I2C_MODE
-
 /* This function is meant to be end user friendly, not debugging friendly. */
 static void print_eeprom_error(int error)
 {
@@ -54,7 +51,7 @@ static void print_eeprom_error(int error)
  * <int>,<int>[,<int>,<int>]*, which is a list of tuples that stand for
  * (offset, new_byte). It does the actual updating within the layout struct.
  */
-static void update_bytes(struct layout *layout, struct cli_command *command)
+static void update_bytes(struct layout *layout, struct command *command)
 {
 	int offset, value, res;
 	char *tok = strtok(command->new_byte_data, ",");
@@ -83,7 +80,7 @@ static void update_bytes(struct layout *layout, struct cli_command *command)
  * form of: field name=new value(s), and does the actual updating within the
  * layout struct.
  */
-static void update_fields(struct layout *layout, struct cli_command *command)
+static void update_fields(struct layout *layout, struct command *command)
 {
 	int i, res;
 	char *field_name, *value;
@@ -98,29 +95,28 @@ static void update_fields(struct layout *layout, struct cli_command *command)
 	}
 }
 
-static void print_command(struct cli_command command)
+static void print_command(struct command command)
 {
-	if (command.action == READ)
+	if (command.action == EEPROM_READ)
 		printf("Reading ");
 	else
 		printf("Writing ");
 
-	if (command.mode == DRIVER_MODE)
+	if (command.mode == EEPROM_DRIVER_MODE)
 		printf("via driver at %s\n", command.dev_file);
 	else
 		printf("via i2c at %s, from address 0x%x\n",
 		       command.dev_file, command.i2c_addr);
 }
 
-static void do_io(struct cli_command command)
+static void do_io(struct command command)
 {
 	int res;
 	unsigned char buf[EEPROM_SIZE];
 	struct layout *layout;
 
 	print_command(command);
-	res = eeprom_read(command, buf, 0, EEPROM_SIZE,
-						EEPROM_MODE(command.mode));
+	res = eeprom_read(command, buf, 0, EEPROM_SIZE, command.mode);
 	if (res < 0) {
 		print_eeprom_error(res);
 		return;
@@ -130,7 +126,7 @@ static void do_io(struct cli_command command)
 	if (layout == NULL)
 		goto out_of_memory;
 
-	if (command.action == READ) {
+	if (command.action == EEPROM_READ) {
 		print_layout(layout);
 		goto free_layout;
 	}
@@ -140,8 +136,7 @@ static void do_io(struct cli_command command)
 	else if (command.new_field_data != NULL)
 		update_fields(layout, &command);
 
-	res = eeprom_write(command, layout->data, 0, EEPROM_SIZE,
-						EEPROM_MODE(command.mode));
+	res = eeprom_write(command, layout->data, 0, EEPROM_SIZE, command.mode);
 	if (res < 0)
 		print_eeprom_error(res);
 
@@ -193,12 +188,12 @@ void print_banner(void)
 /*=================================================================*/
 int main(int argc, char *argv[])
 {
-	struct cli_command command;
+	struct command command;
 
 	print_banner();
 	parse(argc, argv, &command);
 
-	if (command.action == LIST)
+	if (command.action == EEPROM_LIST)
 		print_i2c_accessible();
 	else /* READ/WRITE */
 		do_io(command);

@@ -20,28 +20,8 @@
 #ifndef _PARSER_
 #define _PARSER_
 
-enum cli_action {
-	READ,
-	WRITE,
-	LIST,
-	ACTION_INVALID
-};
+#include "eeprom.h"
 
-enum cli_mode {
-	DRIVER_MODE,
-	I2C_MODE,
-	MODE_INVALID
-};
-
-struct cli_command {
-	enum cli_action action;
-	enum cli_mode mode;
-	int i2c_addr;
-	char *dev_file;
-	char *new_byte_data;
-	char **new_field_data;
-};
-
-void parse(int argc, char *argv[], struct cli_command *cli_cmd);
+void parse(int argc, char *argv[], struct command *command);
 
 #endif

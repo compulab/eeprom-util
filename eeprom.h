@@ -20,9 +20,6 @@
 #ifndef _EEPROM_
 #define _EEPROM_
 
-/* NOTE: remove in subsequent refactoring */
-#include "parser.h"
-
 #define EEPROM_SIZE	256
 #define EEPROM_PAGE_SIZE 16
 
@@ -42,20 +39,32 @@ enum eeprom_errors {
 	EEPROM_IO_FAILED,
 };
 
-enum access_mode {
-	EEPROM_DRIVER_MODE,
-	EEPROM_I2C_MODE
+enum action {
+	EEPROM_READ,
+	EEPROM_WRITE,
+	EEPROM_LIST,
+	EEPROM_ACTION_INVALID,
 };
 
-enum eeprom_cmd {
-	EEPROM_READ,
-	EEPROM_WRITE
+enum mode {
+	EEPROM_DRIVER_MODE,
+	EEPROM_I2C_MODE,
+	EEPROM_MODE_INVALID,
+};
+
+struct command {
+	enum action action;
+	enum mode mode;
+	int i2c_addr;
+	char *dev_file;
+	char *new_byte_data;
+	char **new_field_data;
 };
 
 int i2c_probe(int fd, int address);
-int eeprom_read(struct cli_command, unsigned char *buf, int offset, int size,
-		enum access_mode mode);
-int eeprom_write(struct cli_command, unsigned char *buf, int offset, int size,
-		enum access_mode mode);
+int eeprom_read(struct command, unsigned char *buf, int offset, int size,
+		enum mode mode);
+int eeprom_write(struct command, unsigned char *buf, int offset, int size,
+		enum mode mode);
 
 #endif

@@ -28,8 +28,8 @@
 #include <errno.h>
 #include "eeprom.h"
 
-static int check_io_params(unsigned char *buf, enum eeprom_cmd function,
-			enum access_mode mode, int offset, int size)
+static int check_io_params(unsigned char *buf, enum action function,
+			enum mode mode, int offset, int size)
 {
 	if (buf == NULL)
 		return -EEPROM_NULL_PTR;
@@ -58,8 +58,7 @@ static int check_io_params(unsigned char *buf, enum eeprom_cmd function,
  *	EEPROM_NO_I2C_ACCESS:	couldn't point i2c to the given address.
  *	EEPROM_INVALID_MODE:	mode is illegal.
  */
-static int open_device_file(struct cli_command command, enum access_mode mode,
-			    int flags)
+static int open_device_file(struct command command, enum mode mode, int flags)
 {
 	int fd;
 
@@ -109,7 +108,7 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
  * On success: returns number of bytes transferred.
  * On failure: enum eeprom_errors.
  */
-static int eeprom_i2c_io(struct cli_command command, enum eeprom_cmd function,
+static int eeprom_i2c_io(struct command command, enum action function,
 			 unsigned char *buf, int offset, int size)
 {
 	int res, fd, i, bytes_transferred = 0;
@@ -157,7 +156,7 @@ static int eeprom_i2c_io(struct cli_command command, enum eeprom_cmd function,
  * On success: returns number of bytes transferred.
  * On failure: returns negative values of eeprom_errors.
  */
-static int eeprom_driver_io(struct cli_command command, enum eeprom_cmd function,
+static int eeprom_driver_io(struct command command, enum action function,
 			    unsigned char *buf, int offset, int size)
 {
 	int res, fd;
@@ -210,8 +209,8 @@ int i2c_probe(int fd, int address)
  * On success: returns number of bytes written.
  * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
  */
-int eeprom_read(struct cli_command command, unsigned char *buf, int offset,
-		int size, enum access_mode mode)
+int eeprom_read(struct command command, unsigned char *buf, int offset,
+		int size, enum mode mode)
 {
 	if (mode == EEPROM_DRIVER_MODE)
 		return eeprom_driver_io(command, EEPROM_READ, buf, offset, size);
@@ -219,8 +218,8 @@ int eeprom_read(struct cli_command command, unsigned char *buf, int offset,
 		return eeprom_i2c_io(command, EEPROM_READ, buf, offset, size);
 }
 
-int eeprom_write(struct cli_command command, unsigned char *buf, int offset,
-		 int size, enum access_mode mode)
+int eeprom_write(struct command command, unsigned char *buf, int offset,
+		 int size, enum mode mode)
 {
 	if (mode == EEPROM_DRIVER_MODE)
 		return eeprom_driver_io(command, EEPROM_WRITE, buf, offset, size);

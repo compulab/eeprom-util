@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
-#include "eeprom.h"
 
 #define NEXT_OR_STOP(i) do {				\
 				(i)++;			\
@@ -120,15 +119,15 @@ static char *extract_value(char *argv[], int arg_index)
 	return strtok(NULL, "=");
 }
 
-static void parse_function(char *argv[], int arg_index,
-					struct cli_command *cli_command)
+static void parse_action(char *argv[], int arg_index,
+					struct command *command)
 {
 	if (!strcmp(argv[arg_index], "list"))
-		cli_command->action = LIST;
+		command->action = EEPROM_LIST;
 	else if (!strcmp(argv[arg_index], "read"))
-		cli_command->action = READ;
+		command->action = EEPROM_READ;
 	else if (write_enabled() && !strcmp(argv[arg_index], "write"))
-		cli_command->action = WRITE;
+		command->action = EEPROM_WRITE;
 	else if (!strcmp(argv[arg_index], "examples"))
 		examples_exit();
 	else if (!strcmp(argv[arg_index], "help") ||
@@ -140,29 +139,28 @@ static void parse_function(char *argv[], int arg_index,
 }
 
 static void parse_mode(char *argv[], int arg_index,
-					struct cli_command *cli_command)
+					struct command *command)
 {
 	if (!strcmp(argv[arg_index], "-d") ||
 	    !strcmp(argv[arg_index], "--driver"))
-		cli_command->mode = DRIVER_MODE;
+		command->mode = EEPROM_DRIVER_MODE;
 	else if (!strcmp(argv[arg_index], "-i") ||
 		 !strcmp(argv[arg_index], "--i2c"))
-		cli_command->mode = I2C_MODE;
+		command->mode = EEPROM_I2C_MODE;
 	else
 		usage_exit("Unknown I/O mode specified!\n");
 }
 
-static int parse_path(char *argv[], int *arg_index,
-					struct cli_command *cli_command)
+static int parse_path(char *argv[], int *arg_index, struct command *command)
 {
 	int custom_path = 0;
 
 	if (!strcmp(argv[*arg_index], "-p")) {
 		(*arg_index)++;
-		cli_command->dev_file = argv[*arg_index];
+		command->dev_file = argv[*arg_index];
 		custom_path = 1;
 	} else if (!strncmp(argv[*arg_index], "--path=", 7)) {
-		cli_command->dev_file = extract_value(argv, *arg_index);
+		command->dev_file = extract_value(argv, *arg_index);
 		custom_path = 1;
 	}
 
@@ -176,13 +174,13 @@ static int parse_path(char *argv[], int *arg_index,
  * "-- field1=value field2=value...".
  */
 static void parse_new_data(int argc, char *argv[], int arg_index,
-				struct cli_command *cli_command)
+				struct command *command)
 {
 	int i = 0;
 
 	if (!strncmp(argv[arg_index], "--change-bytes=", 15)) {
 		strtok(argv[arg_index], "=");
-		cli_command->new_byte_data = strtok(NULL, "=");
+		command->new_byte_data = strtok(NULL, "=");
 		return;
 	}
 
@@ -199,47 +197,47 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 	 * pointers one step back to place a null pointer in
 	 * the end of argv.
 	 */
-	cli_command->new_field_data = argv + arg_index - 1;
+	command->new_field_data = argv + arg_index - 1;
 	for (; arg_index < argc; arg_index++, i++)
-		cli_command->new_field_data[i] = argv[arg_index];
+		command->new_field_data[i] = argv[arg_index];
 
-	cli_command->new_field_data[i] = NULL;
+	command->new_field_data[i] = NULL;
 }
 #else
 static inline void parse_new_data(int argc, char *argv[], int arg_index,
-				struct cli_command *cli_command) {}
+				struct command *command) {}
 #endif
 
 /*
  * This method returns an "uninitialized" command; that is- a command
  * initialized with the appropriate "uninitialized" values.
  */
-static void set_command(struct cli_command *command)
+static void set_command(struct command *command)
 {
 	command->new_field_data = NULL;
 	command->new_byte_data = NULL;
 	command->dev_file = NULL;
 	command->i2c_addr = -1;
-	command->mode = MODE_INVALID;
-	command->action = ACTION_INVALID;
+	command->mode = EEPROM_MODE_INVALID;
+	command->action = EEPROM_ACTION_INVALID;
 }
 
 /*
  * This function operates in stages of user input, whose general format can
  * be seen in usage_exit.
  */
-void parse(int argc, char *argv[], struct cli_command *cli_cmd)
+void parse(int argc, char *argv[], struct command *command)
 {
 	int cli_arg = 1;
 	char *tok;
 
-	set_command(cli_cmd);
+	set_command(command);
 
 	if (argc <= 1)
 		usage_exit("");
 
-	parse_function(argv, cli_arg, cli_cmd);
-	if (cli_cmd->action == LIST)
+	parse_action(argv, cli_arg, command);
+	if (command->action == EEPROM_LIST)
 		return;
 
 	cli_arg++;
@@ -248,25 +246,25 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 		usage_exit("Specified function implies "
 			   "I/O mode to be specified!\n");
 
-	parse_mode(argv, cli_arg, cli_cmd);
-	if (cli_cmd->mode == DRIVER_MODE)
-		cli_cmd->dev_file = DEFAULT_DRIVER_PATH;
-	else if (cli_cmd->mode == I2C_MODE)
-		cli_cmd->dev_file = DEFAULT_I2C_PATH;
+	parse_mode(argv, cli_arg, command);
+	if (command->mode == EEPROM_DRIVER_MODE)
+		command->dev_file = DEFAULT_DRIVER_PATH;
+	else if (command->mode == EEPROM_I2C_MODE)
+		command->dev_file = DEFAULT_I2C_PATH;
 
-	cli_cmd->i2c_addr = DEFAULT_I2C_ADDR;
+	command->i2c_addr = DEFAULT_I2C_ADDR;
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
-	if (cli_cmd->mode == I2C_MODE &&
+	if (command->mode == EEPROM_I2C_MODE &&
 	    !strncmp(argv[cli_arg], "--addr=", 7)) {
 		tok = extract_value(argv, cli_arg);
-		cli_cmd->i2c_addr = strtol(tok, 0, 0);
+		command->i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);
 	}
 
 	/* Next argument might be file path */
-	if (parse_path(argv, &cli_arg, cli_cmd))
+	if (parse_path(argv, &cli_arg, command))
 		NEXT_OR_STOP(cli_arg);
 
-	parse_new_data(argc, argv, cli_arg, cli_cmd);
+	parse_new_data(argc, argv, cli_arg, command);
 }
