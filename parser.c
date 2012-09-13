@@ -254,6 +254,7 @@ void parse(int argc, char *argv[], struct cli_command *cli_cmd)
 	else if (cli_cmd->mode == I2C_MODE)
 		cli_cmd->dev_file = DEFAULT_I2C_PATH;
 
+	cli_cmd->i2c_addr = DEFAULT_I2C_ADDR;
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
 	if (cli_cmd->mode == I2C_MODE &&

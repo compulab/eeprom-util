@@ -20,17 +20,15 @@
 #ifndef _EEPROM_
 #define _EEPROM_
 
+/* NOTE: remove in subsequent refactoring */
+#include "parser.h"
+
 #define EEPROM_SIZE	256
 #define EEPROM_PAGE_SIZE 16
 
 #define DEFAULT_DRIVER_PATH	"/sys/bus/i2c/devices/3-0050/eeprom"
 #define DEFAULT_I2C_PATH	"/dev/i2c-3"
 #define DEFAULT_I2C_ADDR	0x50
-
-struct eeprom {
-	char *devfile;
-	int i2c_addr;
-};
 
 enum eeprom_errors {
 	EEPROM_SUCCESS = 0,
@@ -55,10 +53,9 @@ enum eeprom_cmd {
 };
 
 int i2c_probe(int fd, int address);
-void eeprom_set_params(struct eeprom *e, char *path, int i2c_addr);
-int eeprom_read(struct eeprom e, unsigned char *buf, int offset, int size,
+int eeprom_read(struct cli_command, unsigned char *buf, int offset, int size,
 		enum access_mode mode);
-int eeprom_write(struct eeprom e, unsigned char *buf, int offset, int size,
+int eeprom_write(struct cli_command, unsigned char *buf, int offset, int size,
 		enum access_mode mode);
 
 #endif

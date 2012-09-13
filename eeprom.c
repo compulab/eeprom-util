@@ -28,22 +28,6 @@
 #include <errno.h>
 #include "eeprom.h"
 
-/*
- * Sets fields of an eeprom struct.
- * Input:
- *	driver_path: path to driver device file. Input NULL for default value.
- *	i2c_path: path to i2c device file. Input NULL for default value.
- *	i2c_addr: address for i2c. Input <0 for default value.
- */
-void eeprom_set_params(struct eeprom *e, char *path, int i2c_addr)
-{
-	if (e == NULL)
-		return;
-
-	e->devfile = path;
-	e->i2c_addr = (i2c_addr >= 0) ? i2c_addr : DEFAULT_I2C_ADDR;
-}
-
 static int check_io_params(unsigned char *buf, enum eeprom_cmd function,
 			enum access_mode mode, int offset, int size)
 {
@@ -74,12 +58,13 @@ static int check_io_params(unsigned char *buf, enum eeprom_cmd function,
  *	EEPROM_NO_I2C_ACCESS:	couldn't point i2c to the given address.
  *	EEPROM_INVALID_MODE:	mode is illegal.
  */
-static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
+static int open_device_file(struct cli_command command, enum access_mode mode,
+			    int flags)
 {
 	int fd;
 
 	if (mode == EEPROM_I2C_MODE || mode == EEPROM_DRIVER_MODE)
-		fd = open(e.devfile, flags);
+		fd = open(command.dev_file, flags);
 	else
 		return -EEPROM_INVAL_MODE;
 
@@ -87,7 +72,7 @@ static int open_device_file(struct eeprom e, enum access_mode mode, int flags)
 		return -EEPROM_OPEN_FAILED;
 
 	if (mode == EEPROM_I2C_MODE) {
-		if (ioctl(fd, I2C_SLAVE_FORCE, e.i2c_addr) < 0) {
+		if (ioctl(fd, I2C_SLAVE_FORCE, command.i2c_addr) < 0) {
 			close(fd);
 			return -EEPROM_NO_I2C_ACCESS;
 		}
@@ -124,7 +109,7 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
  * On success: returns number of bytes transferred.
  * On failure: enum eeprom_errors.
  */
-static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
+static int eeprom_i2c_io(struct cli_command command, enum eeprom_cmd function,
 			 unsigned char *buf, int offset, int size)
 {
 	int res, fd, i, bytes_transferred = 0;
@@ -134,7 +119,7 @@ static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
 	if (res < 0)
 		return res;
 
-	fd = open_device_file(e, EEPROM_I2C_MODE, O_RDWR);
+	fd = open_device_file(command, EEPROM_I2C_MODE, O_RDWR);
 	if (fd < 0)
 		return fd;
 
@@ -172,7 +157,7 @@ static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
  * On success: returns number of bytes transferred.
  * On failure: returns negative values of eeprom_errors.
  */
-static int eeprom_driver_io(struct eeprom e, enum eeprom_cmd function,
+static int eeprom_driver_io(struct cli_command command, enum eeprom_cmd function,
 			    unsigned char *buf, int offset, int size)
 {
 	int res, fd;
@@ -181,7 +166,7 @@ static int eeprom_driver_io(struct eeprom e, enum eeprom_cmd function,
 	if (res < 0)
 		return res;
 
-	fd = open_device_file(e, EEPROM_DRIVER_MODE, O_RDWR);
+	fd = open_device_file(command, EEPROM_DRIVER_MODE, O_RDWR);
 	if (fd < 0)
 		return fd;
 
@@ -225,20 +210,20 @@ int i2c_probe(int fd, int address)
  * On success: returns number of bytes written.
  * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
  */
-int eeprom_read(struct eeprom e, unsigned char *buf, int offset, int size,
-		enum access_mode mode)
+int eeprom_read(struct cli_command command, unsigned char *buf, int offset,
+		int size, enum access_mode mode)
 {
 	if (mode == EEPROM_DRIVER_MODE)
-		return eeprom_driver_io(e, EEPROM_READ, buf, offset, size);
+		return eeprom_driver_io(command, EEPROM_READ, buf, offset, size);
 	else /* mode == EEPROM_I2C_MODE) */
-		return eeprom_i2c_io(e, EEPROM_READ, buf, offset, size);
+		return eeprom_i2c_io(command, EEPROM_READ, buf, offset, size);
 }
 
-int eeprom_write(struct eeprom e, unsigned char *buf, int offset, int size,
-		enum access_mode mode)
+int eeprom_write(struct cli_command command, unsigned char *buf, int offset,
+		 int size, enum access_mode mode)
 {
 	if (mode == EEPROM_DRIVER_MODE)
-		return eeprom_driver_io(e, EEPROM_WRITE, buf, offset, size);
+		return eeprom_driver_io(command, EEPROM_WRITE, buf, offset, size);
 	else /* mode == EEPROM_I2C_MODE) */
-		return eeprom_i2c_io(e, EEPROM_WRITE, buf, offset, size);
+		return eeprom_i2c_io(command, EEPROM_WRITE, buf, offset, size);
 }
