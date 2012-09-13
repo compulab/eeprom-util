@@ -62,9 +62,7 @@ struct command {
 };
 
 int i2c_probe(int fd, int address);
-int eeprom_read(struct command, unsigned char *buf, int offset, int size,
-		enum mode mode);
-int eeprom_write(struct command, unsigned char *buf, int offset, int size,
-		enum mode mode);
+int eeprom_read(struct command, unsigned char *buf, int offset, int size);
+int eeprom_write(struct command, unsigned char *buf, int offset, int size);
 
 #endif

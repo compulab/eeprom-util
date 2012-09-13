@@ -116,7 +116,7 @@ static void do_io(struct command command)
 	struct layout *layout;
 
 	print_command(command);
-	res = eeprom_read(command, buf, 0, EEPROM_SIZE, command.mode);
+	res = eeprom_read(command, buf, 0, EEPROM_SIZE);
 	if (res < 0) {
 		print_eeprom_error(res);
 		return;
@@ -136,7 +136,7 @@ static void do_io(struct command command)
 	else if (command.new_field_data != NULL)
 		update_fields(layout, &command);
 
-	res = eeprom_write(command, layout->data, 0, EEPROM_SIZE, command.mode);
+	res = eeprom_write(command, layout->data, 0, EEPROM_SIZE);
 	if (res < 0)
 		print_eeprom_error(res);
 

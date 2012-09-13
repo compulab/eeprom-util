@@ -58,11 +58,12 @@ static int check_io_params(unsigned char *buf, enum action function,
  *	EEPROM_NO_I2C_ACCESS:	couldn't point i2c to the given address.
  *	EEPROM_INVALID_MODE:	mode is illegal.
  */
-static int open_device_file(struct command command, enum mode mode, int flags)
+static int open_device_file(struct command command, int flags)
 {
 	int fd;
 
-	if (mode == EEPROM_I2C_MODE || mode == EEPROM_DRIVER_MODE)
+	if (command.mode == EEPROM_I2C_MODE ||
+	    command.mode == EEPROM_DRIVER_MODE)
 		fd = open(command.dev_file, flags);
 	else
 		return -EEPROM_INVAL_MODE;
@@ -70,7 +71,7 @@ static int open_device_file(struct command command, enum mode mode, int flags)
 	if (fd < 0)
 		return -EEPROM_OPEN_FAILED;
 
-	if (mode == EEPROM_I2C_MODE) {
+	if (command.mode == EEPROM_I2C_MODE) {
 		if (ioctl(fd, I2C_SLAVE_FORCE, command.i2c_addr) < 0) {
 			close(fd);
 			return -EEPROM_NO_I2C_ACCESS;
@@ -118,7 +119,7 @@ static int eeprom_i2c_io(struct command command, enum action function,
 	if (res < 0)
 		return res;
 
-	fd = open_device_file(command, EEPROM_I2C_MODE, O_RDWR);
+	fd = open_device_file(command, O_RDWR);
 	if (fd < 0)
 		return fd;
 
@@ -165,7 +166,7 @@ static int eeprom_driver_io(struct command command, enum action function,
 	if (res < 0)
 		return res;
 
-	fd = open_device_file(command, EEPROM_DRIVER_MODE, O_RDWR);
+	fd = open_device_file(command, O_RDWR);
 	if (fd < 0)
 		return fd;
 
@@ -209,19 +210,17 @@ int i2c_probe(int fd, int address)
  * On success: returns number of bytes written.
  * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
  */
-int eeprom_read(struct command command, unsigned char *buf, int offset,
-		int size, enum mode mode)
+int eeprom_read(struct command command, unsigned char *buf, int offset, int size)
 {
-	if (mode == EEPROM_DRIVER_MODE)
+	if (command.mode == EEPROM_DRIVER_MODE)
 		return eeprom_driver_io(command, EEPROM_READ, buf, offset, size);
 	else /* mode == EEPROM_I2C_MODE) */
 		return eeprom_i2c_io(command, EEPROM_READ, buf, offset, size);
 }
 
-int eeprom_write(struct command command, unsigned char *buf, int offset,
-		 int size, enum mode mode)
+int eeprom_write(struct command command, unsigned char *buf, int offset, int size)
 {
-	if (mode == EEPROM_DRIVER_MODE)
+	if (command.mode == EEPROM_DRIVER_MODE)
 		return eeprom_driver_io(command, EEPROM_WRITE, buf, offset, size);
 	else /* mode == EEPROM_I2C_MODE) */
 		return eeprom_i2c_io(command, EEPROM_WRITE, buf, offset, size);
