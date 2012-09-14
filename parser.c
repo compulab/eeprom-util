@@ -119,8 +119,7 @@ static char *extract_value(char *argv[], int arg_index)
 	return strtok(NULL, "=");
 }
 
-static void parse_action(char *argv[], int arg_index,
-					struct command *command)
+static void parse_action(char *argv[], int arg_index, struct command *command)
 {
 	if (!strcmp(argv[arg_index], "list"))
 		command->action = EEPROM_LIST;
@@ -138,8 +137,7 @@ static void parse_action(char *argv[], int arg_index,
 		usage_exit("Unknown function specified!\n");
 }
 
-static void parse_mode(char *argv[], int arg_index,
-					struct command *command)
+static void parse_mode(char *argv[], int arg_index, struct command *command)
 {
 	if (!strcmp(argv[arg_index], "-d") ||
 	    !strcmp(argv[arg_index], "--driver"))

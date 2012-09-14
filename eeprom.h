@@ -20,8 +20,8 @@
 #ifndef _EEPROM_
 #define _EEPROM_
 
-#define EEPROM_SIZE	256
-#define EEPROM_PAGE_SIZE 16
+#define EEPROM_SIZE		256
+#define EEPROM_PAGE_SIZE	16
 
 #define DEFAULT_DRIVER_PATH	"/sys/bus/i2c/devices/3-0050/eeprom"
 #define DEFAULT_I2C_PATH	"/dev/i2c-3"

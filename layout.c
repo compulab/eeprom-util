@@ -172,11 +172,11 @@ struct layout *new_layout(unsigned char *buf, int buf_size)
 	}
 
 	if (l->fields == NULL)
-		goto free_shallow;
+		goto free_layout;
 
 	l->data = (unsigned char *) malloc(sizeof(unsigned char) * buf_size);
 	if (l->data == NULL)
-		goto free_deep;
+		goto free_fields;
 
 	for (i = 0; i < buf_size; i++)
 		l->data[i] = buf[i];
@@ -192,9 +192,9 @@ struct layout *new_layout(unsigned char *buf, int buf_size)
 
 	return l;
 
-free_deep:
+free_fields:
 	free(l->fields);
-free_shallow:
+free_layout:
 	free(l);
 
 	return NULL;
