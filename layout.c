@@ -213,7 +213,7 @@ void print_layout(struct layout *layout)
 	struct field *fields = layout->fields;
 
 	for (i = 0; fields[i].size != 0; i++)
-		fields[i].print(fields[i]);
+		fields[i].print(&fields[i]);
 }
 
 enum layout_res update_field(struct layout *layout, char *field_name,

@@ -25,7 +25,7 @@
 #define PRINT_FIELD_SEGMENT	"%-30s"
 
 struct field set_field(char *name, int size, char *delim,
-			void (*print)(struct field self),
+			void (*print)(const struct field *self),
 			void (*update)(struct field *self, char *value))
 {
 	struct field f;
@@ -41,71 +41,71 @@ struct field set_field(char *name, int size, char *delim,
 
 /*====================Print field functions==================*/
 /* For printing the binary "version" field. */
-void print_bin_ver(struct field self)
+void print_bin_ver(const struct field *self)
 {
-	if ((self.buf[0] == 0xff) && (self.buf[1] == 0xff)) {
-		self.buf[0] = 0;
-		self.buf[1] = 0;
+	if ((self->buf[0] == 0xff) && (self->buf[1] == 0xff)) {
+		self->buf[0] = 0;
+		self->buf[1] = 0;
 	}
 
-	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf("%#.2f\n", (self.buf[1] << 8 | self.buf[0]) / 100.0);
+	printf(PRINT_FIELD_SEGMENT, self->name);
+	printf("%#.2f\n", (self->buf[1] << 8 | self->buf[0]) / 100.0);
 }
 
 /* For printing binary data in reverse. */
-void print_bin_rev(struct field self)
+void print_bin_rev(const struct field *self)
 {
 	int i;
 
-	printf(PRINT_FIELD_SEGMENT, self.name);
-	for (i = self.size - 1; i > 0; i--)
-		printf("%02x%s", self.buf[i], self.delim);
+	printf(PRINT_FIELD_SEGMENT, self->name);
+	for (i = self->size - 1; i > 0; i--)
+		printf("%02x%s", self->buf[i], self->delim);
 
-	printf("%02x\n", self.buf[0]);
+	printf("%02x\n", self->buf[0]);
 }
 
 /* For printing binary data. */
-void print_bin(struct field self)
+void print_bin(const struct field *self)
 {
 	int i;
 
-	printf(PRINT_FIELD_SEGMENT, self.name);
-	for (i = 0; i < self.size - 1; i++)
-		printf("%02x%s", self.buf[i], self.delim);
+	printf(PRINT_FIELD_SEGMENT, self->name);
+	for (i = 0; i < self->size - 1; i++)
+		printf("%02x%s", self->buf[i], self->delim);
 
-	printf("%02x\n", self.buf[self.size - 1]);
+	printf("%02x\n", self->buf[self->size - 1]);
 }
 
-void print_date(struct field self)
+void print_date(const struct field *self)
 {
 	char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf("%d%s", self.buf[0], self.delim);
-	if (self.buf[1] >= 1 && self.buf[1] <= 12)
-		printf("%s", months[self.buf[1] - 1]);
+	printf(PRINT_FIELD_SEGMENT, self->name);
+	printf("%d%s", self->buf[0], self->delim);
+	if (self->buf[1] >= 1 && self->buf[1] <= 12)
+		printf("%s", months[self->buf[1] - 1]);
 	else
 		printf("BAD");
 
-	printf("%s%d\n", self.delim, self.buf[3] << 8 | self.buf[2]);
+	printf("%s%d\n", self->delim, self->buf[3] << 8 | self->buf[2]);
 }
 
 /* For printing data meant to be interpreted as an ASCII string. */
-void print_ascii(struct field self)
+void print_ascii(const struct field *self)
 {
 	char format[8];
 
-	sprintf(format, "%%.%ds\n", self.size);
-	printf(PRINT_FIELD_SEGMENT, self.name);
-	printf(format, self.buf);
+	sprintf(format, "%%.%ds\n", self->size);
+	printf(PRINT_FIELD_SEGMENT, self->name);
+	printf(format, self->buf);
 }
 
 /* For printing the "Reserved field" section. */
-void print_reserved(struct field self)
+void print_reserved(const struct field *self)
 {
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
-	printf("(%d bytes)\n", self.size);
+	printf("(%d bytes)\n", self->size);
 }
 
 /*====================Update field functions==================*/
