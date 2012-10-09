@@ -17,11 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _PARSER_
-#define _PARSER_
-
+#include <stdio.h>
 #include "command.h"
 
-void parse(int argc, char *argv[], struct command *command);
+void print_command(const struct command command)
+{
+	if (command.action == EEPROM_READ)
+		printf("Reading ");
+	else
+		printf("Writing ");
 
-#endif
+	if (command.mode == EEPROM_DRIVER_MODE)
+		printf("via driver at %s\n", command.dev_file);
+	else
+		printf("via i2c at %s, from address 0x%x\n",
+		       command.dev_file, command.i2c_addr);
+}

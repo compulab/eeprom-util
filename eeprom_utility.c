@@ -25,6 +25,7 @@
 #include "eeprom.h"
 #include "layout.h"
 #include "parser.h"
+#include "command.h"
 #include "auto_generated.h"
 
 /* This function is meant to be end user friendly, not debugging friendly. */
@@ -95,36 +96,35 @@ static void update_fields(struct layout *layout, struct command *command)
 	}
 }
 
-static void print_command(struct command command)
-{
-	if (command.action == EEPROM_READ)
-		printf("Reading ");
-	else
-		printf("Writing ");
-
-	if (command.mode == EEPROM_DRIVER_MODE)
-		printf("via driver at %s\n", command.dev_file);
-	else
-		printf("via i2c at %s, from address 0x%x\n",
-		       command.dev_file, command.i2c_addr);
-}
-
 static void do_io(struct command command)
 {
-	int res;
 	unsigned char buf[EEPROM_SIZE];
 	struct layout *layout;
+	int res, fd;
+	int offset = 0, size = EEPROM_SIZE;
 
-	print_command(command);
-	res = eeprom_read(command, buf, 0, EEPROM_SIZE);
-	if (res < 0) {
-		print_eeprom_error(res);
+	fd = open_device_file(command.dev_file, command.mode, command.i2c_addr,
+			      O_RDWR);
+	if (fd < 0) {
+		print_eeprom_error(fd);
 		return;
 	}
 
+	print_command(command);
+	res = (command.mode == EEPROM_DRIVER_MODE) ?
+		eeprom_driver_io(fd, EEPROM_READ, buf, offset, size) :
+		eeprom_i2c_io(fd, EEPROM_READ, buf, offset, size);
+
+	if (res < 0) {
+		print_eeprom_error(res);
+		goto close_fd;
+	}
+
 	layout = new_layout(buf, EEPROM_SIZE);
-	if (layout == NULL)
-		goto out_of_memory;
+	if (layout == NULL) {
+		print_eeprom_error(-EEPROM_NULL_PTR);
+		goto close_fd;
+	}
 
 	if (command.action == EEPROM_READ) {
 		layout->print(layout);
@@ -136,16 +136,17 @@ static void do_io(struct command command)
 	else if (command.new_field_data != NULL)
 		update_fields(layout, &command);
 
-	res = eeprom_write(command, layout->data, 0, EEPROM_SIZE);
+	res = (command.mode == EEPROM_DRIVER_MODE) ?
+		eeprom_driver_io(fd, EEPROM_WRITE, layout->data, offset, size) :
+		eeprom_i2c_io(fd, EEPROM_WRITE, layout->data, offset, size);
+
 	if (res < 0)
 		print_eeprom_error(res);
 
 free_layout:
 	free_layout(layout);
-
-	return;
-out_of_memory:
-	printf("Out of memory!\n");
+close_fd:
+	close(fd);
 }
 
 void print_i2c_accessible(void)

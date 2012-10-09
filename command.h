@@ -17,11 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _PARSER_
-#define _PARSER_
+#ifndef _COMMAND_
+#define _COMMAND_
 
-#include "command.h"
+#include "eeprom.h"
 
-void parse(int argc, char *argv[], struct command *command);
+struct command {
+	enum action action;
+	enum mode mode;
+	int i2c_addr;
+	char *dev_file;
+	char *new_byte_data;
+	char **new_field_data;
+};
+
+void print_command(const struct command command);
 
 #endif

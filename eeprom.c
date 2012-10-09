@@ -29,16 +29,13 @@
 #include "eeprom.h"
 
 static int check_io_params(unsigned char *buf, enum action function,
-			enum mode mode, int offset, int size)
+			   int offset, int size)
 {
 	if (buf == NULL)
 		return -EEPROM_NULL_PTR;
 
 	if (function != EEPROM_READ && function != EEPROM_WRITE)
 		return -EEPROM_NO_SUCH_FUNCTION;
-
-	if (mode != EEPROM_I2C_MODE && mode != EEPROM_DRIVER_MODE)
-		return -EEPROM_INVAL_MODE;
 
 	if (offset < 0)
 		return -EEPROM_INVAL_OFFSET;
@@ -58,21 +55,19 @@ static int check_io_params(unsigned char *buf, enum action function,
  *	EEPROM_NO_I2C_ACCESS:	couldn't point i2c to the given address.
  *	EEPROM_INVALID_MODE:	mode is illegal.
  */
-static int open_device_file(struct command command, int flags)
+int open_device_file(char *dev_file, enum mode mode, int i2c_addr, int flags)
 {
 	int fd;
 
-	if (command.mode == EEPROM_I2C_MODE ||
-	    command.mode == EEPROM_DRIVER_MODE)
-		fd = open(command.dev_file, flags);
-	else
+	if (mode != EEPROM_I2C_MODE && mode != EEPROM_DRIVER_MODE)
 		return -EEPROM_INVAL_MODE;
 
+	fd = open(dev_file, flags);
 	if (fd < 0)
 		return -EEPROM_OPEN_FAILED;
 
-	if (command.mode == EEPROM_I2C_MODE) {
-		if (ioctl(fd, I2C_SLAVE_FORCE, command.i2c_addr) < 0) {
+	if (mode == EEPROM_I2C_MODE) {
+		if (ioctl(fd, I2C_SLAVE_FORCE, i2c_addr) < 0) {
 			close(fd);
 			return -EEPROM_NO_I2C_ACCESS;
 		}
@@ -109,19 +104,15 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
  * On success: returns number of bytes transferred.
  * On failure: enum eeprom_errors.
  */
-static int eeprom_i2c_io(struct command command, enum action function,
-			 unsigned char *buf, int offset, int size)
+int eeprom_i2c_io(int fd, enum action function, unsigned char *buf, int offset,
+		  int size)
 {
-	int res, fd, i, bytes_transferred = 0;
+	int res, i, bytes_transferred = 0;
 	union i2c_smbus_data data;
 
-	res = check_io_params(buf, function, EEPROM_I2C_MODE, offset, size);
+	res = check_io_params(buf, function, offset, size);
 	if (res < 0)
 		return res;
-
-	fd = open_device_file(command, O_RDWR);
-	if (fd < 0)
-		return fd;
 
 	/* Reset the reading pointer of the EEPROM to offset 0 */
 	i2c_smbus_access(fd, I2C_SMBUS_WRITE, 0, I2C_SMBUS_BYTE, NULL);
@@ -157,18 +148,14 @@ static int eeprom_i2c_io(struct command command, enum action function,
  * On success: returns number of bytes transferred.
  * On failure: returns negative values of eeprom_errors.
  */
-static int eeprom_driver_io(struct command command, enum action function,
-			    unsigned char *buf, int offset, int size)
+int eeprom_driver_io(int fd, enum action function, unsigned char *buf,
+		     int offset, int size)
 {
-	int res, fd;
+	int res;
 
-	res = check_io_params(buf, function, EEPROM_DRIVER_MODE, offset, size);
+	res = check_io_params(buf, function, offset, size);
 	if (res < 0)
 		return res;
-
-	fd = open_device_file(command, O_RDWR);
-	if (fd < 0)
-		return fd;
 
 	lseek(fd, offset, SEEK_SET);
 	if (function == EEPROM_READ)
@@ -176,7 +163,6 @@ static int eeprom_driver_io(struct command command, enum action function,
 	else if (function == EEPROM_WRITE)
 		res = write(fd, buf + offset, size);
 
-	close(fd);
 	if (res <= 0)
 		return -EEPROM_IO_FAILED;
 
@@ -203,25 +189,4 @@ int i2c_probe(int fd, int address)
 		return 0;
 
 	return 1;
-}
-
-/*
- * eeprom_read and eeprom_write:
- * On success: returns number of bytes written.
- * On failure: negative values of enum eeprom_errors, sans EEPROM_IO_FAILED.
- */
-int eeprom_read(struct command command, unsigned char *buf, int offset, int size)
-{
-	if (command.mode == EEPROM_DRIVER_MODE)
-		return eeprom_driver_io(command, EEPROM_READ, buf, offset, size);
-	else /* mode == EEPROM_I2C_MODE) */
-		return eeprom_i2c_io(command, EEPROM_READ, buf, offset, size);
-}
-
-int eeprom_write(struct command command, unsigned char *buf, int offset, int size)
-{
-	if (command.mode == EEPROM_DRIVER_MODE)
-		return eeprom_driver_io(command, EEPROM_WRITE, buf, offset, size);
-	else /* mode == EEPROM_I2C_MODE) */
-		return eeprom_i2c_io(command, EEPROM_WRITE, buf, offset, size);
 }

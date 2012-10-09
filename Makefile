@@ -25,7 +25,7 @@ CROSS_COMPILE ?=
 
 AUTO_GENERATED_FILE = auto_generated.h
 
-OBJS = eeprom_utility.o eeprom.o field.o parser.o layout.o
+OBJS = eeprom_utility.o eeprom.o field.o parser.o layout.o command.o
 SOURCES	:= $(OBJS:.o=.c)
 CFLAGS = -Wall
 COMPILE_CMD = $(CROSS_COMPILE)gcc $(CFLAGS) $(SOURCES) -o eeprom-util
