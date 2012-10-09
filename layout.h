@@ -22,32 +22,34 @@
 
 #include "field.h"
 
-struct layout {
-	struct field *fields;
-	int layout_number;
-	unsigned char *data;
-	int data_size;
-};
-
-struct layout *new_layout(unsigned char *buf, int buf_size);
-void free_layout(struct layout *layout);
-void print_layout(struct layout *layout);
-enum layout_res update_field(struct layout *layout, char *field_name,
-								char *new_data);
-enum layout_res update_byte(struct layout *layout, int offset, char new_byte);
-
-enum layout_names {
-	LAYOUT_LEGACY,
-	LAYOUT_VER1,
-	LAYOUT_VER2,
-	LAYOUT_INCORRECT,
-};
-
 enum layout_res {
 	LAYOUT_SUCCESS = 0,
 	LAYOUT_NULL_ARGUMENTS,
 	LAYOUT_OFFSET_OUT_OF_BOUNDS,
 	LAYOUT_NO_SUCH_FIELD,
 };
+
+enum layout_version {
+	LAYOUT_UNRECOGNIZED,
+	LAYOUT_LEGACY,
+	LAYOUT_VER1,
+	LAYOUT_VER2,
+};
+
+struct layout {
+	struct field *fields;
+	int num_of_fields;
+	enum layout_version layout_version;
+	unsigned char *data;
+	int data_size;
+	void (*print)(const struct layout *layout);
+	enum layout_res (*update_field)(struct layout *layout, char *field_name,
+					char *new_data);
+	enum layout_res (*update_byte)(struct layout *layout,
+				       unsigned int offset, char new_byte);
+};
+
+struct layout *new_layout(unsigned char *buf, unsigned int buf_size);
+void free_layout(struct layout *layout);
 
 #endif

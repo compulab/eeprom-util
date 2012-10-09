@@ -66,7 +66,7 @@ static void update_bytes(struct layout *layout, struct command *command)
 			return;
 
 		value = strtol(tok, 0, 0);
-		res = update_byte(layout, offset, value);
+		res = layout->update_byte(layout, offset, value);
 		if (res == -LAYOUT_OFFSET_OUT_OF_BOUNDS)
 			printf("Offset %d out of bounds. "
 				"Did not update.\n", offset);
@@ -88,7 +88,7 @@ static void update_fields(struct layout *layout, struct command *command)
 	for (i = 0; command->new_field_data[i] != NULL; i++) {
 		field_name = strtok(command->new_field_data[i], "=");
 		value = strtok(NULL, "=");
-		res = update_field(layout, field_name, value);
+		res = layout->update_field(layout, field_name, value);
 		if (res == -LAYOUT_NO_SUCH_FIELD)
 			printf("'%s' is not a valid field. "
 				"Skipping update", field_name);
@@ -127,7 +127,7 @@ static void do_io(struct command command)
 		goto out_of_memory;
 
 	if (command.action == EEPROM_READ) {
-		print_layout(layout);
+		layout->print(layout);
 		goto free_layout;
 	}
 
