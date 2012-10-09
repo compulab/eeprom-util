@@ -111,6 +111,19 @@ static void msleep(unsigned int msecs)
 	nanosleep(&time, NULL);
 }
 
+static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
+				     int size, union i2c_smbus_data *data)
+{
+	struct i2c_smbus_ioctl_data args;
+
+	args.read_write = read_write;
+	args.command = command;
+	args.size = size;
+	args.data = data;
+
+	return ioctl(file, I2C_SMBUS, &args);
+}
+
 /*
  * I2C mode IO function.
  * On success: returns number of bytes transferred.
@@ -121,9 +134,7 @@ static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
 {
 	int res, fd, i, bytes_transferred = 0;
 	union i2c_smbus_data data;
-	struct i2c_smbus_ioctl_data args;
 
-	args.data = &data;
 	res = check_io_params(buf, function, EEPROM_I2C_MODE, offset, size);
 	if (res < 0)
 		return res;
@@ -132,12 +143,12 @@ static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
 	if (fd < 0)
 		return fd;
 
-	args.read_write = I2C_SMBUS_READ;
-	args.size = I2C_SMBUS_BYTE;
+	/* Reset the reading pointer of the EEPROM to offset 0 */
+	i2c_smbus_access(fd, I2C_SMBUS_WRITE, 0, I2C_SMBUS_BYTE, NULL);
 	if (function == EEPROM_READ) {
 		for (i = offset; i < size; i++) {
-			args.command = i;
-			if (ioctl(fd, I2C_SMBUS, &args) < 0)
+			if (i2c_smbus_access(fd, I2C_SMBUS_READ, i,
+					     I2C_SMBUS_BYTE, &data) < 0)
 				return -EEPROM_IO_FAILED;
 
 			buf[i] = (unsigned char)(data.byte & 0xFF);
@@ -148,12 +159,10 @@ static int eeprom_i2c_io(struct eeprom e, enum eeprom_cmd function,
 	}
 
 	/* function == EEPROM_WRITE */
-	args.read_write = I2C_SMBUS_WRITE;
-	args.size = I2C_SMBUS_BYTE_DATA;
 	for (i = offset; i < size; i++) {
-		args.command = i;
 		data.byte = buf[i];
-		if (ioctl(fd, I2C_SMBUS, &args) < 0)
+		if (i2c_smbus_access(fd, I2C_SMBUS_WRITE, i,
+				     I2C_SMBUS_BYTE_DATA, &data) < 0)
 			return -EEPROM_IO_FAILED;
 
 		msleep(5);
