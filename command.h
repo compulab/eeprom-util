@@ -20,8 +20,20 @@
 #ifndef _COMMAND_
 #define _COMMAND_
 
-#include "eeprom.h"
 #include "pairs.h"
+
+enum mode {
+	EEPROM_DRIVER_MODE,
+	EEPROM_I2C_MODE,
+	EEPROM_MODE_INVALID,
+};
+
+enum action {
+	EEPROM_READ,
+	EEPROM_WRITE,
+	EEPROM_LIST,
+	EEPROM_ACTION_INVALID,
+};
 
 struct command {
 	enum action action;

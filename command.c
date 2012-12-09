@@ -41,6 +41,7 @@ void print_command(const struct command *command)
 		       command->dev_file, command->i2c_addr);
 }
 
+#define EEPROM_SIZE 256
 static void do_io(struct command *command)
 {
 	unsigned char buf[EEPROM_SIZE];

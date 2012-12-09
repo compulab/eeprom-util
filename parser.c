@@ -23,6 +23,10 @@
 #include "pairs.h"
 #include "parser.h"
 
+#define DEFAULT_DRIVER_PATH	"/sys/bus/i2c/devices/3-0050/eeprom"
+#define DEFAULT_I2C_PATH	"/dev/i2c-3"
+#define DEFAULT_I2C_ADDR	0x50
+
 #define NEXT_OR_STOP(i) do {				\
 				(i)++;			\
 				if ((i) == argc)	\
@@ -151,7 +155,7 @@ static enum mode parse_mode(char *argv[], int arg_index)
 	else
 		usage_exit("Unknown I/O mode specified!\n");
 
-	return EEPROM_INVAL_MODE; /* Not reached */
+	return -1; /* Not reached */
 }
 
 static char *parse_path(char *argv[], int *arg_index)
