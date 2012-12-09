@@ -27,22 +27,22 @@ struct field {
 	char *delim;
 	unsigned char *buf;
 
-	void (*print)(const struct field *self);
-	void (*update)(struct field *self, char *value);
+	void (*print)(const struct field *field);
+	void (*update)(struct field *field, char *value);
 };
 
 struct field set_field(char *name, int size, char *delim,
-			void (*print)(const struct field *self),
-			void (*update)(struct field *self, char *value));
+			void (*print)(const struct field *field),
+			void (*update)(struct field *field, char *value));
 
-void print_bin_ver(const struct field *self);
-void print_bin_rev(const struct field *self);
-void print_bin(const struct field *self);
-void print_date(const struct field *self);
-void print_ascii(const struct field *self);
-void print_reserved(const struct field *self);
+void print_bin_ver(const struct field *field);
+void print_bin_rev(const struct field *field);
+void print_bin(const struct field *field);
+void print_date(const struct field *field);
+void print_ascii(const struct field *field);
+void print_reserved(const struct field *field);
 
-void update_binary(struct field *self, char *value);
-void update_ascii(struct field *self, char *value);
+void update_binary(struct field *field, char *value);
+void update_ascii(struct field *field, char *value);
 
 #endif
