@@ -27,6 +27,12 @@
 #define RESERVED_FIELDS		0
 #define NO_LAYOUT_FIELDS	"Could not detect layout. Dumping raw data\n"
 
+/*
+ * set_layout_legacy() - setup layout as a legacy layout.
+ * @layout: A pointer to an existing struct layout.
+ *
+ * Returns: 0 on failure, 1 on success.
+ */
 static int set_layout_legacy(struct layout *layout)
 {
 	int field_num = 5;
@@ -52,6 +58,12 @@ static int set_layout_legacy(struct layout *layout)
 	return 1;
 }
 
+/*
+ * set_layout_v1() - setup layout as a layout v1.
+ * @layout: A pointer to an existing struct layout.
+ *
+ * Returns: 0 on failure, 1 on success.
+ */
 static int set_layout_v1(struct layout *layout)
 {
 	int field_num = 12;
@@ -91,6 +103,12 @@ static int set_layout_v1(struct layout *layout)
 	return 1;
 }
 
+/*
+ * set_layout_v2() - setup layout as a layout v2.
+ * @layout: A pointer to an existing struct layout.
+ *
+ * Returns: 0 on failure, 1 on success.
+ */
 static int set_layout_v2(struct layout *layout)
 {
 	int field_num = 15;
@@ -136,6 +154,12 @@ static int set_layout_v2(struct layout *layout)
 	return 1;
 }
 
+/*
+ * set_layout_unrecognized() - setup layout as an unrecognized layout.
+ * @layout: A pointer to an existing struct layout.
+ *
+ * Returns: 0 on failure, 1 on success.
+ */
 static int set_layout_unrecognized(struct layout *layout)
 {
 	int field_num = 1;
@@ -153,6 +177,12 @@ static int set_layout_unrecognized(struct layout *layout)
 	return 1;
 }
 
+/*
+ * detect_layout() - detect layout based on the contents of the data.
+ * @data: Pointer to the data to be analyzed.
+ *
+ * Returns: the detected layout version.
+ */
 static enum layout_version detect_layout(unsigned char *data)
 {
 	int check_byte = LAYOUT_CHECK_BYTE;
@@ -166,6 +196,10 @@ static enum layout_version detect_layout(unsigned char *data)
 	return LAYOUT_VER2;
 }
 
+/*
+ * print_layout() - print the layout and the data which is assigned to it.
+ * @layout: A pointer to an existing struct layout.
+ */
 static void print_layout(const struct layout *layout)
 {
 	int i;
@@ -175,6 +209,14 @@ static void print_layout(const struct layout *layout)
 		fields[i].print(&fields[i]);
 }
 
+/*
+ * update_field() - update a single field in the layout data.
+ * @layout:	A pointer to an existing struct layout.
+ * @field_name:	The name of the field to update
+ * @new_data:	The new field data (a string. Format depends on the field)
+ *
+ * Returns: LAYOUT_SUCCESS on success, a negative layout_res on failure.
+ */
 static enum layout_res update_field(struct layout *layout, char *field_name,
 				    char *new_data)
 {
@@ -199,6 +241,14 @@ static enum layout_res update_field(struct layout *layout, char *field_name,
 	return LAYOUT_SUCCESS;
 }
 
+/*
+ * update_byte() - update a single byte in layout data.
+ * @layout:	A pointer to an existing struct layout.
+ * @offset:	The offset of the byte in layout data
+ * @new_byte:	The value of the new byte
+ *
+ * Returns: LAYOUT_SUCCESS on success, a negative layout_res on failure.
+ */
 static enum layout_res update_byte(struct layout *layout, unsigned int offset,
 				   char new_byte)
 {
@@ -214,9 +264,15 @@ static enum layout_res update_byte(struct layout *layout, unsigned int offset,
 }
 
 /*
- * Allocates a new layout based on the data given in buf. The layout version
- * is automatically detected. The resulting layout struct contains a copy of
- * the provided data.
+ * new_layout() - Allocate a new layout based on the data given in buf.
+ * @buf:	Data seed for layout
+ * @buf_size:	Size of buf
+ *
+ * Allocates a new layout based on data in buf. The layout version is
+ * automatically detected. The resulting layout struct contains a copy of the
+ * provided data.
+ *
+ * Returns: pointer to a new layout on success, NULL on failure
  */
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size)
 {
@@ -274,6 +330,10 @@ free_layout:
 	return NULL;
 }
 
+/*
+ * free_layout() - a "destructor" for layout
+ * @layout:	the layout to deallocate
+ */
 void free_layout(struct layout *layout)
 {
 	free(layout->fields);
