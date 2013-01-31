@@ -24,6 +24,16 @@
 
 #define PRINT_FIELD_SEGMENT	"%-30s"
 
+/*
+ * set_field() - initialize a field object
+ * @name:	field name
+ * @size:	field size in bytes
+ * @delim:	a string to print in between values
+ * @print:	a function for printing this field
+ * @update:	a function for updating this field
+ *
+ * Returns: an initialized field
+ */
 struct field set_field(char *name, int size, char *delim,
 			void (*print)(const struct field *field),
 			void (*update)(struct field *field, char *value))
@@ -39,8 +49,10 @@ struct field set_field(char *name, int size, char *delim,
 	return f;
 }
 
-/*====================Print field functions==================*/
-/* For printing the binary "version" field. */
+/*
+ * print_bin_ver() - print a "version field" which contains binary data
+ * @field:	an initialized field to print
+ */
 void print_bin_ver(const struct field *field)
 {
 	if ((field->buf[0] == 0xff) && (field->buf[1] == 0xff)) {
@@ -52,7 +64,10 @@ void print_bin_ver(const struct field *field)
 	printf("%#.2f\n", (field->buf[1] << 8 | field->buf[0]) / 100.0);
 }
 
-/* For printing binary data in reverse. */
+/*
+ * print_bin_rev() - print in reverse a field which contains binary data
+ * @field:	an initialized field to print
+ */
 void print_bin_rev(const struct field *field)
 {
 	int i;
@@ -64,7 +79,10 @@ void print_bin_rev(const struct field *field)
 	printf("%02x\n", field->buf[0]);
 }
 
-/* For printing binary data. */
+/*
+ * print_bin() - print a field which contains binary data
+ * @field:	an initialized field to print
+ */
 void print_bin(const struct field *field)
 {
 	int i;
@@ -76,6 +94,10 @@ void print_bin(const struct field *field)
 	printf("%02x\n", field->buf[field->size - 1]);
 }
 
+/*
+ * print_date() - print a field which contains date data
+ * @field:	an initialized field to print
+ */
 void print_date(const struct field *field)
 {
 	char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -91,7 +113,10 @@ void print_date(const struct field *field)
 	printf("%s%d\n", field->delim, field->buf[3] << 8 | field->buf[2]);
 }
 
-/* For printing data meant to be interpreted as an ASCII string. */
+/*
+ * print_ascii() - print a field which contains ASCII data
+ * @field:	an initialized field to print
+ */
 void print_ascii(const struct field *field)
 {
 	char format[8];
@@ -101,14 +126,21 @@ void print_ascii(const struct field *field)
 	printf(format, field->buf);
 }
 
-/* For printing the "Reserved field" section. */
+/*
+ * print_reserved() - print the "Reserved fields" field
+ * @field:	an initialized field to print
+ */
 void print_reserved(const struct field *field)
 {
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
 	printf("(%d bytes)\n", field->size);
 }
 
-/*====================Update field functions==================*/
+/*
+ * update_binary() - Update field with new data in binary form
+ * @field:	an initialized field
+ * @value:	a space delimited string of byte values (i.e. "1 2 3 4")
+ */
 void update_binary(struct field *field, char *value)
 {
 	int i;
@@ -122,6 +154,11 @@ void update_binary(struct field *field, char *value)
 	}
 }
 
+/*
+ * update_ascii() - Update field with new data in ASCII form
+ * @field:	an initialized field
+ * @value:	the new string data
+ */
 void update_ascii(struct field *field, char *value)
 {
 	strncpy((char *)field->buf, value, field->size - 1);
