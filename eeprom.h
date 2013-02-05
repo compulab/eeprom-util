@@ -52,11 +52,4 @@ enum mode {
 	EEPROM_MODE_INVALID,
 };
 
-int i2c_probe(int fd, int address);
-int eeprom_driver_io(int fd, enum action function, unsigned char *buf,
-		     int offset, int size);
-int eeprom_i2c_io(int fd, enum action function, unsigned char *buf, int offset,
-		  int size);
-int open_device_file(char *dev_file, enum mode mode, int i2c_addr, int flags);
-
 #endif
