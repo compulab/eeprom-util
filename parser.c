@@ -144,18 +144,18 @@ static enum action parse_action(char *argv[], int arg_index)
 	return EEPROM_ACTION_INVALID; /* Not reached */
 }
 
-static enum mode parse_mode(char *argv[], int arg_index)
+static const char *parse_mode(char *argv[], int arg_index)
 {
 	if (!strcmp(argv[arg_index], "-d") ||
 	    !strcmp(argv[arg_index], "--driver"))
-		return EEPROM_DRIVER_MODE;
+		return "driver";
 	else if (!strcmp(argv[arg_index], "-i") ||
 		 !strcmp(argv[arg_index], "--i2c"))
-		return EEPROM_I2C_MODE;
+		return "i2c";
 	else
 		usage_exit("Unknown I/O mode specified!\n");
 
-	return -1; /* Not reached */
+	return ""; /* Not reached */
 }
 
 static char *parse_path(char *argv[], int *arg_index)
@@ -321,7 +321,7 @@ void parse(int argc, char *argv[], struct command *command)
 	struct offset_value_pair *new_byte_data = NULL;
 	struct strings_pair *new_field_data = NULL;
 	enum action action = EEPROM_ACTION_INVALID;
-	enum mode mode = EEPROM_MODE_INVALID;
+	const char *mode = "";
 	char *tok;
 
 	reset_command(command);
@@ -340,16 +340,16 @@ void parse(int argc, char *argv[], struct command *command)
 			   "I/O mode to be specified!\n");
 
 	mode = parse_mode(argv, cli_arg);
-	if (mode == EEPROM_DRIVER_MODE) {
+	if (!strncmp(mode, "driver", 6)) {
 		dev_file = DEFAULT_DRIVER_PATH;
-	} else if (mode == EEPROM_I2C_MODE) {
+	} else if (!strncmp(mode, "i2c", 3)) {
 		dev_file = DEFAULT_I2C_PATH;
 		i2c_addr = DEFAULT_I2C_ADDR;
 	}
 
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
-	if (mode == EEPROM_I2C_MODE && !strncmp(argv[cli_arg], "--addr=", 7)) {
+	if (!strncmp(mode, "i2c", 3) && !strncmp(argv[cli_arg], "--addr=", 7)) {
 		tok = extract_value(argv, cli_arg);
 		i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);

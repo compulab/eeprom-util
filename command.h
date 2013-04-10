@@ -22,12 +22,6 @@
 
 #include "pairs.h"
 
-enum mode {
-	EEPROM_DRIVER_MODE,
-	EEPROM_I2C_MODE,
-	EEPROM_MODE_INVALID,
-};
-
 enum action {
 	EEPROM_READ,
 	EEPROM_WRITE,
@@ -37,7 +31,7 @@ enum action {
 
 struct command {
 	enum action action;
-	enum mode mode;
+	const char *mode;
 	int i2c_addr;
 	char *dev_file;
 	struct offset_value_pair *new_byte_data;
@@ -49,7 +43,7 @@ struct command {
 };
 
 void reset_command(struct command *command);
-int setup_command(struct command *cmd, enum action action, enum mode mode,
+int setup_command(struct command *cmd, enum action action, const char *mode,
 		int i2c_addr, char *dev_file,
 		struct offset_value_pair *new_byte_data,
 		struct strings_pair *new_field_data, int new_data_size);

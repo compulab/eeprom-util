@@ -34,11 +34,8 @@ void print_command(const struct command *command)
 	else
 		printf("Writing ");
 
-	if (command->mode == EEPROM_DRIVER_MODE)
-		printf("via driver at %s\n", command->dev_file);
-	else
-		printf("via i2c at %s, from address 0x%x\n",
-		       command->dev_file, command->i2c_addr);
+	printf("using %s ", command->mode);
+	printf("at %s, address 0x%x\n", command->dev_file, command->i2c_addr);
 }
 
 #define EEPROM_SIZE 256
@@ -84,7 +81,7 @@ void print_i2c_accessible(struct command *command)
 	api.probe();
 }
 
-int setup_command(struct command *cmd, enum action action, enum mode mode,
+int setup_command(struct command *cmd, enum action action, const char *mode,
 		int i2c_addr, char *dev_file,
 		struct offset_value_pair *new_byte_data,
 		struct strings_pair *new_field_data, int new_data_size)
@@ -109,7 +106,7 @@ int setup_command(struct command *cmd, enum action action, enum mode mode,
 
 void reset_command(struct command *command)
 {
-	command->mode = EEPROM_MODE_INVALID;
+	command->mode = "";
 	command->i2c_addr = -1;
 	command->dev_file = NULL;
 	command->new_byte_data = NULL;

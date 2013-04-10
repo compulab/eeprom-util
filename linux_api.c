@@ -191,7 +191,7 @@ static void configure_driver(struct api *api)
 
 int setup_interface(struct api *api, struct command *command)
 {
-	if (command->mode == EEPROM_DRIVER_MODE)
+	if (!strncmp(command->mode, "driver", 6))
 		configure_driver(api);
 	else
 		configure_i2c(api);
