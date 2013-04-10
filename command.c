@@ -35,7 +35,8 @@ void print_command(const struct command *command)
 		printf("Writing ");
 
 	printf("using %s ", command->mode);
-	printf("at %s, address 0x%x\n", command->dev_file, command->i2c_addr);
+	printf("at %s, address 0x%x\n", (char *)command->platform_specific_data,
+					command->i2c_addr);
 }
 
 #define EEPROM_SIZE 256
@@ -82,14 +83,14 @@ void print_i2c_accessible(struct command *command)
 }
 
 int setup_command(struct command *cmd, enum action action, const char *mode,
-		int i2c_addr, char *dev_file,
+		int i2c_addr, void *platform_specific_data,
 		struct offset_value_pair *new_byte_data,
 		struct strings_pair *new_field_data, int new_data_size)
 {
 	cmd->mode = mode;
 	cmd->action = action;
 	cmd->i2c_addr = i2c_addr;
-	cmd->dev_file = dev_file;
+	cmd->platform_specific_data = platform_specific_data;
 	cmd->new_byte_data = new_byte_data;
 	cmd->new_field_data = new_field_data;
 	cmd->new_data_size = new_data_size;
@@ -108,7 +109,7 @@ void reset_command(struct command *command)
 {
 	command->mode = "";
 	command->i2c_addr = -1;
-	command->dev_file = NULL;
+	command->platform_specific_data = NULL;
 	command->new_byte_data = NULL;
 	command->new_field_data = NULL;
 	command->new_data_size = -1;

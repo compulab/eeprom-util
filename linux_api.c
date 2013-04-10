@@ -191,13 +191,15 @@ static void configure_driver(struct api *api)
 
 int setup_interface(struct api *api, struct command *command)
 {
+	char *device_file = (char *)command->platform_specific_data;
+
 	if (!strncmp(command->mode, "driver", 6))
 		configure_driver(api);
 	else
 		configure_i2c(api);
 
 	if (command->action != EEPROM_LIST) {
-		fd = open_device_file(command->dev_file, command->i2c_addr);
+		fd = open_device_file(device_file, command->i2c_addr);
 		if (fd < 0) {
 			perror("Can't configure I/O");
 			return -1;

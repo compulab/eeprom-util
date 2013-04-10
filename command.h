@@ -33,7 +33,7 @@ struct command {
 	enum action action;
 	const char *mode;
 	int i2c_addr;
-	char *dev_file;
+	void *platform_specific_data;
 	struct offset_value_pair *new_byte_data;
 	struct strings_pair *new_field_data;
 	int new_data_size; /* Used for both new_*_data arrays */
@@ -44,7 +44,7 @@ struct command {
 
 void reset_command(struct command *command);
 int setup_command(struct command *cmd, enum action action, const char *mode,
-		int i2c_addr, char *dev_file,
+		int i2c_addr, void *platform_specific_data,
 		struct offset_value_pair *new_byte_data,
 		struct strings_pair *new_field_data, int new_data_size);
 void free_command(struct command *command);
