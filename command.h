@@ -31,8 +31,16 @@ struct command {
 	struct offset_value_pair *new_byte_data;
 	struct strings_pair *new_field_data;
 	int new_data_size; /* Used for both new_*_data arrays */
+
+	void (*print)(const struct command *command);
+	void (*execute)(struct command *command);
 };
 
-void print_command(const struct command command);
+void reset_command(struct command *command);
+int setup_command(struct command *cmd, enum action action, enum mode mode,
+		int i2c_addr, char *dev_file,
+		struct offset_value_pair *new_byte_data,
+		struct strings_pair *new_field_data, int new_data_size);
+void free_command(struct command *command);
 
 #endif

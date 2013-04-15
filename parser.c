@@ -26,7 +26,7 @@
 #define NEXT_OR_STOP(i) do {				\
 				(i)++;			\
 				if ((i) == argc)	\
-					return;		\
+					goto done;	\
 			} while (0);
 
 #ifdef ENABLE_WRITE
@@ -120,14 +120,14 @@ static char *extract_value(char *argv[], int arg_index)
 	return strtok(NULL, "=");
 }
 
-static void parse_action(char *argv[], int arg_index, struct command *command)
+static enum action parse_action(char *argv[], int arg_index)
 {
 	if (!strcmp(argv[arg_index], "list"))
-		command->action = EEPROM_LIST;
+		return EEPROM_LIST;
 	else if (!strcmp(argv[arg_index], "read"))
-		command->action = EEPROM_READ;
+		return EEPROM_READ;
 	else if (write_enabled() && !strcmp(argv[arg_index], "write"))
-		command->action = EEPROM_WRITE;
+		return EEPROM_WRITE;
 	else if (!strcmp(argv[arg_index], "examples"))
 		examples_exit();
 	else if (!strcmp(argv[arg_index], "help") ||
@@ -136,31 +136,33 @@ static void parse_action(char *argv[], int arg_index, struct command *command)
 		usage_exit("");
 	else
 		usage_exit("Unknown function specified!\n");
+
+	return EEPROM_ACTION_INVALID; /* Not reached */
 }
 
-static void parse_mode(char *argv[], int arg_index, struct command *command)
+static enum mode parse_mode(char *argv[], int arg_index)
 {
 	if (!strcmp(argv[arg_index], "-d") ||
 	    !strcmp(argv[arg_index], "--driver"))
-		command->mode = EEPROM_DRIVER_MODE;
+		return EEPROM_DRIVER_MODE;
 	else if (!strcmp(argv[arg_index], "-i") ||
 		 !strcmp(argv[arg_index], "--i2c"))
-		command->mode = EEPROM_I2C_MODE;
+		return EEPROM_I2C_MODE;
 	else
 		usage_exit("Unknown I/O mode specified!\n");
+
+	return EEPROM_INVAL_MODE; /* Not reached */
 }
 
-static int parse_path(char *argv[], int *arg_index, struct command *command)
+static char *parse_path(char *argv[], int *arg_index)
 {
-	int custom_path = 0;
+	char *custom_path = NULL;
 
 	if (!strcmp(argv[*arg_index], "-p")) {
 		(*arg_index)++;
-		command->dev_file = argv[*arg_index];
-		custom_path = 1;
+		custom_path = argv[*arg_index];
 	} else if (!strncmp(argv[*arg_index], "--path=", 7)) {
-		command->dev_file = extract_value(argv, *arg_index);
-		custom_path = 1;
+		custom_path = extract_value(argv, *arg_index);
 	}
 
 	return custom_path;
@@ -286,59 +288,21 @@ static struct strings_pair *parse_new_field_data(char *field_changes[],
 
 	return res;
 }
-
-/*
- * This method records the location of the new data to write.
- * Currently data can come in two forms: "--change-bytes=..." and
- * "-- field1=value field2=value...".
- */
-static void parse_new_data(char *new_data[], int new_data_array_size,
-							struct command *command)
-{
-	char *tok;
-	int num_of_pairs;
-
-	if (!strncmp(new_data[0], "--change-bytes=", 15)) {
-		strtok(new_data[0], "=");
-		tok = strtok(NULL, "=");
-		num_of_pairs = validate_byte_changes(tok);
-		if (num_of_pairs < 0)
-			usage_exit("Malformed change-bytes input!\n");
-
-		command->new_data_size = num_of_pairs;
-		command->new_byte_data = parse_change_bytes(tok, num_of_pairs);
-		return;
-	}
-
-	if (strcmp(new_data[0], "--"))
-		usage_exit("Too many arguments! (Have you forgot the '--'?)\n");
-
-	if (new_data_array_size == 1)
-		return;
-
-	num_of_pairs = new_data_array_size - 1;
-	command->new_data_size = num_of_pairs;
-	command->new_field_data = parse_new_field_data(new_data + 1,
-								num_of_pairs);
-}
 #else
-static inline void parse_new_data(char *new_data[], int new_data_array_size,
-				struct command *command) {}
-#endif
-
-/*
- * This method returns an "uninitialized" command; that is- a command
- * initialized with the appropriate "uninitialized" values.
- */
-static void set_command(struct command *command)
+static struct offset_value_pair *parse_change_bytes(char *changes, int size)
 {
-	command->new_field_data = NULL;
-	command->new_byte_data = NULL;
-	command->dev_file = NULL;
-	command->i2c_addr = -1;
-	command->mode = EEPROM_MODE_INVALID;
-	command->action = EEPROM_ACTION_INVALID;
+	return NULL;
 }
+static struct strings_pair *parse_new_field_data(char *field_changes[],
+							int field_changes_size)
+{
+	return NULL;
+}
+static int validate_byte_changes(char *str)
+{
+	return -1;
+}
+#endif
 
 /*
  * This function operates in stages of user input, whose general format can
@@ -347,16 +311,23 @@ static void set_command(struct command *command)
 void parse(int argc, char *argv[], struct command *command)
 {
 	int cli_arg = 1;
+	int i2c_addr = -1;
+	int new_data_size = -1;
+	char *dev_file = NULL, *custom_path = NULL;
+	struct offset_value_pair *new_byte_data = NULL;
+	struct strings_pair *new_field_data = NULL;
+	enum action action = EEPROM_ACTION_INVALID;
+	enum mode mode = EEPROM_MODE_INVALID;
 	char *tok;
 
-	set_command(command);
+	reset_command(command);
 
 	if (argc <= 1)
 		usage_exit("");
 
-	parse_action(argv, cli_arg, command);
-	if (command->action == EEPROM_LIST)
-		return;
+	action = parse_action(argv, cli_arg);
+	if (action == EEPROM_LIST)
+		goto done;
 
 	cli_arg++;
 	/* Reads and writes require additional parameters. */
@@ -364,25 +335,53 @@ void parse(int argc, char *argv[], struct command *command)
 		usage_exit("Specified function implies "
 			   "I/O mode to be specified!\n");
 
-	parse_mode(argv, cli_arg, command);
-	if (command->mode == EEPROM_DRIVER_MODE)
-		command->dev_file = DEFAULT_DRIVER_PATH;
-	else if (command->mode == EEPROM_I2C_MODE)
-		command->dev_file = DEFAULT_I2C_PATH;
+	mode = parse_mode(argv, cli_arg);
+	if (mode == EEPROM_DRIVER_MODE) {
+		dev_file = DEFAULT_DRIVER_PATH;
+	} else if (mode == EEPROM_I2C_MODE) {
+		dev_file = DEFAULT_I2C_PATH;
+		i2c_addr = DEFAULT_I2C_ADDR;
+	}
 
-	command->i2c_addr = DEFAULT_I2C_ADDR;
 	NEXT_OR_STOP(cli_arg);
 	/* Next argument might be --addr= */
-	if (command->mode == EEPROM_I2C_MODE &&
-	    !strncmp(argv[cli_arg], "--addr=", 7)) {
+	if (mode == EEPROM_I2C_MODE && !strncmp(argv[cli_arg], "--addr=", 7)) {
 		tok = extract_value(argv, cli_arg);
-		command->i2c_addr = strtol(tok, 0, 0);
+		i2c_addr = strtol(tok, 0, 0);
 		NEXT_OR_STOP(cli_arg);
 	}
 
 	/* Next argument might be file path */
-	if (parse_path(argv, &cli_arg, command))
+	custom_path = parse_path(argv, &cli_arg);
+	if (custom_path != NULL) {
+		dev_file = custom_path;
 		NEXT_OR_STOP(cli_arg);
+	}
 
-	parse_new_data(argv + cli_arg, argc - cli_arg, command);
+	if (!strncmp(argv[cli_arg], "--change-bytes=", 15)) {
+		strtok(argv[cli_arg], "=");
+		tok = strtok(NULL, "=");
+		new_data_size = validate_byte_changes(tok);
+		if (new_data_size < 0)
+			usage_exit("Malformed change-bytes input!\n");
+
+		new_byte_data = parse_change_bytes(tok, new_data_size);
+		goto done;
+	}
+
+	if (strcmp(argv[cli_arg], "--"))
+		usage_exit("Too many arguments! (Have you forgot the '--'?)\n");
+
+	NEXT_OR_STOP(cli_arg);
+
+	if (cli_arg == argc)
+		return;
+
+	new_data_size = argc - cli_arg;
+	new_field_data = parse_new_field_data(argv + cli_arg, new_data_size);
+
+done:
+	if (setup_command(command, action, mode, i2c_addr,
+			dev_file, new_byte_data, new_field_data, new_data_size))
+		exit(1);
 }
