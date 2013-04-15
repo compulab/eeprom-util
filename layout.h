@@ -44,8 +44,9 @@ struct layout {
 	unsigned char *data;
 	int data_size;
 	void (*print)(const struct layout *layout);
-	enum layout_res (*update_field)(struct layout *layout, char *field_name,
-					char *new_data);
+	enum layout_res (*update_fields)(struct layout *layout,
+				struct strings_pair *new_field_data,
+				int new_field_array_size);
 	enum layout_res (*update_bytes)(struct layout *layout,
 				struct offset_value_pair *new_byte_data,
 				int new_byte_array_size);

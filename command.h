@@ -29,8 +29,8 @@ struct command {
 	int i2c_addr;
 	char *dev_file;
 	struct offset_value_pair *new_byte_data;
-	char **new_field_data;
-	int new_data_size;
+	struct strings_pair *new_field_data;
+	int new_data_size; /* Used for both new_*_data arrays */
 };
 
 void print_command(const struct command command);

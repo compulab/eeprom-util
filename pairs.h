@@ -25,4 +25,9 @@ struct offset_value_pair {
 	unsigned char value;
 };
 
+struct strings_pair {
+	char *key;
+	char *value;
+};
+
 #endif

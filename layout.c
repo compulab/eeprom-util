@@ -243,6 +243,33 @@ static enum layout_res update_field(struct layout *layout, char *field_name,
 }
 
 /*
+ * Selectively update EEPROM data by fields.
+ * @layout:			An initialized layout
+ * @new_field_data:		An array of string pairs (fieldname,data)
+ * @new_field_array_size:	Size of the new_field_data array
+ *
+ * Returns: LAYOUT_SUCCESS on success, negative layout_res on failure.
+ */
+static enum layout_res update_fields(struct layout *layout,
+				     struct strings_pair *new_field_data,
+				     int new_field_array_size)
+{
+	int i, res;
+
+	for (i = 0; i < new_field_array_size; i++) {
+		res = update_field(layout, new_field_data[i].key,
+						new_field_data[i].value);
+		if (res == -LAYOUT_NO_SUCH_FIELD) {
+			printf("'%s' is not a valid field. Did not update",
+				new_field_data[i].key);
+			return res;
+		}
+	}
+
+	return LAYOUT_SUCCESS;
+}
+
+/*
  * update_byte() - update a single byte in layout data.
  * @layout:	A pointer to an existing struct layout.
  * @offset:	The offset of the byte in layout data
@@ -346,7 +373,7 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size)
 
 	l->data_size = buf_size;
 	l->print = print_layout;
-	l->update_field = update_field;
+	l->update_fields = update_fields;
 	l->update_bytes = update_bytes;
 
 	return l;

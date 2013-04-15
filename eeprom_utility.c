@@ -47,26 +47,6 @@ static void print_eeprom_error(int error)
 	}
 }
 
-/*
- * This function takes a command that points to an array of strings in the
- * form of: field name=new value(s), and does the actual updating within the
- * layout struct.
- */
-static void update_fields(struct layout *layout, struct command *command)
-{
-	int i, res;
-	char *field_name, *value;
-
-	for (i = 0; command->new_field_data[i] != NULL; i++) {
-		field_name = strtok(command->new_field_data[i], "=");
-		value = strtok(NULL, "=");
-		res = layout->update_field(layout, field_name, value);
-		if (res == -LAYOUT_NO_SUCH_FIELD)
-			printf("'%s' is not a valid field. "
-				"Skipping update", field_name);
-	}
-}
-
 static void do_io(struct command command)
 {
 	unsigned char buf[EEPROM_SIZE];
@@ -106,7 +86,8 @@ static void do_io(struct command command)
 		layout->update_bytes(layout, command.new_byte_data,
 						command.new_data_size);
 	else if (command.new_field_data != NULL)
-		update_fields(layout, &command);
+		layout->update_fields(layout, command.new_field_data,
+						command.new_data_size);
 
 	res = (command.mode == EEPROM_DRIVER_MODE) ?
 		eeprom_driver_io(fd, EEPROM_WRITE, layout->data, offset, size) :
@@ -173,6 +154,7 @@ int main(int argc, char *argv[])
 
 	/* Make a proper destructor for command later */
 	free(command.new_byte_data);
+	free(command.new_field_data);
 
 	return 0;
 }

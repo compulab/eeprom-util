@@ -269,19 +269,37 @@ error:
 	return NULL;
 }
 
+static struct strings_pair *parse_new_field_data(char *field_changes[],
+							int field_changes_size)
+{
+	int i;
+	struct strings_pair *res = (struct strings_pair *)malloc(
+			sizeof(struct strings_pair) * field_changes_size);
+
+	if (res == NULL)
+		return res;
+
+	for (i = 0; i < field_changes_size; i++) {
+		res[i].key = strtok(field_changes[i], "=");
+		res[i].value = strtok(NULL, "=");
+	}
+
+	return res;
+}
+
 /*
  * This method records the location of the new data to write.
  * Currently data can come in two forms: "--change-bytes=..." and
  * "-- field1=value field2=value...".
  */
-static void parse_new_data(int argc, char *argv[], int arg_index,
-				struct command *command)
+static void parse_new_data(char *new_data[], int new_data_array_size,
+							struct command *command)
 {
 	char *tok;
-	int num_of_pairs, i = 0;
+	int num_of_pairs;
 
-	if (!strncmp(argv[arg_index], "--change-bytes=", 15)) {
-		strtok(argv[arg_index], "=");
+	if (!strncmp(new_data[0], "--change-bytes=", 15)) {
+		strtok(new_data[0], "=");
 		tok = strtok(NULL, "=");
 		num_of_pairs = validate_byte_changes(tok);
 		if (num_of_pairs < 0)
@@ -292,27 +310,19 @@ static void parse_new_data(int argc, char *argv[], int arg_index,
 		return;
 	}
 
-	if (strcmp(argv[arg_index], "--"))
+	if (strcmp(new_data[0], "--"))
 		usage_exit("Too many arguments! (Have you forgot the '--'?)\n");
 
-	arg_index++;
-	if (arg_index == argc)
+	if (new_data_array_size == 1)
 		return;
 
-	/*
-	 * new_field_data will point to the remainder of argv,
-	 * where the new field values reside. We move all the
-	 * pointers one step back to place a null pointer in
-	 * the end of argv.
-	 */
-	command->new_field_data = argv + arg_index - 1;
-	for (; arg_index < argc; arg_index++, i++)
-		command->new_field_data[i] = argv[arg_index];
-
-	command->new_field_data[i] = NULL;
+	num_of_pairs = new_data_array_size - 1;
+	command->new_data_size = num_of_pairs;
+	command->new_field_data = parse_new_field_data(new_data + 1,
+								num_of_pairs);
 }
 #else
-static inline void parse_new_data(int argc, char *argv[], int arg_index,
+static inline void parse_new_data(char *new_data[], int new_data_array_size,
 				struct command *command) {}
 #endif
 
@@ -374,5 +384,5 @@ void parse(int argc, char *argv[], struct command *command)
 	if (parse_path(argv, &cli_arg, command))
 		NEXT_OR_STOP(cli_arg);
 
-	parse_new_data(argc, argv, cli_arg, command);
+	parse_new_data(argv + cli_arg, argc - cli_arg, command);
 }
