@@ -20,6 +20,7 @@
 #ifndef _LAYOUT_
 #define _LAYOUT_
 
+#include "pairs.h"
 #include "field.h"
 
 enum layout_res {
@@ -45,8 +46,9 @@ struct layout {
 	void (*print)(const struct layout *layout);
 	enum layout_res (*update_field)(struct layout *layout, char *field_name,
 					char *new_data);
-	enum layout_res (*update_byte)(struct layout *layout,
-				       unsigned int offset, char new_byte);
+	enum layout_res (*update_bytes)(struct layout *layout,
+				struct offset_value_pair *new_byte_data,
+				int new_byte_array_size);
 };
 
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size);

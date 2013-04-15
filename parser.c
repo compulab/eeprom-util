@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pairs.h"
 #include "parser.h"
 
 #define NEXT_OR_STOP(i) do {				\
@@ -42,7 +43,7 @@ static void examples_exit(void)
 	if (write_enabled()) {
 		printf("Writing '4c' to bytes 0, 5, and 23 via I2C:\n"
 		       "\teeprom-util write -i "
-		       "--change-bytes=0,4c,5,4c,23,4c\n");
+		       "--change-bytes=0,4c:5,4c:23,4c\n");
 
 		printf("Changing fields \"Bytes Field\" and \"String Field\" "
 		       "to bytes 2,3,4 and string \"Hello World!\", "
@@ -100,7 +101,7 @@ static void usage_exit(const char *message)
 	if (write_enabled()) {
 		printf("data:\n"
 			"[-- [\"<name>=<vals>\"]* | "
-			"--change-bytes=<offset>,<val>[,<offset>,<val>]*]\n"
+			"--change-bytes=<offset>,<val>[:<offset>,<val>]*]\n"
 			"\n");
 	}
 
@@ -167,6 +168,108 @@ static int parse_path(char *argv[], int *arg_index, struct command *command)
 
 #ifdef ENABLE_WRITE
 /*
+ * validate_byte_changes - Check how many pairs are in the --change-bytes
+ * string.
+ * @str:	The string to check.
+ *
+ * This function validates the following syntax:
+ *	<offset>,<val>[:<offset>,<val>]*
+ * offset and val are non-negative numbers.
+ *
+ * NOTE: this function's role is to help the parser, so it should not do things
+ * that may interfere with parsing, like invoking strtok.
+ *
+ * Returns: how many pairs the string has, or -1 if it is malformed.
+ */
+static int validate_byte_changes(const char *str)
+{
+	unsigned int counter = 0;
+	char *end_ptr;
+
+	if (str == NULL)
+		return -1;
+
+	/*
+	 * We take advantage of strtoul's behavior to check that a string starts
+	 * with a number, and ends in a desired character (value of *end_ptr).
+	 */
+	while (*str) {
+		/* First part of pair is a >=0 number that ends with a comma */
+		if (*str == '-')
+			return -1;
+
+		strtoul(str, &end_ptr, 0);
+		if (*end_ptr != ',')
+			return -1;
+
+		str = ++end_ptr;
+		/*
+		 * Second part of pair is a >=0 number that either ends
+		 * the string, or ends with a pair delimiter ":"
+		 */
+		if (*str == '-' || *str == '\0')
+			return -1;
+
+		strtoul(str, &end_ptr, 0);
+		if (*end_ptr == '\0') {
+			counter++;
+			break;
+		}
+
+		if (*end_ptr != ':')
+			return -1;
+
+		str = ++end_ptr;
+		counter++;
+	}
+
+	/* Consider no changes as a syntax error */
+	if (counter == 0)
+		return -1;
+
+	return counter;
+}
+
+static struct offset_value_pair *parse_change_bytes(char *changes, int size)
+{
+	char *tok, *end_ptr;
+	int i = 0;
+	struct offset_value_pair *res;
+
+	if (size == 0)
+		return NULL;
+
+	res = (struct offset_value_pair *)malloc(size *
+					sizeof(struct offset_value_pair));
+	if (res == NULL)
+		return NULL;
+
+	tok = strtok(changes, ",");
+	while (tok) {
+		res[i].offset = strtoul(tok, &end_ptr, 0);
+		if (*end_ptr != '\0')
+			goto error;
+
+		tok = strtok(NULL, ":");
+		if (tok == NULL)
+			goto error;
+
+		res[i].value = strtoul(tok, &end_ptr, 0);
+		if (*end_ptr != '\0')
+			goto error;
+
+		i++;
+		tok = strtok(NULL, ",");
+	}
+
+	return res;
+
+error:
+	free(res);
+	return NULL;
+}
+
+/*
  * This method records the location of the new data to write.
  * Currently data can come in two forms: "--change-bytes=..." and
  * "-- field1=value field2=value...".
@@ -174,11 +277,18 @@ static int parse_path(char *argv[], int *arg_index, struct command *command)
 static void parse_new_data(int argc, char *argv[], int arg_index,
 				struct command *command)
 {
-	int i = 0;
+	char *tok;
+	int num_of_pairs, i = 0;
 
 	if (!strncmp(argv[arg_index], "--change-bytes=", 15)) {
 		strtok(argv[arg_index], "=");
-		command->new_byte_data = strtok(NULL, "=");
+		tok = strtok(NULL, "=");
+		num_of_pairs = validate_byte_changes(tok);
+		if (num_of_pairs < 0)
+			usage_exit("Malformed change-bytes input!\n");
+
+		command->new_data_size = num_of_pairs;
+		command->new_byte_data = parse_change_bytes(tok, num_of_pairs);
 		return;
 	}
 

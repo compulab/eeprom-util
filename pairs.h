@@ -17,22 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _COMMAND_
-#define _COMMAND_
+#ifndef _PAIRS_
+#define _PAIRS_
 
-#include "eeprom.h"
-#include "pairs.h"
-
-struct command {
-	enum action action;
-	enum mode mode;
-	int i2c_addr;
-	char *dev_file;
-	struct offset_value_pair *new_byte_data;
-	char **new_field_data;
-	int new_data_size;
+struct offset_value_pair {
+	unsigned int offset;
+	unsigned char value;
 };
-
-void print_command(const struct command command);
 
 #endif

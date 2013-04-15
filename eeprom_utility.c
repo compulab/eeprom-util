@@ -48,35 +48,6 @@ static void print_eeprom_error(int error)
 }
 
 /*
- * This function takes a command that points to a string in the form of
- * <int>,<int>[,<int>,<int>]*, which is a list of tuples that stand for
- * (offset, new_byte). It does the actual updating within the layout struct.
- */
-static void update_bytes(struct layout *layout, struct command *command)
-{
-	int offset, value, res;
-	char *tok = strtok(command->new_byte_data, ",");
-
-	if (tok == NULL)
-		return;
-
-	do {
-		offset = strtol(tok, 0, 0);
-		tok = strtok(NULL, ",");
-		if (tok == NULL)
-			return;
-
-		value = strtol(tok, 0, 0);
-		res = layout->update_byte(layout, offset, value);
-		if (res == -LAYOUT_OFFSET_OUT_OF_BOUNDS)
-			printf("Offset %d out of bounds. "
-				"Did not update.\n", offset);
-
-		tok = strtok(NULL, ",");
-	} while (tok != NULL);
-}
-
-/*
  * This function takes a command that points to an array of strings in the
  * form of: field name=new value(s), and does the actual updating within the
  * layout struct.
@@ -132,7 +103,8 @@ static void do_io(struct command command)
 	}
 
 	if (command.new_byte_data != NULL)
-		update_bytes(layout, &command);
+		layout->update_bytes(layout, command.new_byte_data,
+						command.new_data_size);
 	else if (command.new_field_data != NULL)
 		update_fields(layout, &command);
 
@@ -198,6 +170,9 @@ int main(int argc, char *argv[])
 		print_i2c_accessible();
 	else /* READ/WRITE */
 		do_io(command);
+
+	/* Make a proper destructor for command later */
+	free(command.new_byte_data);
 
 	return 0;
 }

@@ -21,6 +21,7 @@
 #include <string.h>
 #include <malloc.h>
 #include "layout.h"
+#include "pairs.h"
 #include "field.h"
 
 #define LAYOUT_CHECK_BYTE	44
@@ -264,6 +265,34 @@ static enum layout_res update_byte(struct layout *layout, unsigned int offset,
 }
 
 /*
+ * Selectively update EEPROM bytes.
+ * @layout:			An initialized layout
+ * @new_byte_data:		An array of (offset,value) pairs
+ * @new_byte_array_size:	Size of the new_byte_data array
+ *
+ * Returns: LAYOUT_SUCCESS on success, negative layout_res on failure.
+ */
+static enum layout_res update_bytes(struct layout *layout,
+				    struct offset_value_pair *new_byte_data,
+				    int new_byte_array_size)
+{
+	int i, res;
+
+	for (i = 0; i < new_byte_array_size; i++) {
+		res = update_byte(layout, new_byte_data[i].offset,
+						new_byte_data[i].value);
+		if (res == -LAYOUT_OFFSET_OUT_OF_BOUNDS) {
+			printf("Offset %d out of bounds. Did not update.\n",
+					new_byte_data[i].offset);
+
+			return res;
+		}
+	}
+
+	return LAYOUT_SUCCESS;
+}
+
+/*
  * new_layout() - Allocate a new layout based on the data given in buf.
  * @buf:	Data seed for layout
  * @buf_size:	Size of buf
@@ -318,7 +347,7 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size)
 	l->data_size = buf_size;
 	l->print = print_layout;
 	l->update_field = update_field;
-	l->update_byte = update_byte;
+	l->update_bytes = update_bytes;
 
 	return l;
 
