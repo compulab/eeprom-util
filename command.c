@@ -67,6 +67,26 @@ static void print_i2c_accessible(struct command *cmd)
 	api.probe(cmd->i2c_bus);
 }
 
+static void execute_command(struct command *cmd)
+{
+	if (setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr))
+		return;
+
+	switch(cmd->action) {
+	case EEPROM_LIST:
+		print_i2c_accessible(cmd);
+		break;
+	case EEPROM_READ:
+	case EEPROM_WRITE_FIELDS:
+	case EEPROM_WRITE_BYTES:
+		do_io(cmd);
+		break;
+	case EEPROM_ACTION_INVALID:
+		api.system_error("Invalid command");
+		break;
+	}
+}
+
 struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
 		    	    enum layout_version layout_ver, int new_data_size,
 		    	    struct strings_pair *new_field_data)
@@ -81,16 +101,7 @@ struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
 	cmd->layout_ver = layout_ver;
 	cmd->new_field_data = new_field_data;
 	cmd->new_data_size = new_data_size;
-	if (action == EEPROM_LIST)
-		cmd->execute = print_i2c_accessible;
-	else if (action == EEPROM_READ || action == EEPROM_WRITE_FIELDS ||
-		 action == EEPROM_WRITE_BYTES)
-		cmd->execute = do_io;
-	else
-		return NULL;
-
-	if (setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr))
-		return NULL;
+	cmd->execute = execute_command;
 
 	return cmd;
 }
