@@ -23,26 +23,29 @@
 struct field {
 	char *name;
 	int size;
-	/* Tells printing functions what to print between data members. */
 	char *delim;
 	unsigned char *buf;
 
 	void (*print)(const struct field *field);
-	void (*update)(struct field *field, char *value);
+	int (*update)(struct field *field, char *value);
 };
 
 struct field set_field(char *name, int size, char *delim,
 			void (*print)(const struct field *field),
-			void (*update)(struct field *field, char *value));
+			int (*update)(struct field *field, char *value));
+
+void print_bin(const struct field *field);
+int update_bin(struct field *field, char *value);
 
 void print_bin_ver(const struct field *field);
-void print_bin_rev(const struct field *field);
-void print_bin(const struct field *field);
-void print_date(const struct field *field);
-void print_ascii(const struct field *field);
-void print_reserved(const struct field *field);
 
-void update_binary(struct field *field, char *value);
-void update_ascii(struct field *field, char *value);
+void print_bin_rev(const struct field *field);
+
+void print_date(const struct field *field);
+
+void print_ascii(const struct field *field);
+int update_ascii(struct field *field, char *value);
+
+void print_reserved(const struct field *field);
 
 #endif

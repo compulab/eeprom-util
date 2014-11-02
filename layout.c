@@ -45,11 +45,11 @@ static int set_layout_legacy(struct layout *layout)
 		return 0;
 
 	layout->fields[0] = set_field("MAC address", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[1] = set_field("Board Revision", 2, "",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[2] = set_field("Serial Number", 8, "",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[3] = set_field("Board Configuration", 64, "",
 					print_ascii, update_ascii);
 	layout->fields[4] = set_field(RESERVED_FIELDS, 176, "",
@@ -76,19 +76,19 @@ static int set_layout_v1(struct layout *layout)
 		return 0;
 
 	layout->fields[0] = set_field("Major Revision", 2, ".",
-					print_bin_ver, update_binary);
+					print_bin_ver, update_bin);
 	layout->fields[1] = set_field("Minor Revision", 2, ".",
-					print_bin_ver, update_binary);
+					print_bin_ver, update_bin);
 	layout->fields[2] = set_field("1st MAC addr", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[3] = set_field("2nd MAC addr", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[4] = set_field("Production Date", 4, "/",
-					print_date, update_binary);
+					print_date, update_bin);
 	layout->fields[5] = set_field("Serial Number", 12, " ",
-					print_bin_rev, update_binary);
+					print_bin_rev, update_bin);
 	layout->fields[6] = set_field(RESERVED_FIELDS, 96, "",
-					print_reserved, update_binary);
+					print_reserved, update_bin);
 	layout->fields[7] = set_field("Product Name", 16, "",
 					print_ascii, update_ascii);
 	layout->fields[8] = set_field("Product Options #1", 16, "",
@@ -121,25 +121,25 @@ static int set_layout_v2(struct layout *layout)
 		return 0;
 
 	layout->fields[0] = set_field("Major Revision", 2, ".",
-					print_bin_ver, update_binary);
+					print_bin_ver, update_bin);
 	layout->fields[1] = set_field("Minor Revision", 2, ".",
-					print_bin_ver, update_binary);
+					print_bin_ver, update_bin);
 	layout->fields[2] = set_field("1st MAC addr", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[3] = set_field("2nd MAC addr", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[4] = set_field("Production Date", 4, "/",
-					print_date, update_binary);
+					print_date, update_bin);
 	layout->fields[5] = set_field("Serial Number", 12, " ",
-					print_bin_rev, update_binary);
+					print_bin_rev, update_bin);
 	layout->fields[6] = set_field("3rd MAC Address (WIFI)", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[7] = set_field("4th MAC Address (Bluetooth)", 6, ":",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[8] = set_field("Layout Version", 1, " ",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->fields[9] = set_field(RESERVED_FIELDS, 83, "",
-					print_reserved, update_binary);
+					print_reserved, update_bin);
 	layout->fields[10] = set_field("Product Name", 16, "",
 					print_ascii, update_ascii);
 	layout->fields[11] = set_field("Product Options #1", 16, "",
@@ -172,7 +172,7 @@ static int set_layout_unrecognized(struct layout *layout)
 		return 0;
 
 	layout->fields[0] = set_field(NO_LAYOUT_FIELDS, 256, " ",
-					print_bin, update_binary);
+					print_bin, update_bin);
 	layout->num_of_fields = field_num;
 
 	return 1;
