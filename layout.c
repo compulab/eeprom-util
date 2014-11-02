@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include "layout.h"
@@ -122,11 +123,62 @@ static enum layout_version detect_layout(unsigned char *data)
  */
 static void print_layout(const struct layout *layout)
 {
-	int i;
 	struct field *fields = layout->fields;
 
-	for (i = 0; i < layout->num_of_fields; i++)
+	for (int i = 0; i < layout->num_of_fields; i++)
 		fields[i].print(&fields[i]);
+}
+
+/*
+ * Return a positive integer or -1 if conversion of string cannot be performed.
+ */
+static int safe_strtoui(char *str)
+{
+	if (!strcmp(str, ""))
+		return -1;
+
+	char* endptr;
+	int val = strtol(str, &endptr, 0);
+	if (*endptr != '\0')
+		return -1;
+
+	return val;
+}
+
+/*
+ * Selectively update EEPROM data by bytes.
+ * @layout:		An initialized layout
+ * @new_byte_data:	An array of (offset,value) strings matching the regexp
+ * 			([[:digit:]]+,[[:digit:]]+,)*([[:digit:]]+,[[:digit:]]+)
+ * @new_data_size: Size of the new_field_data array
+ *
+ * Returns: number of updated bytes.
+ */
+static int update_bytes(struct layout *layout,
+			struct strings_pair *new_byte_data,
+			int new_data_size)
+{
+	int updated_bytes = 0;
+	for (int i = 0; i < new_data_size; i++) {
+		int offset = safe_strtoui(new_byte_data[i].key);
+		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
+			printf("Invalid offset '%s'; will not update!\n",
+			       new_byte_data[i].key);
+			continue;
+		}
+
+		int value = safe_strtoui(new_byte_data[i].value);
+		if (!(value >= 0 && value <= 255)) {
+			printf("Invalid value '%s' at offset '%s'; will not update!\n",
+			       new_byte_data[i].value, new_byte_data[i].key);
+			continue;
+		}
+
+		layout->data[offset] = value;
+		updated_bytes++;
+	}
+
+	return updated_bytes;
 }
 
 /*
@@ -135,30 +187,27 @@ static void print_layout(const struct layout *layout)
  * @field_name:	The name of the field to update
  * @new_data:	The new field data (a string. Format depends on the field)
  *
- * Returns: LAYOUT_SUCCESS on success, a negative layout_res on failure.
+ * Returns: 0 on success, -1 on failure (field_name not a valid field).
  */
-static enum layout_res update_field(struct layout *layout, char *field_name,
-				    char *new_data)
+static int update_field(struct layout *layout, char *field_name, char *new_data)
 {
-	int i;
 	struct field *fields = layout->fields;
 
-	if (layout == NULL || field_name == NULL || new_data == NULL)
-		return -LAYOUT_NULL_ARGUMENTS;
+	if (new_data == NULL)
+		return 0;
 
-	/* Advance until the field name is found. */
-	for (i = 0; i < layout->num_of_fields; i++) {
+	if (field_name == NULL)
+		return -1;
+
+	for (int i = 0; i < layout->num_of_fields; i++) {
 		if (fields[i].name != RESERVED_FIELDS &&
-		    !strcmp(fields[i].name, field_name))
-			break;
+		    !strcmp(fields[i].name, field_name)) {
+			fields[i].update(&fields[i], new_data);
+			return 0;
+		}
 	}
 
-	if (i >= layout->num_of_fields)
-		return -LAYOUT_NO_SUCH_FIELD;
-
-	fields[i].update(&fields[i], new_data);
-
-	return LAYOUT_SUCCESS;
+	return -1;
 }
 
 /*
@@ -167,75 +216,25 @@ static enum layout_res update_field(struct layout *layout, char *field_name,
  * @new_field_data:		An array of string pairs (fieldname,data)
  * @new_field_array_size:	Size of the new_field_data array
  *
- * Returns: LAYOUT_SUCCESS on success, negative layout_res on failure.
+ * Returns: number of updated fields.
  */
-static enum layout_res update_fields(struct layout *layout,
-				     struct strings_pair *new_field_data,
-				     int new_field_array_size)
+static int update_fields(struct layout *layout,
+			 struct strings_pair *new_field_data,
+			 int new_field_array_size)
 {
-	int i, res;
+	int updated_fields_cnt = 0;
 
-	for (i = 0; i < new_field_array_size; i++) {
-		res = update_field(layout, new_field_data[i].key,
-						new_field_data[i].value);
-		if (res == -LAYOUT_NO_SUCH_FIELD) {
-			printf("'%s' is not a valid field. Did not update",
-				new_field_data[i].key);
-			return res;
+	for (int i = 0; i < new_field_array_size; i++) {
+		if (update_field(layout, new_field_data[i].key,
+				 new_field_data[i].value)) {
+			printf("No such field '%s'\n", new_field_data[i].key);
+			continue;
 		}
+
+		updated_fields_cnt++;
 	}
 
-	return LAYOUT_SUCCESS;
-}
-
-/*
- * update_byte() - update a single byte in layout data.
- * @layout:	A pointer to an existing struct layout.
- * @offset:	The offset of the byte in layout data
- * @new_byte:	The value of the new byte
- *
- * Returns: LAYOUT_SUCCESS on success, a negative layout_res on failure.
- */
-static enum layout_res update_byte(struct layout *layout, unsigned int offset,
-				   char new_byte)
-{
-	if (layout == NULL)
-		return -LAYOUT_NULL_ARGUMENTS;
-
-	if (offset >= layout->data_size)
-		return -LAYOUT_OFFSET_OUT_OF_BOUNDS;
-
-	layout->data[offset] = new_byte;
-
-	return LAYOUT_SUCCESS;
-}
-
-/*
- * Selectively update EEPROM bytes.
- * @layout:			An initialized layout
- * @new_byte_data:		An array of (offset,value) pairs
- * @new_byte_array_size:	Size of the new_byte_data array
- *
- * Returns: LAYOUT_SUCCESS on success, negative layout_res on failure.
- */
-static enum layout_res update_bytes(struct layout *layout,
-				    struct offset_value_pair *new_byte_data,
-				    int new_byte_array_size)
-{
-	int i, res;
-
-	for (i = 0; i < new_byte_array_size; i++) {
-		res = update_byte(layout, new_byte_data[i].offset,
-						new_byte_data[i].value);
-		if (res == -LAYOUT_OFFSET_OUT_OF_BOUNDS) {
-			printf("Offset %d out of bounds. Did not update.\n",
-					new_byte_data[i].offset);
-
-			return res;
-		}
-	}
-
-	return LAYOUT_SUCCESS;
+	return updated_fields_cnt;
 }
 
 #define ARRAY_LEN(x)	(sizeof(x) / sizeof(x[0]))

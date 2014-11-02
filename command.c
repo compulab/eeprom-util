@@ -63,10 +63,7 @@ static void do_io(struct command *command)
 		goto done;
 	}
 
-	if (command->new_byte_data != NULL)
-		layout->update_bytes(layout, command->new_byte_data,
-					command->new_data_size);
-	else if (command->new_field_data != NULL)
+	if (command->new_field_data != NULL)
 		layout->update_fields(layout, command->new_field_data,
 					command->new_data_size);
 

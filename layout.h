@@ -21,14 +21,8 @@
 #define _LAYOUT_
 
 #include "pairs.h"
-#include "field.h"
 
-enum layout_res {
-	LAYOUT_SUCCESS = 0,
-	LAYOUT_NULL_ARGUMENTS,
-	LAYOUT_OFFSET_OUT_OF_BOUNDS,
-	LAYOUT_NO_SUCH_FIELD,
-};
+#define EEPROM_SIZE 256
 
 enum layout_version {
 	LAYOUT_AUTODETECT,
@@ -46,12 +40,12 @@ struct layout {
 	unsigned char *data;
 	int data_size;
 	void (*print)(const struct layout *layout);
-	enum layout_res (*update_fields)(struct layout *layout,
-				struct strings_pair *new_field_data,
-				int new_field_array_size);
-	enum layout_res (*update_bytes)(struct layout *layout,
-				struct offset_value_pair *new_byte_data,
-				int new_byte_array_size);
+	int (*update_fields)(struct layout *layout,
+			     struct strings_pair *new_field_data,
+			     int new_field_array_size);
+	int (*update_bytes)(struct layout *layout,
+			    struct strings_pair *new_field_data,
+			    int new_data_size);
 };
 
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
