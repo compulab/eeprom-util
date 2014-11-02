@@ -27,18 +27,6 @@
 
 static struct api api;
 
-void print_command(const struct command *command)
-{
-	if (command->action == EEPROM_READ)
-		printf("Reading ");
-	else
-		printf("Writing ");
-
-	printf("using %s ", command->mode);
-	printf("at %s, address 0x%x\n", (char *)command->platform_specific_data,
-					command->i2c_addr);
-}
-
 #define EEPROM_SIZE 256
 static void do_io(struct command *command)
 {
@@ -46,7 +34,6 @@ static void do_io(struct command *command)
 	struct layout *layout;
 	int offset = 0, size = EEPROM_SIZE;
 
-	print_command(command);
 	if (api.read(buf, offset, size) < 0) {
 		api.system_error("Read error");
 		return;
@@ -91,7 +78,6 @@ int setup_command(struct command *cmd, enum action action, const char *mode,
 	cmd->new_byte_data = new_byte_data;
 	cmd->new_field_data = new_field_data;
 	cmd->new_data_size = new_data_size;
-	cmd->print = print_command;
 	if (action == EEPROM_LIST)
 		cmd->execute = print_i2c_accessible;
 	else if (action == EEPROM_READ || action == EEPROM_WRITE)
@@ -110,7 +96,6 @@ void reset_command(struct command *command)
 	command->new_byte_data = NULL;
 	command->new_field_data = NULL;
 	command->new_data_size = -1;
-	command->print = NULL;
 	command->execute = NULL;
 }
 

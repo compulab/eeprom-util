@@ -38,7 +38,6 @@ struct command {
 	struct strings_pair *new_field_data;
 	int new_data_size; /* Used for both new_*_data arrays */
 
-	void (*print)(const struct command *command);
 	void (*execute)(struct command *command);
 };
 
