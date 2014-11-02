@@ -52,7 +52,7 @@ static void do_io(struct command *command)
 		return;
 	}
 
-	layout = new_layout(buf, EEPROM_SIZE);
+	layout = new_layout(buf, EEPROM_SIZE, LAYOUT_AUTODETECT);
 	if (layout == NULL) {
 		api.system_error("Memory allocation error");
 		goto done;

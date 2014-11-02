@@ -31,10 +31,11 @@ enum layout_res {
 };
 
 enum layout_version {
-	LAYOUT_UNRECOGNIZED,
+	LAYOUT_AUTODETECT,
 	LAYOUT_LEGACY,
 	LAYOUT_VER1,
 	LAYOUT_VER2,
+	LAYOUT_UNRECOGNIZED,
 };
 
 struct layout {
@@ -52,7 +53,8 @@ struct layout {
 				int new_byte_array_size);
 };
 
-struct layout *new_layout(unsigned char *buf, unsigned int buf_size);
+struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
+			  enum layout_version layout_version);
 void free_layout(struct layout *layout);
 
 #endif

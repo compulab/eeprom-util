@@ -29,10 +29,6 @@ struct field {
 	int (*update)(struct field *field, char *value);
 };
 
-struct field set_field(char *name, int size,
-			void (*print)(const struct field *field),
-			int (*update)(struct field *field, char *value));
-
 void print_bin(const struct field *field);
 int update_bin(struct field *field, char *value);
 

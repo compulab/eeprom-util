@@ -24,30 +24,6 @@
 
 #define PRINT_FIELD_SEGMENT	"%-30s"
 
-/*
- * set_field() - initialize a field object
- * @name:	field name
- * @size:	field size in bytes
- * @delim:	a string to print in between values
- * @print:	a function for printing this field
- * @update:	a function for updating this field
- *
- * Returns: an initialized field
- */
-struct field set_field(char *name, int size,
-			void (*print)(const struct field *field),
-			int (*update)(struct field *field, char *value))
-{
-	struct field f;
-
-	f.name = name;
-	f.size = size;
-	f.print = print;
-	f.update = update;
-
-	return f;
-}
-
 static void __print_bin(const struct field *field, char *delimiter, int reverse)
 {
 	printf(PRINT_FIELD_SEGMENT, field->name);

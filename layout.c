@@ -25,158 +25,53 @@
 #include "field.h"
 
 #define LAYOUT_CHECK_BYTE	44
-#define RESERVED_FIELDS		0
-#define NO_LAYOUT_FIELDS	"Could not detect layout. Dumping raw data\n"
+#define RESERVED_FIELDS		NULL
+#define NO_LAYOUT_FIELDS	"Unknown layout. Dumping raw data\n"
 
-/*
- * set_layout_legacy() - setup layout as a legacy layout.
- * @layout: A pointer to an existing struct layout.
- *
- * Returns: 0 on failure, 1 on success.
- */
-static int set_layout_legacy(struct layout *layout)
-{
-	int field_num = 5;
-	layout->num_of_fields = 0;
-	layout->fields = (struct field *) malloc(sizeof(struct field) *
-								field_num);
+struct field layout_legacy[5] = {
+	{ "MAC address",          6, NULL, print_mac,      update_mac },
+	{ "Board Revision",       2, NULL, print_bin,      update_bin },
+	{ "Serial Number",        8, NULL, print_bin,      update_bin },
+	{ "Board Configuration", 64, NULL, print_ascii,    update_ascii },
+	{ RESERVED_FIELDS,      176, NULL, print_reserved, update_ascii },
+};
 
-	if (layout->fields == NULL)
-		return 0;
+struct field layout_v1[12] = {
+	{ "Major Revision",      2, NULL, print_bin_ver,  update_bin_ver },
+	{ "Minor Revision",      2, NULL, print_bin_ver,  update_bin_ver },
+	{ "1st MAC Address",     6, NULL, print_mac,      update_mac },
+	{ "2nd MAC Address",     6, NULL, print_mac,      update_mac },
+	{ "Production Date",     4, NULL, print_date,     update_date },
+	{ "Serial Number",      12, NULL, print_bin_rev,  update_bin_rev },
+	{ RESERVED_FIELDS,      96, NULL, print_reserved, update_bin },
+	{ "Product Name",       16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #1", 16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #2", 16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #3", 16, NULL, print_ascii,    update_ascii },
+	{ RESERVED_FIELDS,      64, NULL, print_reserved, update_ascii },
+};
 
-	layout->fields[0] = set_field("MAC address", 6,
-					print_bin, update_bin);
-	layout->fields[1] = set_field("Board Revision", 2,
-					print_bin, update_bin);
-	layout->fields[2] = set_field("Serial Number", 8,
-					print_bin, update_bin);
-	layout->fields[3] = set_field("Board Configuration", 64,
-					print_ascii, update_ascii);
-	layout->fields[4] = set_field(RESERVED_FIELDS, 176,
-					print_reserved, update_ascii);
-	layout->num_of_fields = field_num;
+struct field layout_v2[15] = {
+	{ "Major Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "Minor Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "1st MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "2nd MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "Production Date",          4, NULL, print_date,     update_date },
+	{ "Serial Number",           12, NULL, print_bin_rev,  update_bin_rev },
+	{ "3rd MAC Address (WIFI)",   6, NULL, print_mac,      update_mac },
+	{ "4th MAC Address (Bluetooth)", 6, NULL, print_mac,   update_mac },
+	{ "Layout Version",           1, NULL, print_bin,      update_bin },
+	{ RESERVED_FIELDS,           83, NULL, print_reserved, update_bin },
+	{ "Product Name",            16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #1",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #2",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #3",      16, NULL, print_ascii,    update_ascii },
+	{ RESERVED_FIELDS,           64, NULL, print_reserved, update_ascii },
+};
 
-	return 1;
-}
-
-/*
- * set_layout_v1() - setup layout as a layout v1.
- * @layout: A pointer to an existing struct layout.
- *
- * Returns: 0 on failure, 1 on success.
- */
-static int set_layout_v1(struct layout *layout)
-{
-	int field_num = 12;
-	layout->num_of_fields = 0;
-	layout->fields = (struct field *) malloc(sizeof(struct field) *
-								field_num);
-
-	if (layout->fields == NULL)
-		return 0;
-
-	layout->fields[0] = set_field("Major Revision", 2,
-					print_bin_ver, update_bin);
-	layout->fields[1] = set_field("Minor Revision", 2,
-					print_bin_ver, update_bin);
-	layout->fields[2] = set_field("1st MAC addr", 6,
-					print_bin, update_bin);
-	layout->fields[3] = set_field("2nd MAC addr", 6,
-					print_bin, update_bin);
-	layout->fields[4] = set_field("Production Date", 4,
-					print_date, update_bin);
-	layout->fields[5] = set_field("Serial Number", 12,
-					print_bin_rev, update_bin);
-	layout->fields[6] = set_field(RESERVED_FIELDS, 96,
-					print_reserved, update_bin);
-	layout->fields[7] = set_field("Product Name", 16,
-					print_ascii, update_ascii);
-	layout->fields[8] = set_field("Product Options #1", 16,
-					print_ascii, update_ascii);
-	layout->fields[9] = set_field("Product Options #2", 16,
-					print_ascii, update_ascii);
-	layout->fields[10] = set_field("Product Options #3", 16,
-					print_ascii, update_ascii);
-	layout->fields[11] = set_field(RESERVED_FIELDS, 64,
-					print_reserved,	update_ascii);
-	layout->num_of_fields = field_num;
-
-	return 1;
-}
-
-/*
- * set_layout_v2() - setup layout as a layout v2.
- * @layout: A pointer to an existing struct layout.
- *
- * Returns: 0 on failure, 1 on success.
- */
-static int set_layout_v2(struct layout *layout)
-{
-	int field_num = 15;
-	layout->num_of_fields = 0;
-	layout->fields = (struct field *) malloc(sizeof(struct field) *
-								field_num);
-
-	if (layout->fields == NULL)
-		return 0;
-
-	layout->fields[0] = set_field("Major Revision", 2,
-					print_bin_ver, update_bin);
-	layout->fields[1] = set_field("Minor Revision", 2,
-					print_bin_ver, update_bin);
-	layout->fields[2] = set_field("1st MAC addr", 6,
-					print_bin, update_bin);
-	layout->fields[3] = set_field("2nd MAC addr", 6,
-					print_bin, update_bin);
-	layout->fields[4] = set_field("Production Date", 4,
-					print_date, update_bin);
-	layout->fields[5] = set_field("Serial Number", 12,
-					print_bin_rev, update_bin);
-	layout->fields[6] = set_field("3rd MAC Address (WIFI)", 6,
-					print_bin, update_bin);
-	layout->fields[7] = set_field("4th MAC Address (Bluetooth)", 6,
-					print_bin, update_bin);
-	layout->fields[8] = set_field("Layout Version", 1,
-					print_bin, update_bin);
-	layout->fields[9] = set_field(RESERVED_FIELDS, 83,
-					print_reserved, update_bin);
-	layout->fields[10] = set_field("Product Name", 16,
-					print_ascii, update_ascii);
-	layout->fields[11] = set_field("Product Options #1", 16,
-					print_ascii, update_ascii);
-	layout->fields[12] = set_field("Product Options #2", 16,
-					print_ascii, update_ascii);
-	layout->fields[13] = set_field("Product Options #3", 16,
-					print_ascii, update_ascii);
-	layout->fields[14] = set_field(RESERVED_FIELDS, 64,
-					print_reserved,	update_ascii);
-	layout->num_of_fields = field_num;
-
-	return 1;
-}
-
-/*
- * set_layout_unrecognized() - setup layout as an unrecognized layout.
- * @layout: A pointer to an existing struct layout.
- *
- * Returns: 0 on failure, 1 on success.
- */
-static int set_layout_unrecognized(struct layout *layout)
-{
-	int field_num = 1;
-	layout->num_of_fields = 0;
-	layout->fields = (struct field *) malloc(sizeof(struct field) *
-								field_num);
-
-	if (layout->fields == NULL)
-		return 0;
-
-	layout->fields[0] = set_field(NO_LAYOUT_FIELDS, 256,
-					print_bin, update_bin);
-	layout->num_of_fields = field_num;
-
-	return 1;
-}
+struct field layout_unknown[1] = {
+	{ NO_LAYOUT_FIELDS, 256, NULL, print_bin, update_bin },
+};
 
 /*
  * detect_layout() - detect layout based on the contents of the data.
@@ -186,15 +81,18 @@ static int set_layout_unrecognized(struct layout *layout)
  */
 static enum layout_version detect_layout(unsigned char *data)
 {
-	int check_byte = LAYOUT_CHECK_BYTE;
-
-	if (data[check_byte] == 0xff || data[check_byte] == 0)
+	switch (data[LAYOUT_CHECK_BYTE]) {
+	case 0xff:
+	case 0:
 		return LAYOUT_VER1;
+	case 2:
+		return LAYOUT_VER2;
+	}
 
-	if (data[check_byte] >= 0x20)
+	if (data[LAYOUT_CHECK_BYTE] >= 0x20)
 		return LAYOUT_LEGACY;
 
-	return LAYOUT_VER2;
+	return LAYOUT_UNRECOGNIZED;
 }
 
 /*
@@ -319,6 +217,8 @@ static enum layout_res update_bytes(struct layout *layout,
 	return LAYOUT_SUCCESS;
 }
 
+#define ARRAY_LEN(x)	(sizeof(x) / sizeof(x[0]))
+
 /*
  * new_layout() - Allocate a new layout based on the data given in buf.
  * @buf:	Data seed for layout
@@ -330,69 +230,55 @@ static enum layout_res update_bytes(struct layout *layout,
  *
  * Returns: pointer to a new layout on success, NULL on failure
  */
-struct layout *new_layout(unsigned char *buf, unsigned int buf_size)
+struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
+			  enum layout_version layout_version)
 {
-	int i, success;
-	struct layout *l;
-	unsigned char *temp;
-
-	l = (struct layout *) malloc(sizeof(struct layout));
-	if (l == NULL)
+	struct layout *layout = malloc(sizeof(struct layout));
+	if (layout == NULL)
 		return NULL;
 
-	l->layout_version = detect_layout(buf);
-	switch (l->layout_version) {
+	if (layout_version == LAYOUT_AUTODETECT)
+		layout->layout_version = detect_layout(buf);
+	else
+		layout->layout_version = layout_version;
+
+	switch (layout->layout_version) {
 	case LAYOUT_LEGACY:
-		success = set_layout_legacy(l);
+		layout->fields = layout_legacy;
+		layout->num_of_fields = ARRAY_LEN(layout_legacy);
 		break;
 	case LAYOUT_VER1:
-		success = set_layout_v1(l);
+		layout->fields = layout_v1;
+		layout->num_of_fields = ARRAY_LEN(layout_v1);
 		break;
 	case LAYOUT_VER2:
-		success = set_layout_v2(l);
+		layout->fields = layout_v2;
+		layout->num_of_fields = ARRAY_LEN(layout_v2);
 		break;
 	default:
-		success = set_layout_unrecognized(l);
+		layout->fields = layout_unknown;
+		layout->num_of_fields = ARRAY_LEN(layout_unknown);
 	}
 
-	if (!success)
-		goto free_layout;
-
-	l->data = (unsigned char *) malloc(sizeof(unsigned char) * buf_size);
-	if (l->data == NULL)
-		goto free_fields;
-
-	for (i = 0; i < buf_size; i++)
-		l->data[i] = buf[i];
-
-	temp = l->data;
-	for (i = 0; i < l->num_of_fields; i++) {
-		l->fields[i].buf = temp;
-		temp += l->fields[i].size;
+	layout->data = buf;
+	for (int i = 0; i < layout->num_of_fields; i++) {
+		layout->fields[i].buf = buf;
+		buf += layout->fields[i].size;
 	}
 
-	l->data_size = buf_size;
-	l->print = print_layout;
-	l->update_fields = update_fields;
-	l->update_bytes = update_bytes;
+	layout->data_size = buf_size;
+	layout->print = print_layout;
+	layout->update_fields = update_fields;
+	layout->update_bytes = update_bytes;
 
-	return l;
-
-free_fields:
-	free(l->fields);
-free_layout:
-	free(l);
-
-	return NULL;
+	return layout;
 }
 
 /*
- * free_layout() - a "destructor" for layout
+ * free_layout() - a destructor for layout
  * @layout:	the layout to deallocate
  */
 void free_layout(struct layout *layout)
 {
-	free(layout->fields);
-	free(layout->data);
 	free(layout);
 }
