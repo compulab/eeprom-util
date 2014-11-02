@@ -25,7 +25,7 @@
 struct api {
 	int (*read)(unsigned char *buf, int offset, int size);
 	int (*write)(unsigned char *buf, int offset, int size);
-	void (*probe)(void);
+	void (*probe)(int bus);
 	void (*system_error)(const char *message);
 };
 

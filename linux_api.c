@@ -140,23 +140,21 @@ static int i2c_probe(int fd, int addr)
 	return 1;
 }
 
-static void list_i2c_accessible(void)
+static void list_i2c_accessible(int bus)
 {
-	int i, j, fd;
+	int fd;
 	char dev_file_name[13];
 
-	/*
-	 * Documentation/i2c/dev-interface: "All 256 minor device numbers are
-	 * reserved for i2c."
-	 */
-	for (i = 0; i < 256; i++) {
+	int i = (bus < 0) ? 0 : bus;
+	int end = (bus < 0) ? 256 : bus + 1;
+	for (; i < end; i++) {
 		sprintf(dev_file_name, "/dev/i2c-%d", i);
 		fd = open(dev_file_name, O_RDWR);
 		if (fd < 0)
 			continue;
 
 		printf("On i2c-%d:\n\t", i);
-		for (j = 0; j < 128; j++) { /* Assuming 7 bit addresses here. */
+		for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
 			if (i2c_probe(fd, j))
 				printf("0x%x ", j);
 		}

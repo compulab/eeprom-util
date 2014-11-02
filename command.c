@@ -76,7 +76,7 @@ done:
 
 void print_i2c_accessible(struct command *command)
 {
-	api.probe();
+	api.probe(-1);
 }
 
 int setup_command(struct command *cmd, enum action action, const char *mode,
