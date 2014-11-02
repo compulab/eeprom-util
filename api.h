@@ -20,8 +20,6 @@
 #ifndef API_H_
 #define API_H_
 
-#include "command.h"
-
 struct api {
 	int (*read)(unsigned char *buf, int offset, int size);
 	int (*write)(unsigned char *buf, int offset, int size);
@@ -29,6 +27,6 @@ struct api {
 	void (*system_error)(const char *message);
 };
 
-int setup_interface(struct api *api, struct command *command);
+int setup_interface(struct api *api, int i2c_bus, int i2c_addr);
 
 #endif

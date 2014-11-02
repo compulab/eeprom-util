@@ -17,31 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include "parser.h"
 #include "command.h"
-#include "auto_generated.h"
-
-
-void print_banner(void)
-{
-	char *version = strnlen(VERSION, 20) ? " version " VERSION : "";
-	char *date = " (" BUILD_DATE " - " BUILD_TIME ")";
-
-	printf("CompuLab EEPROM utility%s%s\n\n", version, date);
-}
 
 int main(int argc, char *argv[])
 {
-	struct command command;
+	struct command *cmd = parse(argc, argv);
+	if (cmd == NULL)
+		exit(1);
 
-	print_banner();
-	parse(argc, argv, &command);
-
-	command.execute(&command);
-	free_command(&command);
+	cmd->execute(cmd);
+	free_command(cmd);
 
 	return 0;
 }

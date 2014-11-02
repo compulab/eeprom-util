@@ -29,7 +29,6 @@
 #include "api.h"
 
 static int fd;
-static int i2c_addr;
 
 /*
  * Prepares a device file fd for read or write.
@@ -185,24 +184,32 @@ static void configure_driver(struct api *api)
 	api->system_error = system_error;
 }
 
-int setup_interface(struct api *api, struct command *command)
+int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 {
-	char *device_file = (char *)command->platform_specific_data;
+	char dev_file_name[40];
 
-	if (!strncmp(command->mode, "driver", 6))
-		configure_driver(api);
-	else
+	/* In this case we can still do an i2c probe, so setup for i2c */
+	if (i2c_bus < 0 && i2c_addr < 0) {
 		configure_i2c(api);
-
-	if (command->action != EEPROM_LIST) {
-		fd = open_device_file(device_file, command->i2c_addr);
-		if (fd < 0) {
-			perror("Can't configure I/O");
-			return -1;
-		}
+		return 0;
 	}
 
-	i2c_addr = command->i2c_addr;
+	sprintf(dev_file_name, "/dev/i2c-%d", i2c_bus);
+	fd = open_device_file(dev_file_name, i2c_addr);
+	if (fd != -1) {
+		configure_i2c(api);
+		return 0;
+	}
 
-	return 0;
+	sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom",
+		i2c_bus, i2c_addr);
+	fd = open_device_file(dev_file_name, -1);
+	if (fd != -1) {
+		configure_driver(api);
+		return 0;
+	}
+
+	perror("Can't configure I/O\n"
+		"Neither EEPROM driver nor i2c device interface is available");
+	return -1;
 }

@@ -21,31 +21,30 @@
 #define _COMMAND_
 
 #include "pairs.h"
+#include "layout.h"
 
 enum action {
 	EEPROM_READ,
-	EEPROM_WRITE,
+	EEPROM_WRITE_FIELDS,
+	EEPROM_WRITE_BYTES,
 	EEPROM_LIST,
 	EEPROM_ACTION_INVALID,
 };
 
 struct command {
 	enum action action;
-	const char *mode;
+	int i2c_bus;
 	int i2c_addr;
-	void *platform_specific_data;
-	struct offset_value_pair *new_byte_data;
+	enum layout_version layout_ver;
+	int new_data_size;
 	struct strings_pair *new_field_data;
-	int new_data_size; /* Used for both new_*_data arrays */
 
-	void (*execute)(struct command *command);
+	void (*execute)(struct command *cmd);
 };
 
-void reset_command(struct command *command);
-int setup_command(struct command *cmd, enum action action, const char *mode,
-		int i2c_addr, void *platform_specific_data,
-		struct offset_value_pair *new_byte_data,
-		struct strings_pair *new_field_data, int new_data_size);
-void free_command(struct command *command);
+struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
+			    enum layout_version layout_ver, int new_data_size,
+			    struct strings_pair *new_field_data);
+void free_command(struct command *cmd);
 
 #endif

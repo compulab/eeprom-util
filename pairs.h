@@ -20,11 +20,6 @@
 #ifndef _PAIRS_
 #define _PAIRS_
 
-struct offset_value_pair {
-	unsigned int offset;
-	unsigned char value;
-};
-
 struct strings_pair {
 	char *key;
 	char *value;

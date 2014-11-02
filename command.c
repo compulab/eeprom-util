@@ -27,11 +27,9 @@
 
 static struct api api;
 
-#define EEPROM_SIZE 256
-static void do_io(struct command *command)
+static void do_io(struct command *cmd)
 {
 	unsigned char buf[EEPROM_SIZE];
-	struct layout *layout;
 	int offset = 0, size = EEPROM_SIZE;
 
 	if (api.read(buf, offset, size) < 0) {
@@ -39,20 +37,23 @@ static void do_io(struct command *command)
 		return;
 	}
 
-	layout = new_layout(buf, EEPROM_SIZE, LAYOUT_AUTODETECT);
+	struct layout *layout = new_layout(buf, EEPROM_SIZE, cmd->layout_ver);
 	if (layout == NULL) {
 		api.system_error("Memory allocation error");
 		goto done;
 	}
 
-	if (command->action == EEPROM_READ) {
+	if (cmd->action == EEPROM_READ) {
 		layout->print(layout);
 		goto done;
 	}
 
-	if (command->new_field_data != NULL)
-		layout->update_fields(layout, command->new_field_data,
-					command->new_data_size);
+	if (cmd->action == EEPROM_WRITE_FIELDS)
+		layout->update_fields(layout, cmd->new_field_data,
+				      cmd->new_data_size);
+	else
+		layout->update_bytes(layout, cmd->new_field_data,
+				     cmd->new_data_size);
 
 	if (api.write(layout->data, offset, size) < 0)
 		api.system_error("Write error");
@@ -61,46 +62,46 @@ done:
 	free_layout(layout);
 }
 
-void print_i2c_accessible(struct command *command)
+static void print_i2c_accessible(struct command *cmd)
 {
-	api.probe(-1);
+	api.probe(cmd->i2c_bus);
 }
 
-int setup_command(struct command *cmd, enum action action, const char *mode,
-		int i2c_addr, void *platform_specific_data,
-		struct offset_value_pair *new_byte_data,
-		struct strings_pair *new_field_data, int new_data_size)
+struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
+		    	    enum layout_version layout_ver, int new_data_size,
+		    	    struct strings_pair *new_field_data)
 {
-	cmd->mode = mode;
+	struct command *cmd = malloc(sizeof(struct command));
+	if (cmd == NULL)
+		return cmd;
+
 	cmd->action = action;
+	cmd->i2c_bus = i2c_bus;
 	cmd->i2c_addr = i2c_addr;
-	cmd->platform_specific_data = platform_specific_data;
-	cmd->new_byte_data = new_byte_data;
+	cmd->layout_ver = layout_ver;
 	cmd->new_field_data = new_field_data;
 	cmd->new_data_size = new_data_size;
 	if (action == EEPROM_LIST)
 		cmd->execute = print_i2c_accessible;
-	else if (action == EEPROM_READ || action == EEPROM_WRITE)
+	else if (action == EEPROM_READ || action == EEPROM_WRITE_FIELDS ||
+		 action == EEPROM_WRITE_BYTES)
 		cmd->execute = do_io;
 	else
-		return -1;
+		return NULL;
 
-	return setup_interface(&api, cmd);
+	if (setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr))
+		return NULL;
+
+	return cmd;
 }
 
-void reset_command(struct command *command)
+void free_command(struct command *cmd)
 {
-	command->mode = "";
-	command->i2c_addr = -1;
-	command->platform_specific_data = NULL;
-	command->new_byte_data = NULL;
-	command->new_field_data = NULL;
-	command->new_data_size = -1;
-	command->execute = NULL;
-}
+	for (int i = 0; i < cmd->new_data_size; i++) {
+		free(cmd->new_field_data[i].key);
+		free(cmd->new_field_data[i].value);
+	}
 
-void free_command(struct command *command)
-{
-	free(command->new_byte_data);
-	free(command->new_field_data);
+	free(cmd->new_field_data);
+	free(cmd);
 }

@@ -22,6 +22,6 @@
 
 #include "command.h"
 
-void parse(int argc, char *argv[], struct command *command);
+struct command *parse(int argc, char *argv[]);
 
 #endif
