@@ -38,10 +38,16 @@ void print_bin(const struct field *field);
 int update_bin(struct field *field, char *value);
 
 void print_bin_ver(const struct field *field);
+int update_bin_ver(struct field *field, char *value);
 
 void print_bin_rev(const struct field *field);
+int update_bin_rev(struct field *field, char *value);
+
+void print_mac(const struct field *field);
+int update_mac(struct field *field, char *value);
 
 void print_date(const struct field *field);
+int update_date(struct field *field, char *value);
 
 void print_ascii(const struct field *field);
 int update_ascii(struct field *field, char *value);
