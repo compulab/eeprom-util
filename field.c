@@ -34,7 +34,7 @@
  *
  * Returns: an initialized field
  */
-struct field set_field(char *name, int size, char *delim,
+struct field set_field(char *name, int size,
 			void (*print)(const struct field *field),
 			int (*update)(struct field *field, char *value))
 {
@@ -42,7 +42,6 @@ struct field set_field(char *name, int size, char *delim,
 
 	f.name = name;
 	f.size = size;
-	f.delim = delim;
 	f.print = print;
 	f.update = update;
 
