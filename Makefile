@@ -27,7 +27,7 @@ AUTO_GENERATED_FILE = auto_generated.h
 
 OBJS = eeprom_utility.o field.o parser.o layout.o command.o linux_api.o
 SOURCES	:= $(OBJS:.o=.c)
-CFLAGS = -Wall
+CFLAGS = -Wall -std=gnu99
 COMPILE_CMD = $(CROSS_COMPILE)gcc $(CFLAGS) $(SOURCES) -o eeprom-util
 
 eeprom: $(AUTO_GENERATED_FILE) $(OBJS)
