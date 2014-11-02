@@ -39,9 +39,7 @@ static int i2c_addr;
  */
 static int open_device_file(char *dev_file, int i2c_addr)
 {
-	int fd;
-
-	fd = open(dev_file, O_RDWR);
+	int fd = open(dev_file, O_RDWR);
 	if (fd < 0)
 		return -1;
 
@@ -70,12 +68,12 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
 
 static int i2c_read(unsigned char *buf, int offset, int size)
 {
-	int i, bytes_transferred = 0;
+	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
 	/* Reset the reading pointer of the EEPROM to offset 0 */
 	i2c_smbus_access(fd, I2C_SMBUS_WRITE, 0, I2C_SMBUS_BYTE, NULL);
-	for (i = offset; i < size; i++) {
+	for (int i = offset; i < size; i++) {
 		if (i2c_smbus_access(fd, I2C_SMBUS_READ, i,
 				I2C_SMBUS_BYTE, &data) < 0)
 			return -1;
@@ -99,12 +97,12 @@ static void msleep(unsigned int msecs)
 
 static int i2c_write(unsigned char *buf, int offset, int size)
 {
-	int i, bytes_transferred = 0;
+	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
 	/* Reset the reading pointer of the EEPROM to offset 0 */
 	i2c_smbus_access(fd, I2C_SMBUS_WRITE, 0, I2C_SMBUS_BYTE, NULL);
-	for (i = offset; i < size; i++) {
+	for (int i = offset; i < size; i++) {
 		data.byte = buf[i];
 		if (i2c_smbus_access(fd, I2C_SMBUS_WRITE, i,
 				I2C_SMBUS_BYTE_DATA, &data) < 0)
