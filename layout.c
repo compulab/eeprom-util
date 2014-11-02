@@ -69,6 +69,25 @@ struct field layout_v2[15] = {
 	{ RESERVED_FIELDS,           64, NULL, print_reserved, update_ascii },
 };
 
+struct field layout_v3[16] = {
+	{ "Major Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "Minor Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "1st MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "2nd MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "Production Date",          4, NULL, print_date,     update_date },
+	{ "Serial Number",           12, NULL, print_bin_rev,  update_bin_rev },
+	{ "3rd MAC Address (WIFI)",   6, NULL, print_mac,      update_mac },
+	{ "4th MAC Address (Bluetooth)", 6, NULL, print_mac,   update_mac },
+	{ "Layout Version",           1, NULL, print_bin,      update_bin },
+	{ "CompuLab EEPROM ID",       3, NULL, print_bin,      update_bin },
+	{ RESERVED_FIELDS,           80, NULL, print_reserved, update_bin },
+	{ "Product Name",            16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #1",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #2",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #3",      16, NULL, print_ascii,    update_ascii },
+	{ RESERVED_FIELDS,           64, NULL, print_reserved, update_ascii },
+};
+
 struct field layout_unknown[1] = {
 	{ NO_LAYOUT_FIELDS, 256, NULL, print_bin, update_bin },
 };
@@ -87,6 +106,8 @@ static enum layout_version detect_layout(unsigned char *data)
 		return LAYOUT_VER1;
 	case 2:
 		return LAYOUT_VER2;
+	case 3:
+		return LAYOUT_VER3;
 	}
 
 	if (data[LAYOUT_CHECK_BYTE] >= 0x20)
@@ -254,6 +275,10 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	case LAYOUT_VER2:
 		layout->fields = layout_v2;
 		layout->num_of_fields = ARRAY_LEN(layout_v2);
+		break;
+	case LAYOUT_VER3:
+		layout->fields = layout_v3;
+		layout->num_of_fields = ARRAY_LEN(layout_v3);
 		break;
 	default:
 		layout->fields = layout_unknown;
