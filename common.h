@@ -25,6 +25,6 @@ struct strings_pair {
 	char *value;
 };
 
-int safe_strtoui(char *str);
+int safe_strtoui(char *str, int base);
 
 #endif

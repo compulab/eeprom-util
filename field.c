@@ -56,7 +56,7 @@ static int __update_bin(struct field *field, char *value,
 	int from = reverse ? field->size - 1 : 0;
 	int to = reverse ? -1 : field->size;
 	for (int i = from; tok && i != to; reverse ? i-- : i++) {
-		int val = safe_strtoui(tok);
+		int val = safe_strtoui(tok, 16);
 		if (val < 0)
 			return -1;
 

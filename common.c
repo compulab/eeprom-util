@@ -21,13 +21,13 @@
 /*
  * Return a positive integer or -1 if conversion of string cannot be performed.
  */
-int safe_strtoui(char *str)
+int safe_strtoui(char *str, int base)
 {
 	if (!strcmp(str, ""))
 		return -1;
 
 	char* endptr;
-	int val = strtol(str, &endptr, 0);
+	int val = strtol(str, &endptr, base);
 	if (*endptr != '\0')
 		return -1;
 
