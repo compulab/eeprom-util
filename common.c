@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2009-2011 CompuLab, Ltd.
  * Authors: Nikita Kiryanov <nikita@compulab.co.il>
- *	    Igor Grinberg <grinberg@compulab.co.il>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdlib.h>
+#include <string.h>
 
-#ifndef _PAIRS_
-#define _PAIRS_
+/*
+ * Return a positive integer or -1 if conversion of string cannot be performed.
+ */
+int safe_strtoui(char *str)
+{
+	if (!strcmp(str, ""))
+		return -1;
 
-struct strings_pair {
-	char *key;
-	char *value;
-};
+	char* endptr;
+	int val = strtol(str, &endptr, 0);
+	if (*endptr != '\0')
+		return -1;
 
-#endif
+	return val;
+}

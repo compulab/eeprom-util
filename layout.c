@@ -22,7 +22,7 @@
 #include <string.h>
 #include <malloc.h>
 #include "layout.h"
-#include "pairs.h"
+#include "common.h"
 #include "field.h"
 
 #define LAYOUT_CHECK_BYTE	44
@@ -127,22 +127,6 @@ static void print_layout(const struct layout *layout)
 
 	for (int i = 0; i < layout->num_of_fields; i++)
 		fields[i].print(&fields[i]);
-}
-
-/*
- * Return a positive integer or -1 if conversion of string cannot be performed.
- */
-static int safe_strtoui(char *str)
-{
-	if (!strcmp(str, ""))
-		return -1;
-
-	char* endptr;
-	int val = strtol(str, &endptr, 0);
-	if (*endptr != '\0')
-		return -1;
-
-	return val;
 }
 
 /*

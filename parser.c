@@ -22,7 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "pairs.h"
+#include "common.h"
 #include "command.h"
 #include "auto_generated.h"
 

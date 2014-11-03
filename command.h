@@ -20,7 +20,7 @@
 #ifndef _COMMAND_
 #define _COMMAND_
 
-#include "pairs.h"
+#include "common.h"
 #include "layout.h"
 
 enum action {
