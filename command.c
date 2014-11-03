@@ -108,11 +108,5 @@ struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
 
 void free_command(struct command *cmd)
 {
-	for (int i = 0; i < cmd->new_data_size; i++) {
-		free(cmd->new_field_data[i].key);
-		free(cmd->new_field_data[i].value);
-	}
-
-	free(cmd->new_field_data);
 	free(cmd);
 }

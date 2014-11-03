@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "pairs.h"
-#include "parser.h"
+#include "command.h"
 #include "auto_generated.h"
 
 #ifdef ENABLE_WRITE
@@ -326,7 +326,7 @@ static struct strings_pair *parse_new_data(int field_changes_size,
 #define STR_EINVAL_ADDR	"Invalid device address!\n"
 #define STR_ENO_PARAMS	"Missing parameters!\n"
 #define STR_ENO_MEM	"Out of memory!\n"
-struct command *parse(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct command *cmd;
 	enum layout_version layout_ver = LAYOUT_AUTODETECT;
@@ -377,21 +377,24 @@ struct command *parse(int argc, char *argv[])
 
 	if (new_data == NULL) {
 		perror(STR_ENO_MEM);
-		return NULL;
+		return -1;
 	}
 
 done:
 	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, new_data_size,
 			  new_data);
-	if (cmd == NULL) {
+	if (cmd == NULL)
 		perror(STR_ENO_MEM);
-		for (int i = 0; i < new_data_size; i++) {
-			free(new_data[i].key);
-			free(new_data[i].value);
-		}
+	else
+		cmd->execute(cmd);
 
-		free(new_data);
+	for (int i = 0; i < new_data_size; i++) {
+		free(new_data[i].key);
+		free(new_data[i].value);
 	}
 
-	return cmd;
+	free(new_data);
+	free_command(cmd);
+
+	return 0;
 }
