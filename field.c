@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "common.h"
 #include "field.h"
 
 #define PRINT_FIELD_SEGMENT	"%-30s"
@@ -55,7 +56,11 @@ static int __update_bin(struct field *field, char *value,
 	int from = reverse ? field->size - 1 : 0;
 	int to = reverse ? -1 : field->size;
 	for (int i = from; tok && i != to; reverse ? i-- : i++) {
-		field->buf[i] = (unsigned char)strtol(tok, 0, 0);
+		int val = safe_strtoui(tok);
+		if (val < 0)
+			return -1;
+
+		field->buf[i] = (unsigned char)val;
 		tok = strtok(NULL, delimiter);
 	}
 

@@ -171,7 +171,7 @@ static int update_bytes(struct layout *layout,
  * @field_name:	The name of the field to update
  * @new_data:	The new field data (a string. Format depends on the field)
  *
- * Returns: 0 on success, -1 on failure (field_name not a valid field).
+ * Returns: 0 on success, -1 on failure.
  */
 static int update_field(struct layout *layout, char *field_name, char *new_data)
 {
@@ -184,12 +184,18 @@ static int update_field(struct layout *layout, char *field_name, char *new_data)
 		return -1;
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
-		if (fields[i].name != RESERVED_FIELDS &&
-		    !strcmp(fields[i].name, field_name)) {
-			fields[i].update(&fields[i], new_data);
-			return 0;
-		}
+		if (fields[i].name == RESERVED_FIELDS ||
+		    strcmp(fields[i].name, field_name))
+			continue;
+
+		int err = fields[i].update(&fields[i], new_data);
+		if (err)
+			printf("Invalid data for field %s\n", field_name);
+
+		return err;
 	}
+
+	printf("No such field '%s'\n", field_name);
 
 	return -1;
 }
@@ -211,7 +217,7 @@ static int update_fields(struct layout *layout,
 	for (int i = 0; i < new_field_array_size; i++) {
 		if (update_field(layout, new_field_data[i].key,
 				 new_field_data[i].value)) {
-			printf("No such field '%s'\n", new_field_data[i].key);
+
 			continue;
 		}
 
