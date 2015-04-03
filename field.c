@@ -236,7 +236,7 @@ char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 void print_date(const struct field *field)
 {
 	printf(PRINT_FIELD_SEGMENT, field->name);
-	printf("%d/", field->buf[0]);
+	printf("%02d/", field->buf[0]);
 	if (field->buf[1] >= 1 && field->buf[1] <= 12)
 		printf("%s", months[field->buf[1] - 1]);
 	else
