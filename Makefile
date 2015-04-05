@@ -42,12 +42,12 @@ write: eeprom
 write_static: CFLAGS += -D ENABLE_WRITE -static
 write_static: eeprom
 
-$(AUTO_GENERATED_FILE):
+$(AUTO_GENERATED_FILE): .FORCE
 	@( printf '#define VERSION "%s%s"\n' "$(EEPROM_UTIL_VERSION)" \
 	'$(shell ./setversion)' ) > $@
 	@date +'#define BUILD_DATE "%d %b %C%y"' >> $@
 	@date +'#define BUILD_TIME "%T"' >> $@
 
-.PHONY: clean
+.PHONY: clean .FORCE
 clean:
 	rm -f eeprom-util $(OBJS) $(AUTO_GENERATED_FILE)
