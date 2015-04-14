@@ -28,9 +28,9 @@
 #include "auto_generated.h"
 
 #ifdef ENABLE_WRITE
-static inline int write_enabled(void) { return 1; }
+static inline bool write_enabled(void) { return true; }
 #else
-static inline int write_enabled(void) { return 0; }
+static inline bool write_enabled(void) { return false; }
 #endif
 
 void print_banner(void)
@@ -119,7 +119,6 @@ static enum action parse_action(int argc, char *argv[])
 		print_banner();
 		exit(0);
 	}
-
 
 	cond_usage_exit(true, "Unknown function!\n");
 	return EEPROM_ACTION_INVALID; //To appease the compiler
@@ -307,13 +306,15 @@ static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim)
 	return changes;
 }
 #else
-static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim)
+static inline struct strings_pair *parse_new_data_stdin(int *num_of_pairs,
+							char *delim)
 {
 	return NULL;
 }
 
-static struct strings_pair *parse_new_data(int field_changes_size,
-					   char *field_changes[], char *delim)
+static inline struct strings_pair *parse_new_data(int field_changes_size,
+						  char *field_changes[],
+						  char *delim)
 {
 	return NULL;
 }
