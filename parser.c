@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -42,8 +43,11 @@ void print_banner(void)
 
 #define COLOR_RESET  "\033[0m"
 #define COLOR_RED  "\x1B[31m"
-static void usage_exit(const char *message)
+static void cond_usage_exit(bool cond, const char *message)
 {
+	if (!cond)
+		return;
+
 	printf(COLOR_RED "%s" COLOR_RESET, message);
 	print_banner();
 	printf("Usage: eeprom-util list [<bus_num>]\n");
@@ -91,12 +95,6 @@ static void usage_exit(const char *message)
 	exit(0);
 }
 
-static void usage_exit_if(int bool, const char *message)
-{
-	if (bool)
-		usage_exit(message);
-}
-
 static enum action parse_action(int argc, char *argv[])
 {
 	if (!strncmp(argv[0], "list", 4)) {
@@ -114,7 +112,7 @@ static enum action parse_action(int argc, char *argv[])
 	} else if (!strncmp(argv[0], "help", 4) ||
 		!strncmp(argv[0], "-h", 2) ||
 		!strncmp(argv[0], "--help", 6)) {
-		usage_exit("");
+		cond_usage_exit(true, "");
 	} else if (!strncmp(argv[0], "version", 7) ||
 		!strncmp(argv[0], "-v", 2) ||
 		!strncmp(argv[0], "--version", 9)) {
@@ -123,7 +121,7 @@ static enum action parse_action(int argc, char *argv[])
 	}
 
 
-	usage_exit("Unknown function!\n");
+	cond_usage_exit(true, "Unknown function!\n");
 	return EEPROM_ACTION_INVALID; //To appease the compiler
 }
 
@@ -145,7 +143,7 @@ int parse_numeric_param(char *str, char *error_message)
 {
 	char *endptr;
 	int value = strtol(str, &endptr, 0);
-	usage_exit_if(*endptr != '\0', error_message);
+	cond_usage_exit(*endptr != '\0', error_message);
 
 	return value;
 }
@@ -334,7 +332,7 @@ int main(int argc, char *argv[])
 	struct strings_pair *new_data = NULL;
 	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1;
 
-	usage_exit_if(argc <= 1, "");
+	cond_usage_exit(argc <= 1, "");
 	NEXT_PARAM(argc, argv); // Skip program name
 
 	action = parse_action(argc, argv);
@@ -350,14 +348,14 @@ int main(int argc, char *argv[])
 	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS)
 		NEXT_PARAM(argc, argv);
 
-	usage_exit_if(argc <= 1, STR_ENO_PARAMS);
+	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
 	if (!strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
 		layout_ver = parse_layout_version(argv[0]);
 		NEXT_PARAM(argc, argv);
 	}
 
-	usage_exit_if(argc <= 1, STR_ENO_PARAMS);
+	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
 	i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
