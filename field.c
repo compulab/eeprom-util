@@ -71,15 +71,15 @@ static int __update_bin(struct field *field, char *value,
  * print_bin() - print a field which contains binary data
  *
  * Treat the field data as simple binary data, and print it as two digit
- * hexadecimal values separated by spaces.
+ * hexadecimal values.
  * Sample output:
- * 	Field Name	01 02 03 04 05 06 07 08 09 0a
+ * 	Field Name	0102030405060708090a
  *
  * @field:	an initialized field to print
  */
 void print_bin(const struct field *field)
 {
-	__print_bin(field, " ", 0);
+	__print_bin(field, "", 0);
 }
 
 /**
@@ -97,18 +97,18 @@ int update_bin(struct field *field, char *value)
  * print_bin_rev() - print a field which contains binary data in reverse order
  *
  * Treat the field data as simple binary data, and print it in reverse order
- * as two digit hexadecimal values separated by spaces.
+ * as two digit hexadecimal values.
  *
  * Data in field:
- *  			01 02 03 04 05 06 07 08 09 0a
+ *  			0102030405060708090a
  * Sample output:
- * 	Field Name	0a 09 08 07 06 05 04 03 02 01
+ * 	Field Name	0a090807060504030201
  *
  * @field:	an initialized field to print
  */
 void print_bin_rev(const struct field *field)
 {
-	__print_bin(field, " ", 1);
+	__print_bin(field, "", 1);
 }
 
 /**
