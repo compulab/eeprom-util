@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "common.h"
 #include "field.h"
 
@@ -35,6 +36,46 @@ static void __print_bin(const struct field *field, char *delimiter, int reverse)
 		printf("%02x%s", field->buf[i], delimiter);
 
 	printf("%02x\n", field->buf[i]);
+}
+
+static int __update_bin(struct field *field, const char *value, bool reverse)
+{
+	int len = strlen(value);
+	int i = reverse ? len - 1 : 0;
+
+	/* each two characters in the string are fit in one byte */
+	if (len > field->size * 2)
+		return -1;
+
+	/* pad with zeros */
+	memset(field->buf, 0, field->size);
+
+	/* i - string iterator, j - buf iterator */
+	for (int j = 0; j < field->size; j++) {
+		unsigned char byte = 0;
+		char tmp[3] = { 0, 0, 0 };
+
+		if ((reverse && i < 0) || (!reverse && i >= len))
+			break;
+
+		for (int k = 0; k < 2; k++) {
+			if (reverse && i == 0) {
+				tmp[k] = value[i];
+				break;
+			}
+
+			tmp[k] = value[reverse ? i - 1 + k : i + k];
+		}
+
+		byte = safe_strtoui(tmp, 16);
+		if (byte < 0)
+			return -1;
+
+		field->buf[j] = byte;
+		i = reverse ? i - 2 : i + 2;
+	}
+
+	return 0;
 }
 
 static int __update_bin_delim(struct field *field, char *value,
@@ -115,16 +156,16 @@ void print_bin_rev(const struct field *field)
  * update_bin_rev() - Update field with new data in binary form, storing it in
  * 		      reverse
  *
- * This function takes a space delimited string of byte values, and stores them
- * in the field in the reverse order. i.e. if the input string was "1 2 3 4",
- * "4 3 2 1" will be written to the field.
+ * This function takes a string of byte values, and stores them
+ * in the field in the reverse order. i.e. if the input string was "1234",
+ * "3412" will be written to the field.
  *
  * @field:	an initialized field
- * @value:	a space delimited string of byte values
+ * @value:	a string of byte values
  */
 int update_bin_rev(struct field *field, char *value)
 {
-	return __update_bin_delim(field, value, " ", 1);
+	return __update_bin(field, value, true);
 }
 
 /**
