@@ -78,8 +78,7 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 	return 0;
 }
 
-static int __update_bin_delim(struct field *field, char *value,
-			      char *delimiter, int reverse)
+static int __update_bin_delim(struct field *field, char *value, char *delimiter)
 {
 	int count = 0;
 	const char *tmp = value;
@@ -94,13 +93,12 @@ static int __update_bin_delim(struct field *field, char *value,
 		return -1;
 
 	char *tok = strtok(value, delimiter);
-	int from = reverse ? field->size - 1 : 0;
-	int to = reverse ? -1 : field->size;
-	for (int i = from; tok && i != to; reverse ? i-- : i++) {
+	for (int i = 0; tok && i < field->size; i++) {
 		int val = safe_strtoui(tok, 16);
 		if (val < 0)
 			return -1;
 
+		/* here we assume that each tok is no more than byte long */
 		field->buf[i] = (unsigned char)val;
 		tok = strtok(NULL, delimiter);
 	}
@@ -131,7 +129,7 @@ void print_bin(const struct field *field)
  */
 int update_bin(struct field *field, char *value)
 {
-	return __update_bin_delim(field, value, " ", 0);
+	return __update_bin_delim(field, value, " ");
 }
 
 /**
@@ -258,7 +256,7 @@ void print_mac(const struct field *field)
  */
 int update_mac(struct field *field, char *value)
 {
-	return __update_bin_delim(field, value, ":", 0);
+	return __update_bin_delim(field, value, ":");
 }
 
 char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
