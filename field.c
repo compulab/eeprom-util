@@ -134,6 +134,17 @@ int update_bin(struct field *field, char *value)
 }
 
 /**
+ * update_reserved() - Update reserved field with new data in binary form
+ *
+ * @field:	an initialized field
+ * @value:	a space delimited string of byte values (i.e. "1 02 3 0x4")
+ */
+int update_reserved(struct field *field, char *value)
+{
+	return __update_bin_delim(field, value, " ");
+}
+
+/**
  * print_bin_rev() - print a field which contains binary data in reverse order
  *
  * Treat the field data as simple binary data, and print it in reverse order

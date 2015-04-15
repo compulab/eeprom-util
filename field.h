@@ -48,5 +48,6 @@ void print_ascii(const struct field *field);
 int update_ascii(struct field *field, char *value);
 
 void print_reserved(const struct field *field);
+int update_reserved(struct field *field, char *value);
 
 #endif
