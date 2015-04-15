@@ -126,11 +126,11 @@ void print_bin(const struct field *field)
  * update_bin() - Update field with new data in binary form
  *
  * @field:	an initialized field
- * @value:	a space delimited string of byte values (i.e. "1 02 3 0x4")
+ * @value:	a string of values (i.e. "10b234a")
  */
 int update_bin(struct field *field, char *value)
 {
-	return __update_bin_delim(field, value, " ");
+	return __update_bin(field, value, false);
 }
 
 /**
