@@ -37,8 +37,8 @@ static void __print_bin(const struct field *field, char *delimiter, int reverse)
 	printf("%02x\n", field->buf[i]);
 }
 
-static int __update_bin(struct field *field, char *value,
-			char *delimiter, int reverse)
+static int __update_bin_delim(struct field *field, char *value,
+			      char *delimiter, int reverse)
 {
 	int count = 0;
 	const char *tmp = value;
@@ -90,7 +90,7 @@ void print_bin(const struct field *field)
  */
 int update_bin(struct field *field, char *value)
 {
-	return __update_bin(field, value, " ", 0);
+	return __update_bin_delim(field, value, " ", 0);
 }
 
 /**
@@ -124,7 +124,7 @@ void print_bin_rev(const struct field *field)
  */
 int update_bin_rev(struct field *field, char *value)
 {
-	return __update_bin(field, value, " ", 1);
+	return __update_bin_delim(field, value, " ", 1);
 }
 
 /**
@@ -217,7 +217,7 @@ void print_mac(const struct field *field)
  */
 int update_mac(struct field *field, char *value)
 {
-	return __update_bin(field, value, ":", 0);
+	return __update_bin_delim(field, value, ":", 0);
 }
 
 char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
