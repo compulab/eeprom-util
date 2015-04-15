@@ -26,7 +26,8 @@
 
 #define PRINT_FIELD_SEGMENT	"%-30s"
 
-static void __print_bin(const struct field *field, char *delimiter, int reverse)
+static void __print_bin(const struct field *field,
+			char *delimiter, bool reverse)
 {
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	int i;
@@ -118,7 +119,7 @@ static int __update_bin_delim(struct field *field, char *value, char *delimiter)
  */
 void print_bin(const struct field *field)
 {
-	__print_bin(field, "", 0);
+	__print_bin(field, "", false);
 }
 
 /**
@@ -147,7 +148,7 @@ int update_bin(struct field *field, char *value)
  */
 void print_bin_rev(const struct field *field)
 {
-	__print_bin(field, "", 1);
+	__print_bin(field, "", true);
 }
 
 /**
@@ -245,7 +246,7 @@ int update_bin_ver(struct field *field, char *value)
  */
 void print_mac(const struct field *field)
 {
-	__print_bin(field, ":", 0);
+	__print_bin(field, ":", false);
 }
 
 /**
