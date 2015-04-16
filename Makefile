@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-VERSION = 2
-PATCHLEVEL = 1
-EEPROM_UTIL_VERSION = $(VERSION).$(PATCHLEVEL)
+VERSION = 3
+MINORVER = 0
+PATCHLEVEL = 0
+EEPROM_UTIL_VERSION = $(VERSION).$(MINORVER).$(PATCHLEVEL)
 
 CROSS_COMPILE ?=
 
