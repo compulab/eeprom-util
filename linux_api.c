@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #include "api.h"
 
 static int fd;
@@ -147,6 +148,7 @@ static void list_i2c_accessible(int bus)
 	int fd;
 	char dev_file_name[13];
 	struct stat buf;
+	bool i2c_bus_found = false;
 
 	int i = (bus < 0) ? 0 : bus;
 	int end = (bus < 0) ? 256 : bus + 1;
@@ -155,6 +157,7 @@ static void list_i2c_accessible(int bus)
 		if (stat(dev_file_name, &buf) == -1)
 			continue;
 
+		i2c_bus_found = true;
 		fd = open(dev_file_name, O_RDWR);
 		if (fd < 0) {
 			fprintf(stderr, "Failed accessing I2C bus "
@@ -170,6 +173,9 @@ static void list_i2c_accessible(int bus)
 		printf("\n");
 		close(fd);
 	}
+
+	if (!i2c_bus_found)
+		printf("No I2C bus was found.\nIs i2c-dev driver loaded?\n");
 }
 
 static void system_error(const char *message)
