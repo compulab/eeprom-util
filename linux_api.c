@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2011 CompuLab, Ltd.
+ * Copyright (C) 2009-2017 CompuLab, Ltd.
  * Authors: Nikita Kiryanov <nikita@compulab.co.il>
  *	    Igor Grinberg <grinberg@compulab.co.il>
  *
@@ -26,9 +26,12 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "api.h"
 
 static int fd;
+extern int errno;
 
 /*
  * Prepares a device file fd for read or write.
@@ -143,19 +146,25 @@ static void list_i2c_accessible(int bus)
 {
 	int fd;
 	char dev_file_name[13];
+	struct stat buf;
 
 	int i = (bus < 0) ? 0 : bus;
 	int end = (bus < 0) ? 256 : bus + 1;
 	for (; i < end; i++) {
 		sprintf(dev_file_name, "/dev/i2c-%d", i);
-		fd = open(dev_file_name, O_RDWR);
-		if (fd < 0)
+		if (stat(dev_file_name, &buf) == -1)
 			continue;
 
-		printf("On i2c-%d:\n\t", i);
-		for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
-			if (i2c_probe(fd, j))
-				printf("0x%x ", j);
+		fd = open(dev_file_name, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed accessing I2C bus "
+			"%d: %s (%d)\n", i, strerror(errno), -errno);
+		} else {
+			printf("On i2c-%d:\n\t", i);
+			for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
+				if (i2c_probe(fd, j))
+					printf("0x%x ", j);
+			}
 		}
 
 		printf("\n");
@@ -196,7 +205,11 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 
 	sprintf(dev_file_name, "/dev/i2c-%d", i2c_bus);
 	fd = open_device_file(dev_file_name, i2c_addr);
-	if (fd != -1) {
+	if (fd < 0) {
+		fprintf(stderr,	"Warning, %s access failed: %s (%d)\n",
+			dev_file_name, strerror(errno), -errno);
+		fprintf(stderr,	"Is i2c-dev driver loaded?\n");
+	} else {
 		configure_i2c(api);
 		return 0;
 	}
@@ -204,12 +217,17 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom",
 		i2c_bus, i2c_addr);
 	fd = open_device_file(dev_file_name, -1);
-	if (fd != -1) {
+	if (fd < 0) {
+		fprintf(stderr,	"Warning, %s access failed: %s (%d)\n",
+			dev_file_name, strerror(errno), -errno);
+		fprintf(stderr,	"Is eeprom driver loaded?\n");
+	} else {
 		configure_driver(api);
 		return 0;
 	}
 
-	perror("Can't configure I/O\n"
-		"Neither EEPROM driver nor i2c device interface is available");
+	fprintf(stderr,
+		"Neither EEPROM driver nor i2c device interface is available\n");
+
 	return -1;
 }
