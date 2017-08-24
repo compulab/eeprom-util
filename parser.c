@@ -74,12 +74,8 @@ static void cond_usage_exit(bool cond, const char *message)
 	       "LAYOUT VERSIONS\n"
 	       "The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
 	       "If the -l option is omitted, the utility will auto detect the layout based on the data in the EEPROM.\n"
-	       "The following values can be provided with the -l option:\n"
-	       "       legacy\n"
-	       "       v1\n"
-	       "       v2\n"
-	       "       v3\n"
-	       "       v4\n");
+	       "The following values can be provided with the -l option:\n\n"
+	       "       legacy, v1, v2, v3, v4\n")
 
 	if (write_enabled())
 		printf("\n"
