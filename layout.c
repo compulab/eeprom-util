@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2011 CompuLab, Ltd.
+ * Copyright (C) 2009-2017 CompuLab, Ltd.
  * Authors: Nikita Kiryanov <nikita@compulab.co.il>
  *	    Igor Grinberg <grinberg@compulab.co.il>
  *
@@ -89,6 +89,30 @@ struct field layout_v3[16] = {
 	{ RESERVED_FIELDS,           64, NULL, print_reserved, update_ascii },
 };
 
+struct field layout_v4[21] = {
+	{ "Major Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "Minor Revision",           2, NULL, print_bin_ver,  update_bin_ver },
+	{ "1st MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "2nd MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "Production Date",          4, NULL, print_date,     update_date },
+	{ "Serial Number",           12, NULL, print_bin_rev,  update_bin_rev },
+	{ "3rd MAC Address (WIFI)",   6, NULL, print_mac,      update_mac },
+	{ "4th MAC Address (Bluetooth)", 6, NULL, print_mac,   update_mac },
+	{ "Layout Version",           1, NULL, print_bin,      update_bin },
+	{ "CompuLab EEPROM ID",       3, NULL, print_bin,      update_bin },
+	{ "5th MAC Address",          6, NULL, print_mac,      update_mac },
+	{ "6th MAC Address",          6, NULL, print_mac,      update_mac },
+	{ RESERVED_FIELDS,          4, NULL, print_reserved, update_reserved },
+	{ RESERVED_FIELDS,          64, NULL, print_reserved, update_reserved },
+	{ "Product Name",            16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #1",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #2",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #3",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #4",      16, NULL, print_ascii,    update_ascii },
+	{ "Product Options #5",      16, NULL, print_ascii,    update_ascii },
+	{ RESERVED_FIELDS,           32, NULL, print_reserved, update_ascii },
+};
+
 struct field layout_unknown[1] = {
 	{ NO_LAYOUT_FIELDS, 256, NULL, print_bin, update_bin },
 };
@@ -109,6 +133,8 @@ static enum layout_version detect_layout(unsigned char *data)
 		return LAYOUT_VER2;
 	case 3:
 		return LAYOUT_VER3;
+	case 4:
+		return LAYOUT_VER4;
 	}
 
 	if (data[LAYOUT_CHECK_BYTE] >= 0x20)
@@ -268,6 +294,10 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	case LAYOUT_VER3:
 		layout->fields = layout_v3;
 		layout->num_of_fields = ARRAY_LEN(layout_v3);
+		break;
+	case LAYOUT_VER4:
+		layout->fields = layout_v4;
+		layout->num_of_fields = ARRAY_LEN(layout_v4);
 		break;
 	default:
 		layout->fields = layout_unknown;

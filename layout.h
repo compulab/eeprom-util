@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2011 CompuLab, Ltd.
+ * Copyright (C) 2009-2017 CompuLab, Ltd.
  * Authors: Nikita Kiryanov <nikita@compulab.co.il>
  *	    Igor Grinberg <grinberg@compulab.co.il>
  *
@@ -30,6 +30,7 @@ enum layout_version {
 	LAYOUT_VER1,
 	LAYOUT_VER2,
 	LAYOUT_VER3,
+	LAYOUT_VER4,
 	LAYOUT_UNRECOGNIZED,
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2011 CompuLab, Ltd.
+ * Copyright (C) 2009-2017 CompuLab, Ltd.
  * Authors: Nikita Kiryanov <nikita@compulab.co.il>
  *	    Igor Grinberg <grinberg@compulab.co.il>
  *
@@ -78,7 +78,8 @@ static void cond_usage_exit(bool cond, const char *message)
 	       "       legacy\n"
 	       "       v1\n"
 	       "       v2\n"
-	       "       v3\n");
+	       "       v3\n"
+	       "       v4\n");
 
 	if (write_enabled())
 		printf("\n"
@@ -134,6 +135,8 @@ static enum layout_version parse_layout_version(char *str)
 		return LAYOUT_VER2;
 	else if (!strncmp(str, "v3", 2))
 		return LAYOUT_VER3;
+	else if (!strncmp(str, "v4", 2))
+		return LAYOUT_VER4;
 	else
 		return LAYOUT_UNRECOGNIZED;
 }
