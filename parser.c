@@ -75,7 +75,7 @@ static void cond_usage_exit(bool cond, const char *message)
 	       "The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
 	       "If the -l option is omitted, the utility will auto detect the layout based on the data in the EEPROM.\n"
 	       "The following values can be provided with the -l option:\n\n"
-	       "       legacy, v1, v2, v3, v4\n")
+	       "       legacy, 1, 2, 3, 4	print according to layout version\n");
 
 	if (write_enabled())
 		printf("\n"
@@ -121,18 +121,19 @@ static enum action parse_action(int argc, char *argv[])
 	return EEPROM_ACTION_INVALID; //To appease the compiler
 }
 
-static enum layout_version parse_layout_version(char *str)
+static enum layout_version parse_layout_version(char *str, char *error_message)
 {
+	char *endptr;
+
 	if (!strncmp(str, "legacy", 6))
 		return LAYOUT_LEGACY;
-	else if (!strncmp(str, "v1", 2))
-		return LAYOUT_VER1;
-	else if (!strncmp(str, "v2", 2))
-		return LAYOUT_VER2;
-	else if (!strncmp(str, "v3", 2))
-		return LAYOUT_VER3;
-	else if (!strncmp(str, "v4", 2))
-		return LAYOUT_VER4;
+	else if(!strncmp(str, "v", 1))
+		str++;
+
+	int layout = strtol(str, &endptr, 10);
+	cond_usage_exit(*endptr != '\0', error_message);
+	if (endptr != str && layout >= LAYOUT_AUTODETECT && layout < LAYOUT_UNRECOGNIZED)
+		return (enum layout_version)layout;
 	else
 		return LAYOUT_UNRECOGNIZED;
 }
@@ -320,10 +321,11 @@ static inline struct strings_pair *parse_new_data(int field_changes_size,
 #endif
 
 #define NEXT_PARAM(argc, argv)	{(argc)--; (argv)++;}
-#define STR_EINVAL_BUS	"Invalid bus number!\n"
-#define STR_EINVAL_ADDR	"Invalid device address!\n"
-#define STR_ENO_PARAMS	"Missing parameters!\n"
-#define STR_ENO_MEM	"Out of memory!\n"
+#define STR_EINVAL_BUS		"Invalid bus number!\n"
+#define STR_EINVAL_ADDR		"Invalid device address!\n"
+#define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
+#define STR_ENO_PARAMS		"Missing parameters!\n"
+#define STR_ENO_MEM		"Out of memory!\n"
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
@@ -351,7 +353,8 @@ int main(int argc, char *argv[])
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
 	if (!strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
-		layout_ver = parse_layout_version(argv[0]);
+		layout_ver = parse_layout_version(argv[0], STR_EINVAL_PARAM);
+		cond_usage_exit(layout_ver == LAYOUT_UNRECOGNIZED, STR_EINVAL_PARAM);
 		NEXT_PARAM(argc, argv);
 	}
 

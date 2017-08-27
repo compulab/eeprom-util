@@ -25,13 +25,13 @@
 #define EEPROM_SIZE 256
 
 enum layout_version {
-	LAYOUT_AUTODETECT,
+	LAYOUT_AUTODETECT = -1,
 	LAYOUT_LEGACY,
 	LAYOUT_VER1,
 	LAYOUT_VER2,
 	LAYOUT_VER3,
 	LAYOUT_VER4,
-	LAYOUT_UNRECOGNIZED,
+	LAYOUT_UNRECOGNIZED, /* marks the end of the layout versions */
 };
 
 struct layout {
