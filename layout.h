@@ -32,6 +32,7 @@ enum layout_version {
 	LAYOUT_VER3,
 	LAYOUT_VER4,
 	LAYOUT_UNRECOGNIZED, /* marks the end of the layout versions */
+	RAW_DATA,
 };
 
 struct layout {
