@@ -410,10 +410,24 @@ int update_date(struct field *field, char *value)
 void print_ascii(const struct field *field)
 {
 	char format[8];
+	int *str = (int*)field->buf;
+	int pattern = *str;
+	/* assuming field->size is a multiple of 32bit! */
+	int block_count = field->size / sizeof(int);
+	char *print_buf = "";
+
+	/* check if str is trivial (contains only 0's or only 0xff's), if so print nothing */
+	for (int i = 0; i < block_count; i++) {
+		str++;
+		if (*str != pattern || (pattern != 0 && pattern != -1)) {
+			print_buf = (char*)field->buf;
+			break;
+		}
+	}
 
 	sprintf(format, "%%.%ds\n", field->size);
 	printf(PRINT_FIELD_SEGMENT, field->name);
-	printf(format, field->buf);
+	printf(format, print_buf);
 }
 
 /**
