@@ -74,7 +74,8 @@ static void cond_usage_exit(bool cond, const char *message)
 	       "LAYOUT VERSIONS\n"
 	       "The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
 	       "If the -l option is omitted, the utility will auto detect the layout based on the data in the EEPROM.\n"
-	       "The following values can be provided with the -l option:\n\n"
+	       "The following values can be provided with the -l option:\n"
+	       "       auto			use auto-detection to print layout\n"
 	       "       legacy, 1, 2, 3, 4	print according to layout version\n"
 	       "       raw			print raw data\n");
 
@@ -130,6 +131,8 @@ static enum layout_version parse_layout_version(char *str, char *error_message)
 		return LAYOUT_LEGACY;
 	else if (!strncmp(str, "raw", 3))
 		return RAW_DATA;
+	else if (!strncmp(str, "auto", 4))
+		return LAYOUT_AUTODETECT;
 	else if(!strncmp(str, "v", 1))
 		str++;
 
