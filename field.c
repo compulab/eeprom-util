@@ -123,6 +123,38 @@ void print_bin(const struct field *field)
 }
 
 /**
+ * print_bin_raw() - print raw data both in hexadecimal and in ascii format
+ *
+ * @field:	an initialized field to print
+ */
+void print_bin_raw(const struct field *field)
+{
+	printf(PRINT_FIELD_SEGMENT, field->name);
+	printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"
+	       "     0123456789abcdef\n");
+	int i, j;
+
+	for (i = 0; i < 256; i += 16) {
+		printf("%02x: ", i);
+		for (j = 0; j < 16; j++) {
+			printf("%02x", field->buf[i+j]);
+			printf(" ");
+		}
+		printf("    ");
+
+		for (j = 0; j < 16; j++) {
+			if (field->buf[i+j] == 0x00 || field->buf[i+j] == 0xff)
+				printf(".");
+			else if (field->buf[i+j] < 32 || field->buf[i+j] >= 127)
+				printf("?");
+			else
+				printf("%c", field->buf[i+j]);
+		}
+		printf("\n");
+	}
+}
+
+/**
  * update_bin() - Update field with new data in binary form
  *
  * @field:	an initialized field

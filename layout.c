@@ -114,7 +114,7 @@ struct field layout_v4[21] = {
 };
 
 struct field layout_unknown[1] = {
-	{ NO_LAYOUT_FIELDS, 256, NULL, print_bin, update_bin },
+	{ NO_LAYOUT_FIELDS, 256, NULL, print_bin_raw, update_bin },
 };
 
 /*

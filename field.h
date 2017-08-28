@@ -50,4 +50,6 @@ int update_ascii(struct field *field, char *value);
 void print_reserved(const struct field *field);
 int update_reserved(struct field *field, char *value);
 
+void print_bin_raw(const struct field *field);
+
 #endif
