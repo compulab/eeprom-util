@@ -130,17 +130,17 @@ static int driver_write(unsigned char *buf, int offset, int size)
 	return write(fd, buf + offset, size);
 }
 
-static int i2c_probe(int fd, int addr)
+static bool i2c_probe(int fd, int addr)
 {
 	union i2c_smbus_data data;
 
 	if (ioctl(fd, I2C_SLAVE_FORCE, addr) < 0)
-		return 0;
+		return false;
 
 	if (i2c_smbus_access(fd, I2C_SMBUS_READ, 0, I2C_SMBUS_BYTE, &data) < 0)
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
 static void list_i2c_accessible(int bus)
