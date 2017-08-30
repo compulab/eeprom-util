@@ -161,7 +161,7 @@ static void list_i2c_accessible(int bus)
 		fd = open(dev_file_name, O_RDWR);
 		if (fd < 0) {
 			fprintf(stderr, "Failed accessing I2C bus "
-			"%d: %s (%d)\n", i, strerror(errno), -errno);
+				"%d: %s (%d)\n", i, strerror(errno), -errno);
 		} else {
 			printf("On i2c-%d:\n\t", i);
 			for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
