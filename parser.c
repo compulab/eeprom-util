@@ -123,7 +123,7 @@ static enum action parse_action(int argc, char *argv[])
 	return EEPROM_ACTION_INVALID; //To appease the compiler
 }
 
-static enum layout_version parse_layout_version(char *str, char *error_message)
+static enum layout_version parse_layout_version(char *str)
 {
 	char *endptr;
 
@@ -137,11 +137,11 @@ static enum layout_version parse_layout_version(char *str, char *error_message)
 		str++;
 
 	int layout = strtol(str, &endptr, 10);
-	cond_usage_exit(*endptr != '\0', error_message);
-	if (endptr != str && layout >= LAYOUT_AUTODETECT && layout < LAYOUT_UNRECOGNIZED)
-		return (enum layout_version)layout;
-	else
+	if (*endptr != '\0' || endptr == str ||
+	    layout < LAYOUT_AUTODETECT || layout >= LAYOUT_UNRECOGNIZED)
 		return LAYOUT_UNRECOGNIZED;
+	else
+		return (enum layout_version)layout;
 }
 
 int parse_numeric_param(char *str, char *error_message)
@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
 	if (!strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
-		layout_ver = parse_layout_version(argv[0], STR_EINVAL_PARAM);
+		layout_ver = parse_layout_version(argv[0]);
 		cond_usage_exit(layout_ver == LAYOUT_UNRECOGNIZED, STR_EINVAL_PARAM);
 		NEXT_PARAM(argc, argv);
 	}
