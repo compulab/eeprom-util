@@ -54,8 +54,10 @@ static void cond_usage_exit(bool cond, const char *message)
 	printf("       eeprom-util read [-l <layout_version>] <bus_num> <device_addr>\n");
 
 
-	if (write_enabled())
+	if (write_enabled()) {
 		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> CHANGES\n");
+		printf("       eeprom-util clear <bus_num> <device_addr>\n");
+	}
 
 	printf("       eeprom-util version|-v|--version\n");
 	printf("       eeprom-util [help|-h|--help]\n");
@@ -65,8 +67,10 @@ static void cond_usage_exit(bool cond, const char *message)
 		"       list\tList device addresses accessible via i2c\n"
 		"       read\tRead from EEPROM\n");
 
-	if (write_enabled())
+	if (write_enabled()) {
 		printf("       write\tWrite to EEPROM\n");
+		printf("       clear\tClear EEPROM\n");
+        }
 
 	printf("       version\tPrint the version banner and exit\n"
 	       "       help\tPrint this help and exit\n");
@@ -100,6 +104,8 @@ static enum action parse_action(int argc, char *argv[])
 		return EEPROM_LIST;
 	} else if (!strncmp(argv[0], "read", 4)) {
 		return EEPROM_READ;
+	} else if (write_enabled() && !strncmp(argv[0], "clear", 5)) {
+		return EEPROM_CLEAR;
 	} else if (write_enabled() && !strncmp(argv[0], "write", 5)) {
 		if (argc > 1) {
 			if (!strncmp(argv[1], "fields", 6)) {
@@ -371,7 +377,7 @@ int main(int argc, char *argv[])
 	i2c_addr = parse_numeric_param(argv[0], STR_EINVAL_ADDR);
 	NEXT_PARAM(argc, argv);
 
-	if (action == EEPROM_READ)
+	if (action == EEPROM_READ || action == EEPROM_CLEAR)
 		goto done;
 
 	char *delim = (action == EEPROM_WRITE_FIELDS) ? "=" : ",";
