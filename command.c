@@ -26,40 +26,28 @@
 #include "api.h"
 
 static struct api api;
+static unsigned char buf[EEPROM_SIZE];
 
-static void do_io(struct command *cmd)
+static void read_eeprom(unsigned char *buf)
 {
-	unsigned char buf[EEPROM_SIZE];
-	int offset = 0, size = EEPROM_SIZE;
-
-	if (api.read(buf, offset, size) < 0) {
+	if (api.read(buf, 0, EEPROM_SIZE) < 0)
 		api.system_error("Read error");
-		return;
-	}
+}
 
-	struct layout *layout = new_layout(buf, EEPROM_SIZE, cmd->layout_ver);
-	if (layout == NULL) {
-		api.system_error("Memory allocation error");
-		goto done;
-	}
-
-	if (cmd->action == EEPROM_READ) {
-		layout->print(layout);
-		goto done;
-	}
-
-	if (cmd->action == EEPROM_WRITE_FIELDS)
-		layout->update_fields(layout, cmd->new_field_data,
-				      cmd->new_data_size);
-	else
-		layout->update_bytes(layout, cmd->new_field_data,
-				     cmd->new_data_size);
-
-	if (api.write(layout->data, offset, size) < 0)
+static void write_eeprom(unsigned char *data)
+{
+	if (api.write(data, 0, EEPROM_SIZE) < 0)
 		api.system_error("Write error");
+}
 
-done:
-	free_layout(layout);
+static struct layout *prepare_layout(struct command *cmd)
+{
+	read_eeprom(buf);
+	struct layout *layout = new_layout(buf, EEPROM_SIZE, cmd->layout_ver);
+	if (layout == NULL)
+		api.system_error("Memory allocation error");
+
+	return layout;
 }
 
 static void print_i2c_accessible(struct command *cmd)
@@ -69,22 +57,44 @@ static void print_i2c_accessible(struct command *cmd)
 
 static void execute_command(struct command *cmd)
 {
+	struct layout *layout = NULL;
 	if (setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr))
 		return;
 
-	switch(cmd->action) {
-	case EEPROM_LIST:
-		print_i2c_accessible(cmd);
-		break;
-	case EEPROM_READ:
-	case EEPROM_WRITE_FIELDS:
-	case EEPROM_WRITE_BYTES:
-		do_io(cmd);
-		break;
-	case EEPROM_ACTION_INVALID:
+	if (cmd->action == EEPROM_ACTION_INVALID) {
 		api.system_error("Invalid command");
-		break;
+		return;
 	}
+
+	if (cmd->action == EEPROM_LIST) {
+		print_i2c_accessible(cmd);
+		return;
+	}
+
+	layout = prepare_layout(cmd);
+	if (!layout)
+		return;
+
+	switch(cmd->action) {
+	case EEPROM_READ:
+		layout->print(layout);
+		goto done;
+	case EEPROM_WRITE_FIELDS:
+		layout->update_fields(layout, cmd->new_field_data,
+				      cmd->new_data_size);
+		break;
+	case EEPROM_WRITE_BYTES:
+		layout->update_bytes(layout, cmd->new_field_data,
+				     cmd->new_data_size);
+		break;
+	default:
+		goto done;
+	}
+
+	write_eeprom(layout->data);
+
+done:
+	free_layout(layout);
 }
 
 struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
