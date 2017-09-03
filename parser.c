@@ -68,8 +68,8 @@ static void cond_usage_exit(bool cond, const char *message)
 	if (write_enabled())
 		printf("       write\tWrite to EEPROM\n");
 
-		printf("       version\tPrint the version banner and exit\n"
-		       "       help\tPrint this help and exit\n");
+	printf("       version\tPrint the version banner and exit\n"
+	       "       help\tPrint this help and exit\n");
 	printf("\n"
 	       "LAYOUT VERSIONS\n"
 	       "The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
