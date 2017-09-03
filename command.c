@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <string.h>
 #include "command.h"
 #include "layout.h"
 #include "api.h"
@@ -55,12 +56,6 @@ static void print_i2c_accessible(struct command *cmd)
 	api.probe(cmd->i2c_bus);
 }
 
-static void fill_buf(char num)
-{
-	for (int i = 0; i < EEPROM_SIZE; i++)
-		buf[i] = num;
-}
-
 static void execute_command(struct command *cmd)
 {
 	struct layout *layout = NULL;
@@ -78,7 +73,7 @@ static void execute_command(struct command *cmd)
 	}
 
 	if (cmd->action == EEPROM_CLEAR) {
-		fill_buf(0xff);
+		memset(buf, 0xff, EEPROM_SIZE);
 		write_eeprom(buf);
 		return;
 	}
