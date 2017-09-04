@@ -201,7 +201,9 @@ static void configure_driver(struct api *api)
 
 int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 {
-	char dev_file_name[40];
+	char i2cdev_fname[13];
+	char eeprom_dev_fname[40];
+	int saved_errno;
 
 	/* In this case we can still do an i2c probe, so setup for i2c */
 	if (i2c_bus < 0 && i2c_addr < 0) {
@@ -209,24 +211,30 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 		return 0;
 	}
 
-	sprintf(dev_file_name, "/dev/i2c-%d", i2c_bus);
-	fd = open_device_file(dev_file_name, i2c_addr);
-	if (fd < 0) {
-		fprintf(stderr,	"Warning, %s access failed: %s (%d)\n",
-			dev_file_name, strerror(errno), -errno);
-		fprintf(stderr,	"Is i2c-dev driver loaded?\n");
-	} else {
+	sprintf(i2cdev_fname, "/dev/i2c-%d", i2c_bus);
+	fd = open_device_file(i2cdev_fname, i2c_addr);
+	if (fd >= 0) {
 		configure_i2c(api);
 		return 0;
 	}
 
-	sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom",
+	saved_errno = errno;
+
+	sprintf(eeprom_dev_fname, "/sys/bus/i2c/devices/%d-00%x/eeprom",
 		i2c_bus, i2c_addr);
-	fd = open_device_file(dev_file_name, -1);
+	fd = open_device_file(eeprom_dev_fname, -1);
 	if (fd < 0) {
-		fprintf(stderr,	"Warning, %s access failed: %s (%d)\n",
-			dev_file_name, strerror(errno), -errno);
-		fprintf(stderr,	"Is eeprom driver loaded?\n");
+		/* print error which occurred when opening i2c-dev file */
+		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
+			i2cdev_fname, strerror(saved_errno), -saved_errno);
+		if (saved_errno == ENOENT)
+			fprintf(stderr,	"Is i2c-dev driver loaded?\n");
+
+		/* print error which occurred when opening eeprom-dev file */
+		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
+			eeprom_dev_fname, strerror(errno), -errno);
+		if (errno == ENOENT)
+			fprintf(stderr,	"Is EEPROM driver loaded?\n");
 	} else {
 		configure_driver(api);
 		return 0;
