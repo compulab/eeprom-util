@@ -87,12 +87,14 @@ static void execute_command(struct command *cmd)
 		layout->print(layout);
 		goto done;
 	case EEPROM_WRITE_FIELDS:
-		layout->update_fields(layout, cmd->new_field_data,
-				      cmd->new_data_size);
+		if (!layout->update_fields(layout, cmd->new_field_data,
+					  cmd->new_data_size))
+			goto done;
 		break;
 	case EEPROM_WRITE_BYTES:
-		layout->update_bytes(layout, cmd->new_field_data,
-				     cmd->new_data_size);
+		if (!layout->update_bytes(layout, cmd->new_field_data,
+					 cmd->new_data_size))
+			goto done;
 		break;
 	default:
 		goto done;

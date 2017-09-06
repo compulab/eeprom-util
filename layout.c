@@ -174,14 +174,14 @@ static int update_bytes(struct layout *layout,
 		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
 			printf("Invalid offset '%s'; will not update!\n",
 			       new_byte_data[i].key);
-			continue;
+			return 0;
 		}
 
 		int value = safe_strtoui(new_byte_data[i].value, 0);
 		if (!(value >= 0 && value <= 255)) {
 			printf("Invalid value '%s' at offset '%s'; will not update!\n",
 			       new_byte_data[i].value, new_byte_data[i].key);
-			continue;
+			return 0;
 		}
 
 		layout->data[offset] = value;
@@ -244,7 +244,7 @@ static int update_fields(struct layout *layout,
 		if (update_field(layout, new_field_data[i].key,
 				 new_field_data[i].value)) {
 
-			continue;
+			return 0;
 		}
 
 		updated_fields_cnt++;
