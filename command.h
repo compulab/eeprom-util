@@ -40,7 +40,7 @@ struct command {
 	int new_data_size;
 	struct strings_pair *new_field_data;
 
-	void (*execute)(struct command *cmd);
+	int (*execute)(struct command *cmd);
 };
 
 struct command *new_command(enum action action, int i2c_bus, int i2c_addr,

@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
 	enum layout_version layout_ver = LAYOUT_AUTODETECT;
 	enum action action = EEPROM_ACTION_INVALID;
 	struct strings_pair *new_data = NULL;
-	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1;
+	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1, ret = -1;
 
 	cond_usage_exit(argc <= 1, "");
 	NEXT_PARAM(argc, argv); // Skip program name
@@ -404,7 +404,7 @@ done:
 	if (cmd == NULL)
 		perror(STR_ENO_MEM);
 	else
-		cmd->execute(cmd);
+		ret = cmd->execute(cmd);
 
 	for (int i = 0; i < new_data_size; i++) {
 		free(new_data[i].key);
@@ -414,5 +414,5 @@ done:
 	free(new_data);
 	free_command(cmd);
 
-	return 0;
+	return ret;
 }

@@ -143,9 +143,9 @@ static bool i2c_probe(int fd, int addr)
 	return true;
 }
 
-static void list_i2c_accessible(int bus)
+static int list_i2c_accessible(int bus)
 {
-	int fd;
+	int fd, ret = -1;
 	char dev_file_name[13];
 	struct stat buf;
 	bool i2c_bus_found = false;
@@ -163,6 +163,11 @@ static void list_i2c_accessible(int bus)
 			fprintf(stderr, "Failed accessing I2C bus "
 				"%d: %s (%d)\n", i, strerror(errno), -errno);
 		} else {
+			/*
+			 * only if dev_file_name exists and
+			 * can be opened, success is returned
+			 */
+			ret = 0;
 			printf("On i2c-%d:\n\t", i);
 			for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
 				if (i2c_probe(fd, j))
@@ -176,6 +181,8 @@ static void list_i2c_accessible(int bus)
 
 	if (!i2c_bus_found)
 		printf("No I2C bus was found.\nIs i2c-dev driver loaded?\n");
+
+	return ret;
 }
 
 static void system_error(const char *message)
