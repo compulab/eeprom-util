@@ -338,6 +338,7 @@ static inline struct strings_pair *parse_new_data(int field_changes_size,
 #define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
 #define STR_ENO_PARAMS		"Missing parameters!\n"
 #define STR_ENO_MEM		"Out of memory!\n"
+#define MAX_I2C_BUS		255
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
@@ -352,9 +353,11 @@ int main(int argc, char *argv[])
 	action = parse_action(argc, argv);
 	NEXT_PARAM(argc, argv);
 	if (action == EEPROM_LIST) {
-		if (argc >= 1)
+		if (argc >= 1) {
 			i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
-
+			cond_usage_exit(i2c_bus > MAX_I2C_BUS ||
+					i2c_bus < 0, STR_EINVAL_BUS);
+		}
 		goto done;
 	}
 
@@ -372,9 +375,11 @@ int main(int argc, char *argv[])
 
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
 	i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
+	cond_usage_exit(i2c_bus > MAX_I2C_BUS || i2c_bus < 0, STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
 	i2c_addr = parse_numeric_param(argv[0], STR_EINVAL_ADDR);
+	cond_usage_exit(i2c_addr > MAX_I2C_BUS || i2c_addr < 0, STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_READ || action == EEPROM_CLEAR)
