@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
 
 	if (new_data == NULL) {
 		perror(STR_ENO_MEM);
-		return -1;
+		return 1;
 	}
 
 done:
@@ -414,5 +414,5 @@ done:
 	free(new_data);
 	free_command(cmd);
 
-	return ret;
+	return ret ? 1 : 0;
 }
