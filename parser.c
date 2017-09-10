@@ -43,12 +43,8 @@ void print_banner(void)
 
 #define COLOR_RESET  "\033[0m"
 #define COLOR_RED  "\x1B[31m"
-static void cond_usage_exit(bool cond, const char *message)
+static void print_help(void)
 {
-	if (!cond)
-		return;
-
-	printf(COLOR_RED "%s" COLOR_RESET, message);
 	print_banner();
 	printf("Usage: eeprom-util list [<bus_num>]\n");
 	printf("       eeprom-util read [-l <layout_version>] <bus_num> <device_addr>\n");
@@ -95,6 +91,21 @@ static void cond_usage_exit(bool cond, const char *message)
 			"and no quote marks are necessary if there are spaces in either <field_name> or <value>\n");
 
 	printf("\n");
+}
+
+static void cond_usage_exit(bool cond, const char *message)
+{
+	if (!cond)
+		return;
+
+	printf(COLOR_RED "%s" COLOR_RESET, message);
+	print_help();
+	exit(1);
+}
+
+static void usage_exit(void)
+{
+	print_help();
 	exit(0);
 }
 
@@ -117,7 +128,7 @@ static enum action parse_action(int argc, char *argv[])
 	} else if (!strncmp(argv[0], "help", 4) ||
 		!strncmp(argv[0], "-h", 2) ||
 		!strncmp(argv[0], "--help", 6)) {
-		cond_usage_exit(true, "");
+		usage_exit();
 	} else if (!strncmp(argv[0], "version", 7) ||
 		!strncmp(argv[0], "-v", 2) ||
 		!strncmp(argv[0], "--version", 9)) {
@@ -347,9 +358,10 @@ int main(int argc, char *argv[])
 	struct strings_pair *new_data = NULL;
 	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1, ret = -1;
 
-	cond_usage_exit(argc <= 1, "");
-	NEXT_PARAM(argc, argv); // Skip program name
+	if (argc <= 1)
+		usage_exit();
 
+	NEXT_PARAM(argc, argv); // Skip program name
 	action = parse_action(argc, argv);
 	NEXT_PARAM(argc, argv);
 	if (action == EEPROM_LIST) {
