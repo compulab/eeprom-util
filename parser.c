@@ -41,8 +41,6 @@ void print_banner(void)
 	printf("CompuLab EEPROM utility%s%s\n\n", version, date);
 }
 
-#define COLOR_RESET  "\033[0m"
-#define COLOR_RED  "\x1B[31m"
 static void print_help(void)
 {
 	print_banner();

@@ -20,6 +20,10 @@
 #ifndef _COMMON_
 #define _COMMON_
 
+#define COLOR_RED  "\x1B[31m"
+#define COLOR_GREEN  "\x1B[32m"
+#define COLOR_RESET  "\033[0m"
+
 struct strings_pair {
 	char *key;
 	char *value;

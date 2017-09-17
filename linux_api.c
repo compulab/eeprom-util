@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include "api.h"
+#include "common.h"
 
 static int fd;
 extern int errno;
@@ -143,6 +144,8 @@ static bool i2c_probe(int fd, int addr)
 	return true;
 }
 
+#define NOT_FOUND(x)	"No "x" was found"
+#define DRIVER_HINT(x)	"Is "x" driver loaded?\n"
 static int list_i2c_accessible(int bus)
 {
 	int fd, ret = -1;
@@ -180,9 +183,53 @@ static int list_i2c_accessible(int bus)
 	}
 
 	if (!i2c_bus_found)
-		printf("No I2C bus was found.\nIs i2c-dev driver loaded?\n");
+		fprintf(stderr, NOT_FOUND("I2C bus")"\n"DRIVER_HINT("i2c-dev"));
 
 	return ret;
+}
+
+static int list_driver_accessible(int bus)
+{
+	int ret = -1;
+	char dev_file_name[40];
+	struct stat buf;
+	bool driver_found = false;
+
+	int i = (bus < 0) ? 0 : bus;
+	int end = (bus < 0) ? 256 : bus + 1;
+	for (; i < end; i++) {
+		for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
+			sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom", i, j);
+			if (stat(dev_file_name, &buf) == -1)
+				continue;
+
+			/* only if dev_file_name exists success is returned */
+			ret = 0;
+			driver_found = true;
+			printf("EEPROM device file found at: %s\n", dev_file_name);
+		}
+	}
+
+	if (!driver_found && bus < 0) {
+		fprintf(stderr, NOT_FOUND("EEPROM driver")"\n"DRIVER_HINT("EEPROM"));
+	} else if (!driver_found && bus >=0) {
+		fprintf(stderr, NOT_FOUND("EEPROM driver")" on bus number %d.\n"
+		      DRIVER_HINT("EEPROM"), bus);
+	}
+
+	return ret;
+}
+
+static int list_accessible(int bus)
+{
+	int ret1, ret2;
+
+	printf(COLOR_GREEN "I2C buses:\n" COLOR_RESET);
+	ret1 = list_i2c_accessible(bus);
+	printf(COLOR_GREEN "\nEEPROM device files:\n" COLOR_RESET);
+	ret2 = list_driver_accessible(bus);
+
+	return -(ret1 && ret2); /* return -1 only if both fail */
 }
 
 static void system_error(const char *message)
@@ -194,7 +241,7 @@ static void configure_i2c(struct api *api)
 {
 	api->read = i2c_read;
 	api->write = i2c_write;
-	api->probe = list_i2c_accessible;
+	api->probe = list_accessible;
 	api->system_error = system_error;
 }
 
@@ -202,7 +249,7 @@ static void configure_driver(struct api *api)
 {
 	api->read = driver_read;
 	api->write = driver_write;
-	api->probe = NULL;
+	api->probe = list_accessible;
 	api->system_error = system_error;
 }
 
@@ -235,13 +282,13 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
 			i2cdev_fname, strerror(saved_errno), -saved_errno);
 		if (saved_errno == ENOENT)
-			fprintf(stderr,	"Is i2c-dev driver loaded?\n");
+			fprintf(stderr,	DRIVER_HINT("i2c-dev"));
 
 		/* print error which occurred when opening eeprom-dev file */
 		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
 			eeprom_dev_fname, strerror(errno), -errno);
 		if (errno == ENOENT)
-			fprintf(stderr,	"Is EEPROM driver loaded?\n");
+			fprintf(stderr,	DRIVER_HINT("EEPROM"));
 	} else {
 		configure_driver(api);
 		return 0;
