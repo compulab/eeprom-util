@@ -170,7 +170,11 @@ static int update_bytes(struct layout *layout,
 {
 	int updated_bytes = 0;
 	for (int i = 0; i < new_data_size; i++) {
-		int offset = safe_strtoui(new_byte_data[i].key, 0);
+		char *str = strtok(new_byte_data[i].key, "-");
+		if (str == NULL)
+			return 0;
+
+		int offset = safe_strtoui(str, 0);
 		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
 			printf("Invalid offset '%s'; will not update!\n",
 			       new_byte_data[i].key);
@@ -184,8 +188,23 @@ static int update_bytes(struct layout *layout,
 			return 0;
 		}
 
-		layout->data[offset] = value;
-		updated_bytes++;
+		/* in case of a range of bytes to write */
+		str = strtok(NULL, "-");
+		if (str != NULL) {
+			int offset_end = safe_strtoui(str, 0);
+			if (!(offset_end >= 0 && offset_end < EEPROM_SIZE)) {
+				printf("Invalid offset '%s'; will not update!\n",
+				       str);
+				return 0;
+			}
+
+			size_t range = offset_end - offset + 1;
+			memset(layout->data + offset, value, range);
+			updated_bytes += range;
+		} else {
+			layout->data[offset] = value;
+			updated_bytes++;
+		}
 	}
 
 	return updated_bytes;

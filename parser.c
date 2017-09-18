@@ -82,11 +82,13 @@ static void print_help(void)
 			"CHANGES FORMAT\n"
 			"The list of changes to the write command can be passed inline:\n"
 			"       eeprom-util write fields [-l <layout_version>] <bus_num> <device_addr> [<field_name>=<value> ]*\n"
-			"       eeprom-util write bytes [-l <layout_version>] <bus_num> <device_addr> [<offset>,<value> ]*\n"
+			"       eeprom-util write bytes [-l <layout_version>] <bus_num> <device_addr> [<offset>[-<offset-end>],<value> ]*\n"
 			"or via file input:\n"
 			"       eeprom-util write (fields | bytes) [-l <layout_version>] <bus_num> <device_addr> < file\n"
 			"\nWhen file input is used, each <field_name>=<value> or <offset>,<value> pair should be on its own line,\n"
-			"and no quote marks are necessary if there are spaces in either <field_name> or <value>\n");
+			"and no quote marks are necessary if there are spaces in either <field_name> or <value>\n"
+			"\nWhen writing a range of bytes use the syntax:	[<offset>[-<offset-end>],<value> ]* \n"
+			"Range is inclusive. Range changes can be mixed with non-range changes.\n");
 
 	printf("\n");
 }
@@ -239,6 +241,36 @@ static int read_nonblock_stdin(char **buffer)
 }
 
 /*
+ * valid_key - check if byte offset key is valid.
+ *
+ * Valid byte offset is a positive number.
+ * If a range is passed in key, the first offset must be
+ * smaller then the second.
+ *
+ * @key - one byte offset or byte range to be checked.
+ *
+ * Returns 1 if key is valid, 0 if not.
+ */
+static bool valid_key(char *key)
+{
+	char *endptr1;
+	int key_num1, key_num2 = 0;
+
+	key_num1 = strtol(key, &endptr1, 0);
+	if (endptr1 == key)
+		return false;
+
+	if (*endptr1 != '\0') {
+		endptr1++;
+		key_num2 = strtol(endptr1, NULL, 0);
+		if (key_num1 >= key_num2)
+			return false;
+	}
+
+	return key_num1 >= 0 && key_num2 >=0;
+}
+
+/*
  * parse_new_data - parse the strings representing new per-key data
  *
  * Allocate a strings_pair array and populate it with (key, new_data) values
@@ -252,41 +284,50 @@ static int read_nonblock_stdin(char **buffer)
  * 			(key, new_data) values.
  */
 static struct strings_pair *parse_new_data(int changes_size, char *changes[],
-					   char *delim)
+					   char *delim, bool is_bytes)
 {
 	struct strings_pair *pairs;
 	pairs = malloc(sizeof(struct strings_pair) * changes_size);
-	if (pairs == NULL)
+	if (!pairs) {
+		perror("Out of memory!");
 		return NULL;
+	}
 
 	int i, sizeof_delim = strlen(delim);
 	for (i = 0; i < changes_size; i++) {
 		char *key, *value;
-		// strtok can't handle empty tokens
 		if (!strncmp(changes[i], delim, sizeof_delim)) {
-			key = "";
-		 	value = strtok(changes[i], delim);
+			goto cleanup;
 		} else {
 			key = strtok(changes[i], delim);
+			// if writing bytes, check if offset is valid
+			if (is_bytes && !valid_key(key)) {
+				fprintf(stderr, "Invalid offset '%s';"
+					"will not update!\n", key);
+				goto cleanup;
+			}
+
 			value = strtok(NULL, delim);
+			if (!value) {
+				fprintf(stderr, "Invalid value, will not update!\n");
+				goto cleanup;
+			}
 		}
 
-		// Fields logic doesn't work with NULLs. Convert to empty strs.
-		if (value == NULL)
-			value = "";
-
-		if (alloc_cpy_str(&pairs[i].key, key))
-			goto out_of_mem;
+		if (alloc_cpy_str(&pairs[i].key, key)) {
+			perror("Out of memory!");
+			goto cleanup;
+		}
 
 		if (alloc_cpy_str(&pairs[i].value, value)) {
 			free(pairs[i].key);
-			goto out_of_mem;
+			perror("Out of memory!");
+			goto cleanup;
 		}
 	}
 
 	return pairs;
-
-out_of_mem:
+cleanup:
 	for (--i; i >= 0; i--) {
 		free(pairs[i].key);
 		free(pairs[i].value);
@@ -297,7 +338,8 @@ out_of_mem:
 	return NULL;
 }
 
-static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim)
+static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim,
+						 bool is_bytes)
 {
 	char *buffer;
 	int num_of_changes = read_nonblock_stdin(&buffer);
@@ -318,7 +360,7 @@ static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim)
 	}
 
 	struct strings_pair *changes;
-	changes = parse_new_data(num_of_changes, field_changes, delim);
+	changes = parse_new_data(num_of_changes, field_changes, delim, is_bytes);
 
 	free(buffer);
 	free(field_changes);
@@ -396,17 +438,16 @@ int main(int argc, char *argv[])
 		goto done;
 
 	char *delim = (action == EEPROM_WRITE_FIELDS) ? "=" : ",";
+	bool is_bytes = (action == EEPROM_WRITE_BYTES) ? true : false;
 	if (!isatty(STDIN_FILENO)) {
-		new_data = parse_new_data_stdin(&new_data_size, delim);
+		new_data = parse_new_data_stdin(&new_data_size, delim, is_bytes);
 	} else {
-		new_data = parse_new_data(argc, argv, delim);
+		new_data = parse_new_data(argc, argv, delim, is_bytes);
 		new_data_size = argc;
 	}
 
-	if (new_data == NULL) {
-		perror(STR_ENO_MEM);
+	if (!new_data)
 		return 1;
-	}
 
 done:
 	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, new_data_size,
