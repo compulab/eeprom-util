@@ -370,14 +370,16 @@ static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim,
 }
 #else
 static inline struct strings_pair *parse_new_data_stdin(int *num_of_pairs,
-							char *delim)
+							char *delim,
+							bool is_bytes)
 {
 	return NULL;
 }
 
 static inline struct strings_pair *parse_new_data(int field_changes_size,
 						  char *field_changes[],
-						  char *delim)
+						  char *delim,
+						  bool is_bytes)
 {
 	return NULL;
 }
