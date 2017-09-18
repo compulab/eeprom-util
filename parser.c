@@ -98,7 +98,7 @@ static void cond_usage_exit(bool cond, const char *message)
 	if (!cond)
 		return;
 
-	printf(COLOR_RED "%s" COLOR_RESET, message);
+	fprintf(stderr, COLOR_RED "%s" COLOR_RESET, message);
 	print_help();
 	exit(1);
 }

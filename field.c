@@ -396,13 +396,13 @@ int update_date(struct field *field, char *value)
 	char *tok3 = strtok(NULL, "/");
 
 	if (tok1 == NULL || tok2 == NULL || tok3 == NULL) {
-		printf("%s: syntax error\n", field->name);
+		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
 	}
 
 	unsigned char day = (unsigned char)strtol(tok1, &endptr, 0);
 	if (*endptr != '\0' || day == 0) {
-		printf("%s: invalid day\n", field->name);
+		fprintf(stderr, "%s: invalid day\n", field->name);
 		return -1;
 	}
 
@@ -413,17 +413,17 @@ int update_date(struct field *field, char *value)
 
 	unsigned int year = strtol(tok3, &endptr, 0);
 	if (*endptr != '\0') {
-		printf("%s: invalid year\n", field->name);
+		fprintf(stderr, "%s: invalid year\n", field->name);
 		return -1;
 	}
 
 	if (validate_date(day, month - 1, year)) {
-		printf("%s: invalid date\n", field->name);
+		fprintf(stderr, "%s: invalid date\n", field->name);
 		return -1;
 	}
 
 	if (year >> 16) {
-		printf("%s: year overflow\n", field->name);
+		fprintf(stderr, "%s: year overflow\n", field->name);
 		return -1;
 	}
 
@@ -472,7 +472,7 @@ void print_ascii(const struct field *field)
 int update_ascii(struct field *field, char *value)
 {
 	if (strlen(value) >= field->size) {
-		printf("%s: new data too long\n", field->name);
+		fprintf(stderr, "%s: new data too long\n", field->name);
 		return -1;
 	}
 

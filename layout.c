@@ -176,15 +176,16 @@ static int update_bytes(struct layout *layout,
 
 		int offset = safe_strtoui(str, 0);
 		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
-			printf("Invalid offset '%s'; will not update!\n",
-			       new_byte_data[i].key);
+			fprintf(stderr, "Invalid offset '%s'; will not update!\n",
+				new_byte_data[i].key);
 			return 0;
 		}
 
 		int value = safe_strtoui(new_byte_data[i].value, 0);
 		if (!(value >= 0 && value <= 255)) {
-			printf("Invalid value '%s' at offset '%s'; will not update!\n",
-			       new_byte_data[i].value, new_byte_data[i].key);
+			fprintf(stderr, "Invalid value '%s' at offset '%s'; "
+				"will not update!\n", new_byte_data[i].value,
+				new_byte_data[i].key);
 			return 0;
 		}
 
@@ -193,8 +194,8 @@ static int update_bytes(struct layout *layout,
 		if (str != NULL) {
 			int offset_end = safe_strtoui(str, 0);
 			if (!(offset_end >= 0 && offset_end < EEPROM_SIZE)) {
-				printf("Invalid offset '%s'; will not update!\n",
-				       str);
+				fprintf(stderr, "Invalid offset '%s'; "
+					"will not update!\n", str);
 				return 0;
 			}
 
@@ -235,12 +236,12 @@ static int update_field(struct layout *layout, char *field_name, char *new_data)
 
 		int err = fields[i].update(&fields[i], new_data);
 		if (err)
-			printf("Invalid data for field %s\n", field_name);
+			fprintf(stderr, "Invalid data for field %s\n", field_name);
 
 		return err;
 	}
 
-	printf("No such field '%s'\n", field_name);
+	fprintf(stderr, "No such field '%s'\n", field_name);
 
 	return -1;
 }
