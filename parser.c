@@ -174,7 +174,7 @@ int parse_numeric_param(char *str, char *error_message)
 static int alloc_cpy_str(char **dest, char *source)
 {
 	*dest = malloc(strlen(source) + 1);
-	if (*dest == NULL)
+	if (!*dest)
 		return -ENOMEM;
 
 	strcpy(*dest, source);
@@ -198,7 +198,7 @@ static int read_nonblock_stdin(char **buffer)
 	unsigned int len = STDIN_READ_SIZE, nonempty_line_cnt = 0;
 
 	char *temp_buf = malloc(len * sizeof(char));
-	if (temp_buf == NULL)
+	if (!temp_buf)
 		return -ENOMEM;
 
 	unsigned int pos = 0;
@@ -221,7 +221,7 @@ static int read_nonblock_stdin(char **buffer)
 		if (pos == len - 1) {
 			len += STDIN_READ_SIZE;
 			char *temp_ptr = realloc(temp_buf, len * sizeof(char));
-			if (temp_ptr == NULL) {
+			if (!temp_ptr) {
 				free(temp_buf);
 				return -ENOMEM;
 			}
@@ -347,7 +347,7 @@ static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim,
 		return NULL;
 
 	char **field_changes = malloc(sizeof(char *) * num_of_changes);
-	if (field_changes == NULL) {
+	if (!field_changes) {
 		free(buffer);
 		num_of_changes = -1;
 		return NULL;
@@ -452,7 +452,7 @@ int main(int argc, char *argv[])
 done:
 	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, new_data_size,
 			  new_data);
-	if (cmd == NULL)
+	if (!cmd)
 		perror(STR_ENO_MEM);
 	else
 		ret = cmd->execute(cmd);

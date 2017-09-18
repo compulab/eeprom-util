@@ -171,7 +171,7 @@ static int update_bytes(struct layout *layout,
 	int updated_bytes = 0;
 	for (int i = 0; i < new_data_size; i++) {
 		char *str = strtok(new_byte_data[i].key, "-");
-		if (str == NULL)
+		if (!str)
 			return 0;
 
 		int offset = safe_strtoui(str, 0);
@@ -191,7 +191,7 @@ static int update_bytes(struct layout *layout,
 
 		/* in case of a range of bytes to write */
 		str = strtok(NULL, "-");
-		if (str != NULL) {
+		if (str) {
 			int offset_end = safe_strtoui(str, 0);
 			if (!(offset_end >= 0 && offset_end < EEPROM_SIZE)) {
 				fprintf(stderr, "Invalid offset '%s'; "
@@ -223,10 +223,10 @@ static int update_field(struct layout *layout, char *field_name, char *new_data)
 {
 	struct field *fields = layout->fields;
 
-	if (new_data == NULL)
+	if (!new_data)
 		return 0;
 
-	if (field_name == NULL)
+	if (!field_name)
 		return -1;
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
@@ -290,7 +290,7 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 			  enum layout_version layout_version)
 {
 	struct layout *layout = malloc(sizeof(struct layout));
-	if (layout == NULL)
+	if (!layout)
 		return NULL;
 
 	if (layout_version == LAYOUT_AUTODETECT)

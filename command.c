@@ -55,7 +55,7 @@ static struct layout *prepare_layout(struct command *cmd)
 		return NULL;
 
 	struct layout *layout = new_layout(buf, EEPROM_SIZE, cmd->layout_ver);
-	if (layout == NULL)
+	if (!layout)
 		api.system_error("Memory allocation error");
 
 	return layout;
@@ -127,7 +127,7 @@ struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
 		    	    struct strings_pair *new_field_data)
 {
 	struct command *cmd = malloc(sizeof(struct command));
-	if (cmd == NULL)
+	if (!cmd)
 		return cmd;
 
 	cmd->action = action;

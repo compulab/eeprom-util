@@ -84,7 +84,7 @@ static int __update_bin_delim(struct field *field, char *value, char *delimiter)
 	int count = 0;
 	const char *tmp = value;
 	tmp = strstr(tmp, delimiter);
-	while (tmp != NULL) {
+	while (tmp) {
 	   count++;
 	   tmp++;
 	   tmp = strstr(tmp, delimiter);
@@ -252,7 +252,7 @@ int update_bin_ver(struct field *field, char *value)
 {
 	char *endptr;
 	char *tok = strtok(value, ".");
-	if (tok == NULL)
+	if (!tok)
 		return -1;
 
 	int num = strtol(tok, &endptr, 0);
@@ -260,7 +260,7 @@ int update_bin_ver(struct field *field, char *value)
 		return -1;
 
 	tok = strtok(NULL, "");
-	if (tok == NULL)
+	if (!tok)
 		return -1;
 
 	int remainder = strtol(tok, &endptr, 0);
@@ -395,7 +395,7 @@ int update_date(struct field *field, char *value)
 	char *tok2 = strtok(NULL, "/");
 	char *tok3 = strtok(NULL, "/");
 
-	if (tok1 == NULL || tok2 == NULL || tok3 == NULL) {
+	if (!tok1 || !tok2 || !tok3) {
 		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
 	}
