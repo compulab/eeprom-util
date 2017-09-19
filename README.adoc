@@ -1,0 +1,72 @@
+= CompuLab EEPROM utility
+
+This utility displays and updates EEPROM information. It works for any EEPROM,
+but has special support for Compulab SoMs by being aware of the EEPROM
+layout, and using that information to display the EEPROM contents in a human
+readable format.
+
+The utility provides a WYSIWYG UI for updating EEPROM contents; the user can
+specify the target field by name, and provide the new value in the same
+formatting as displayed by the `read` command. Direct offset/value mode of
+writing is also supported.
+
+Finally, the utility can list accessible devices on i2c buses, or a more
+concise listing of just the EEPROM devices, depending on the available
+interfaces in the OS.
+
+Example run:
+----
+# ./eeprom-util read 2 0x50
+Major Revision                1.00
+Minor Revision                0.00
+1st MAC Address               00:01:c0:13:91:d0
+2nd MAC Address               00:01:ca:12:91:d0
+Production Date               29/Aug/2013
+Serial Number                 ffffffffffff123456789abc
+3rd MAC Address (WIFI)        ff:ff:ff:ff:ff:ff
+4th MAC Address (Bluetooth)   ff:ff:ff:ff:ff:ff
+Layout Version                02
+Reserved fields               (83 bytes)
+Product Name                  CM-FX6
+Product Options #1            C1200QM-D2G-N0-
+Product Options #2            ND0-U5-E-A-WB
+Product Options #3
+Reserved fields               (64 bytes)
+
+# ./eeprom-util write fields 2 0x50 "Production Date=01/Jun/2014"
+----
+
+= Requirements
+
+The utility requires a Linux system with either /dev/i2c interface, or a loaded
+EEPROM driver (at24).
+
+= Building
+
+To build the utility you can type one of the following:
+
+* `make` - Only read functionality will be supported, system default linking type.
+* `make write` - Enable the write capabilities, system default linking type.
+* `make static` - Only read functionality, force static linking of libraries.
+* `make write_static` - Enable the write capabilities, force static linking of libraries.
+
+= Adding EEPROM layouts
+
+To extend the EEPROM layouts do the following:
+
+*layout.c*:
+
+* Create or extend an existing layout. Note that if your layout does not retain
+  backward compatibility with CompuLab layouts, some features on Compulab
+  software releases may not work correctly.
+* Update `detect_layout()` function to properly detect your layout.
+* Update `new_layout()` function to choose your layout.
+
+*layout.h*:
+
+* Add your layout to `enum layout_names`
+
+*parser.c*:
+
+* (optional) Update the parsing of -l option to enable manually selecting your layout.
+
