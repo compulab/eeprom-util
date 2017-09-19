@@ -98,9 +98,11 @@ since version v3.0.0.
 * List bus number and address of i2c accessible devices.
 * Works with both /dev/i2c interface, and with EEPROM driver.
 
-
 [[v3.0.0]]
-[v3.0.0]: https://github.com/compulab/eeprom-util/compare/v2.0…v3.0.0
+[v3.0.0]: https://github.com/compulab/eeprom-util/compare/v2.1…v3.0.0
+
+[[v2.1]]
+[v2.1]: https://github.com/compulab/eeprom-util/compare/v2.0…v2.1
 
 [[v2.0]]
 [v2.0]: https://github.com/compulab/eeprom-util/compare/v1.2…v2.0
