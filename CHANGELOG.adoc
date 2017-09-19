@@ -1,0 +1,112 @@
+= Change Log
+
+All notable changes to this project will be documented in this file.
+
+The format is based on http://keepachangelog.com/[Keep a Changelog]
+and this project adheres to http://semver.org/[Semantic Versioning]
+since version v3.0.0.
+
+== <<v3.0.0>> - 2017-09-19
+
+=== Changed
+* Utility now returns proper return values, instead of mostly returning 0. This
+  makes it suitable for scripting, since the script can now tell if something
+  goes wrong.
+* If an EEPROM field that contains string data has no valid data, a field name
+  with no data is printed.
+* The utility no longer allows partial updates of the EEPROM. If the `write`
+  command contains invalid fields, offsets, or bad syntax, no changes will be
+  made to the EEPROM contents. Previously, the utility would update what it
+  can, and display a warning for what it couldn't update.
+* i2c bus and address values are now limited to 0-256. Any value outside of
+  these boundries will cause an error.
+* Errors are now only printed to stderr.
+* User now notified with a helpful message if there are no usable interfaces
+  for the utility to work with.
+
+=== Added
+* Support for EEPROM layout version 4.
+* New special layout arguments:
+** `raw` layout which produces a formatted hex dump.
+** `auto` layout. It has the same effect as not specifying any layout
+  value, and is included to improve scriptability.
+* `clear` command for clearing all EEPROM contents.
+* `write bytes` can now be told to fill a range of addresses with a specific
+  value.
+* `list` command now also works with the EEPROM driver. It produces a listing
+  of i2c buses and addresses of only EEPROM devices.
+
+=== Deprecated
+* Layout versions should now be given as simple numbers. The old v<num>
+  (v1, v2, etc.) syntax still works for now. "legacy" layout name is still
+  "legacy".
+
+== <<v2.1>> - 2015-04-16
+=== Changed
+* Serial number display/update format (no spaces between bytes)
+
+=== Fixed
+* `write` command caused serial number to be stored with incorrect byte order.
+
+== <<v2.0>> - 2014-11-03
+=== Changed
+* This is a major refactor/redesign of the application. One of the goals for
+  the new design was to make it easy for users to port the utility to a
+  non-unix-like system.
+* New user interface. Changes include:
+** User no longer need to choose between i2c and driver I/O. The utility will
+   try i2c first, and fallback to driver if needed.
+** Now all invocations require an i2c bus number and device address, and the
+   syntax for specifying this information has changed.
+** Better format for by-byte changes (offset,byte tuples now separated from
+   one another)
+** WYSIWYG field updates. The data format that is displayed by the `read`
+   command is also the format for writing new data to the field.For example,
+   the following are valid field update arguments:
+
+   MAC address field=01:02:03:04:05:06
+   Date field=01/Jan/2010
+
+* Utility banner is now only printed by help and version commands, not on each
+  invocation of utility.
+
+=== Removed
+* Commands no longer echoed back to the user.
+* `examples` command.
+
+=== Added
+* Support for v3 EEPROM layout.
+* Manual layout selection.
+* File input for `write` command.
+* `list` function can be limited to scanning only one bus.
+
+== <<v1.2>> - 2013-01-07
+=== Fixed
+* Each I/O operation now properly resets the EEPROM reading pointer.
+* ASCII fields are always null terminated.
+
+== <<v1.1>> - 2012-09-09
+=== Fixed
+* Segfault when displaying date fields with invalid month value.
+
+== v1.0 - 2012-06-08
+=== Added
+* Display EEPROM contents with layout information and data formatted in human
+  readable format.
+* Update EEPROM contents by specifying offset,byte pairs, or fieldname=data
+  strings.
+* List bus number and address of i2c accessible devices.
+* Works with both /dev/i2c interface, and with EEPROM driver.
+
+
+[[v3.0.0]]
+[v3.0.0]: https://github.com/compulab/eeprom-util/compare/v2.0…v3.0.0
+
+[[v2.0]]
+[v2.0]: https://github.com/compulab/eeprom-util/compare/v1.2…v2.0
+
+[[v1.2]]
+[v1.2]: https://github.com/compulab/eeprom-util/compare/v1.1…v1.2
+
+[[v1.1]]
+[v1.1]: https://github.com/compulab/eeprom-util/compare/v1.0…v1.1
