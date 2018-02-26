@@ -449,7 +449,7 @@ void print_ascii(const struct field *field)
 	char *print_buf = "";
 
 	/* check if str is trivial (contains only 0's or only 0xff's), if so print nothing */
-	for (int i = 0; i < block_count; i++) {
+	for (int i = 0; i < block_count - 1; i++) {
 		str++;
 		if (*str != pattern || (pattern != 0 && pattern != -1)) {
 			print_buf = (char*)field->buf;
