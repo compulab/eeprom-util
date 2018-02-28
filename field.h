@@ -22,6 +22,7 @@
 
 struct field {
 	char *name;
+	char *short_name;
 	int size;
 	unsigned char *buf;
 
