@@ -98,15 +98,13 @@ static int execute_command(struct command *cmd)
 		ret = 0;
 		goto done;
 	case EEPROM_WRITE_FIELDS:
-		if (!layout->update_fields(layout, cmd->new_field_data,
-					  cmd->new_data_size)) {
+		if (!layout->update_fields(layout, cmd->data)) {
 			ret = -1;
 			goto done;
 		}
 		break;
 	case EEPROM_WRITE_BYTES:
-		if (!layout->update_bytes(layout, cmd->new_field_data,
-					 cmd->new_data_size)) {
+		if (!layout->update_bytes(layout, cmd->data)) {
 			ret = -1;
 			goto done;
 		}
@@ -123,8 +121,7 @@ done:
 }
 
 struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
-		    	    enum layout_version layout_ver, int new_data_size,
-		    	    struct strings_pair *new_field_data)
+		enum layout_version layout_ver, struct data_array *data)
 {
 	struct command *cmd = malloc(sizeof(struct command));
 	if (!cmd)
@@ -134,8 +131,7 @@ struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
 	cmd->i2c_bus = i2c_bus;
 	cmd->i2c_addr = i2c_addr;
 	cmd->layout_ver = layout_ver;
-	cmd->new_field_data = new_field_data;
-	cmd->new_data_size = new_data_size;
+	cmd->data = data;
 	cmd->execute = execute_command;
 
 	return cmd;

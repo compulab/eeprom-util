@@ -37,15 +37,14 @@ struct command {
 	int i2c_bus;
 	int i2c_addr;
 	enum layout_version layout_ver;
-	int new_data_size;
-	struct strings_pair *new_field_data;
+	struct data_array *data;
 
 	int (*execute)(struct command *cmd);
 };
 
 struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
-			    enum layout_version layout_ver, int new_data_size,
-			    struct strings_pair *new_field_data);
+			    enum layout_version layout_ver,
+			    struct data_array *data);
 void free_command(struct command *cmd);
 
 #endif

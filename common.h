@@ -29,6 +29,14 @@ struct strings_pair {
 	char *value;
 };
 
+struct data_array {
+	int size;
+	union {
+		struct strings_pair *fields_changes;
+		struct strings_pair *bytes_changes;
+	};
+};
+
 int safe_strtoui(char *str, int base);
 
 #endif

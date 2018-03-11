@@ -157,35 +157,32 @@ static void print_layout(const struct layout *layout)
 
 /*
  * Selectively update EEPROM data by bytes.
- * @layout:		An initialized layout
- * @new_byte_data:	An array of (offset,value) strings matching the regexp
- * 			([[:digit:]]+,[[:digit:]]+,)*([[:digit:]]+,[[:digit:]]+)
- * @new_data_size: Size of the new_field_data array
+ * @layout:	An initialized layout.
+ * @data:	A data array. Each element contains offset and value strings
  *
  * Returns: number of updated bytes.
  */
-static int update_bytes(struct layout *layout,
-			struct strings_pair *new_byte_data,
-			int new_data_size)
+static int update_bytes(struct layout *layout, struct data_array *data)
 {
 	int updated_bytes = 0;
-	for (int i = 0; i < new_data_size; i++) {
-		char *str = strtok(new_byte_data[i].key, "-");
+	for (int i = 0; i < data->size; i++) {
+		char *str = strtok(data->bytes_changes[i].key, "-");
 		if (!str)
 			return 0;
 
 		int offset = safe_strtoui(str, 0);
 		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
 			fprintf(stderr, "Invalid offset '%s'; will not update!\n",
-				new_byte_data[i].key);
+				data->bytes_changes[i].key);
 			return 0;
 		}
 
-		int value = safe_strtoui(new_byte_data[i].value, 0);
+		int value = safe_strtoui(data->bytes_changes[i].value, 0);
 		if (!(value >= 0 && value <= 255)) {
 			fprintf(stderr, "Invalid value '%s' at offset '%s'; "
-				"will not update!\n", new_byte_data[i].value,
-				new_byte_data[i].key);
+				"will not update!\n",
+				data->bytes_changes[i].value,
+				data->bytes_changes[i].key);
 			return 0;
 		}
 
@@ -249,22 +246,18 @@ static int update_field(struct layout *layout, char *field_name, char *new_data)
 
 /*
  * Selectively update EEPROM data by fields.
- * @layout:			An initialized layout
- * @new_field_data:		An array of string pairs (fieldname,data)
- * @new_field_array_size:	Size of the new_field_data array
+ * @layout:	An initialized layout.
+ * @data:	A data array. Each element contains field and value strings
  *
  * Returns: number of updated fields.
  */
-static int update_fields(struct layout *layout,
-			 struct strings_pair *new_field_data,
-			 int new_field_array_size)
+static int update_fields(struct layout *layout, struct data_array *data)
 {
 	int updated_fields_cnt = 0;
 
-	for (int i = 0; i < new_field_array_size; i++) {
-		if (update_field(layout, new_field_data[i].key,
-				 new_field_data[i].value)) {
-
+	for (int i = 0; i < data->size; i++) {
+		if (update_field(layout, data->fields_changes[i].key,
+				 data->fields_changes[i].value)) {
 			return 0;
 		}
 

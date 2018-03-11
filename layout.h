@@ -43,11 +43,9 @@ struct layout {
 	int data_size;
 	void (*print)(const struct layout *layout);
 	int (*update_fields)(struct layout *layout,
-			     struct strings_pair *new_field_data,
-			     int new_field_array_size);
+			     struct data_array *data);
 	int (*update_bytes)(struct layout *layout,
-			    struct strings_pair *new_field_data,
-			    int new_data_size);
+			    struct data_array *data);
 };
 
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,

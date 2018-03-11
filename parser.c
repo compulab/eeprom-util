@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
 	enum layout_version layout_ver = LAYOUT_AUTODETECT;
 	enum action action = EEPROM_ACTION_INVALID;
 	struct strings_pair *new_data = NULL;
+	struct data_array data;
 	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1, ret = -1;
 
 	if (argc <= 1)
@@ -451,9 +452,14 @@ int main(int argc, char *argv[])
 	if (!new_data)
 		return 1;
 
+	data.size = new_data_size;
+	if (action == EEPROM_WRITE_FIELDS)
+		data.fields_changes = new_data;
+	else if (action == EEPROM_WRITE_BYTES)
+		data.bytes_changes = new_data;
+
 done:
-	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, new_data_size,
-			  new_data);
+	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, &data);
 	if (!cmd)
 		perror(STR_ENO_MEM);
 	else
