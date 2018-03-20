@@ -192,64 +192,6 @@ static int alloc_cpy_str(char **dest, char *source)
 // The size of each reallocation of stdin line size or line count
 #define STDIN_REALLOC_SIZE 	10
 
-#define STDIN_READ_SIZE	100
-/*
- * read_nonblock_stdin - Read the contents of stdin and store them in a buffer.
- *
- * Stores the contents of stdin in a buffer, which is allocated and grown as
- * needed. Empty lines are ignored.
- *
- * @buffer: the address of the allocated buffer will be stored here.
- *
- * Returns: number of non-empty lines stored in the buffer.
- */
-static int __attribute__((unused)) read_nonblock_stdin(char **buffer)
-{
-	unsigned int len = STDIN_READ_SIZE, nonempty_line_cnt = 0;
-
-	char *temp_buf = malloc(len * sizeof(char));
-	if (!temp_buf)
-		return -ENOMEM;
-
-	unsigned int pos = 0;
-	int last_value_was_linebreak = 0;
-	for (int value = fgetc(stdin); value != EOF; value = fgetc(stdin)) {
-		temp_buf[pos] = value;
-
-		if (value == '\n') {
-			if (!last_value_was_linebreak) {
-				nonempty_line_cnt++;
-				pos++;
-			}
-
-			last_value_was_linebreak = 1;
-		} else {
-			last_value_was_linebreak = 0;
-			pos++;
-		}
-
-		if (pos == len - 1) {
-			len += STDIN_READ_SIZE;
-			char *temp_ptr = realloc(temp_buf, len * sizeof(char));
-			if (!temp_ptr) {
-				free(temp_buf);
-				return -ENOMEM;
-			}
-
-			temp_buf = temp_ptr;
-		}
-	}
-
-	// Terminate EOF
-	temp_buf[pos - 1] = '\0';
-	if (!last_value_was_linebreak)
-		nonempty_line_cnt++;
-
-	*buffer = temp_buf;
-
-	return nonempty_line_cnt;
-}
-
 /*
  * mem_realloc - Realloc memory if needed
  *
