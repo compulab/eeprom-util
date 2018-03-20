@@ -24,8 +24,8 @@
 #define COLOR_GREEN  "\x1B[32m"
 #define COLOR_RESET  "\033[0m"
 
-struct strings_pair {
-	char *key;
+struct field_change {
+	char *field;
 	char *value;
 };
 
@@ -38,7 +38,7 @@ struct bytes_change {
 struct data_array {
 	int size;
 	union {
-		struct strings_pair *fields_changes;
+		struct field_change *fields_changes;
 		struct bytes_change *bytes_changes;
 	};
 };

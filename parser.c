@@ -171,17 +171,6 @@ int parse_numeric_param(char *str, char *error_message)
 }
 
 #ifdef ENABLE_WRITE
-static int alloc_cpy_str(char **dest, char *source)
-{
-	*dest = malloc(strlen(source) + 1);
-	if (!*dest)
-		return -ENOMEM;
-
-	strcpy(*dest, source);
-
-	return 0;
-}
-
 // The max size of a conventional line from stdin. defined as:
 // MAX[ (field name) + (1 for '=') + (field value) + (1 for '/0') ]
 #define STDIN_LINE_SIZE 	47
@@ -340,104 +329,6 @@ cleanup:
 	return ret;
 }
 
-/*
- * valid_key - check if byte offset key is valid.
- *
- * Valid byte offset is a positive number.
- * If a range is passed in key, the first offset must be
- * smaller then the second.
- *
- * @key - one byte offset or byte range to be checked.
- *
- * Returns 1 if key is valid, 0 if not.
- */
-static bool valid_key(char *key)
-{
-	char *endptr1;
-	int key_num1, key_num2 = 0;
-
-	key_num1 = strtol(key, &endptr1, 0);
-	if (endptr1 == key)
-		return false;
-
-	if (*endptr1 != '\0') {
-		endptr1++;
-		key_num2 = strtol(endptr1, NULL, 0);
-		if (key_num1 >= key_num2)
-			return false;
-	}
-
-	return key_num1 >= 0 && key_num2 >=0;
-}
-
-/*
- * parse_new_data - parse the strings representing new per-key data
- *
- * Allocate a strings_pair array and populate it with (key, new_data) values
- * as extracted from the input strings.
- *
- * @changes_size:	The size of changes[]
- * @changes:		A string array containing "key<delim>new_data" strings
- * @delim:		The delimiter string between key and new_data
- *
- * Returns: Allocated strings_pair populated with field_changes_size pairs of
- * 			(key, new_data) values.
- */
-static struct strings_pair *parse_new_data(int changes_size, char *changes[],
-					   char *delim, bool is_bytes)
-{
-	struct strings_pair *pairs;
-	pairs = malloc(sizeof(struct strings_pair) * changes_size);
-	if (!pairs) {
-		perror("Out of memory!");
-		return NULL;
-	}
-
-	int i, sizeof_delim = strlen(delim);
-	for (i = 0; i < changes_size; i++) {
-		char *key, *value;
-		if (!strncmp(changes[i], delim, sizeof_delim)) {
-			goto cleanup;
-		} else {
-			key = strtok(changes[i], delim);
-			// if writing bytes, check if offset is valid
-			if (is_bytes && !valid_key(key)) {
-				fprintf(stderr, "Invalid offset '%s';"
-					"will not update!\n", key);
-				goto cleanup;
-			}
-
-			value = strtok(NULL, delim);
-			if (!value) {
-				fprintf(stderr, "Invalid value, will not update!\n");
-				goto cleanup;
-			}
-		}
-
-		if (alloc_cpy_str(&pairs[i].key, key)) {
-			perror("Out of memory!");
-			goto cleanup;
-		}
-
-		if (alloc_cpy_str(&pairs[i].value, value)) {
-			free(pairs[i].key);
-			perror("Out of memory!");
-			goto cleanup;
-		}
-	}
-
-	return pairs;
-cleanup:
-	for (--i; i >= 0; i--) {
-		free(pairs[i].key);
-		free(pairs[i].value);
-	}
-
-	free(pairs);
-
-	return NULL;
-}
-
 #define CHARS_REMAIN 1
 #define CHARS_END 2
 /*
@@ -534,6 +425,55 @@ syntax_error:
 	free(changes);
 	return NULL;
 }
+
+/*
+ * parse_field_changes - parse the strings representing new fields values
+ *
+ * Allocate a field_change array, verify the syntax of the input strings and
+ * for each array element set the 'field' and 'value' strings as extracted
+ * from the input strings.
+ *
+ * @size:	The size of input[]
+ * @input:	A string array containing strings in the expected format:
+ * 		"<field_name>=<value>"
+ *
+ * Returns:	Allocated and populated field_change array on success
+ * 		NULL on failue.
+ */
+static struct field_change *parse_field_changes(int size, char *input[])
+{
+	if (!input) {
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, EINVAL, strerror(EINVAL));
+		return NULL;
+	}
+
+	struct field_change *changes;
+	changes = malloc(sizeof(struct field_change) * size);
+	if (!changes) {
+		perror("Out of memory!");
+		return NULL;
+	}
+
+	int i;
+	for (i = 0; i < size; i++) {
+		char *delim = strchr(input[i], '=');
+		if (!delim || input[i] == delim || *(delim + 1) == '\0')
+			goto syntax_error;
+
+		*delim = '\0';
+		changes[i].field = input[i];
+		changes[i].value = delim + 1;
+	}
+
+	return changes;
+
+syntax_error:
+	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	free(changes);
+	return NULL;
+}
+
 #else
 static inline void free_stdin(char **input, int size) {}
 
@@ -542,15 +482,12 @@ static inline int read_lines_stdin(char ***input, int *size)
 	return -ENOSYS;
 }
 
-static inline struct strings_pair *parse_new_data(int field_changes_size,
-						  char *field_changes[],
-						  char *delim,
-						  bool is_bytes)
+static inline struct bytes_change *parse_bytes_changes(int size, char *input[])
 {
 	return NULL;
 }
 
-static inline struct bytes_change *parse_bytes_changes(int size, char *input[])
+static inline struct field_change *parse_field_changes(int size, char *input[])
 {
 	return NULL;
 }
@@ -621,7 +558,7 @@ int main(int argc, char *argv[])
 
 	data.size = argc;
 	if (action == EEPROM_WRITE_FIELDS)
-		data.fields_changes = parse_new_data(argc, input, "=", false);
+		data.fields_changes = parse_field_changes(argc, input);
 	else if (action == EEPROM_WRITE_BYTES)
 		data.bytes_changes = parse_bytes_changes(argc, input);
 
@@ -638,15 +575,10 @@ done:
 
 	free_command(cmd);
 
-	if (action == EEPROM_WRITE_FIELDS) {
-		for (int i = 0; i < data.size; i++) {
-			free(data.fields_changes[i].key);
-			free(data.fields_changes[i].value);
-		}
+	if (action == EEPROM_WRITE_FIELDS)
 		free(data.fields_changes);
-	} else if (action == EEPROM_WRITE_BYTES) {
+	else if (action == EEPROM_WRITE_BYTES)
 		free(data.bytes_changes);
-	}
 
 clean_input:
 	if (input && is_stdin)

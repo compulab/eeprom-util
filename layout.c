@@ -246,7 +246,7 @@ static int update_fields(struct layout *layout, struct data_array *data)
 	int updated_fields_cnt = 0;
 
 	for (int i = 0; i < data->size; i++) {
-		if (update_field(layout, data->fields_changes[i].key,
+		if (update_field(layout, data->fields_changes[i].field,
 				 data->fields_changes[i].value)) {
 			return 0;
 		}
