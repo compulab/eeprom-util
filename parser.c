@@ -182,6 +182,16 @@ static int alloc_cpy_str(char **dest, char *source)
 	return 0;
 }
 
+// The max size of a conventional line from stdin. defined as:
+// MAX[ (field name) + (1 for '=') + (field value) + (1 for '/0') ]
+#define STDIN_LINE_SIZE 	47
+
+// The max line count from stdin. defines as num of fields in layout v4
+#define STDIN_LINES_COUNT	18
+
+// The size of each reallocation of stdin line size or line count
+#define STDIN_REALLOC_SIZE 	10
+
 #define STDIN_READ_SIZE	100
 /*
  * read_nonblock_stdin - Read the contents of stdin and store them in a buffer.
@@ -193,7 +203,7 @@ static int alloc_cpy_str(char **dest, char *source)
  *
  * Returns: number of non-empty lines stored in the buffer.
  */
-static int read_nonblock_stdin(char **buffer)
+static int __attribute__((unused)) read_nonblock_stdin(char **buffer)
 {
 	unsigned int len = STDIN_READ_SIZE, nonempty_line_cnt = 0;
 
@@ -238,6 +248,154 @@ static int read_nonblock_stdin(char **buffer)
 	*buffer = temp_buf;
 
 	return nonempty_line_cnt;
+}
+
+/*
+ * mem_realloc - Realloc memory if needed
+ *
+ * If memory needed is not smaller than memory available, allocate more memory
+ * for the same allocation and update the pointer.
+ *
+ * @ptr 	A pointer to the allocated memory
+ * @mem_needed	The current memory size (in blocks) needed for the allocation
+ * @mem_size	A pointer to where the current memory size (in blocks) is saved
+ * @bytes	The size of every block of memory
+ *
+ * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ */
+static int mem_realloc(void **ptr, unsigned int mem_needed,
+			unsigned int *mem_size, size_t bytes)
+{
+	if (!ptr || !mem_size)
+		return -EINVAL;
+
+	if (mem_needed < *mem_size)
+		return 0;
+
+	unsigned int new_size = *mem_size + STDIN_REALLOC_SIZE;
+	void *new_alloc = realloc(*ptr, new_size * bytes);
+	if (!new_alloc)
+		return -ENOMEM;
+
+	*mem_size = new_size;
+	*ptr = new_alloc;
+	return 0;
+}
+
+/*
+ * read_line_stdin - Read one line from stdin. Ignore empty lines.
+ *
+ * @line	A pointer to where a string will be allocated and populated
+ *		with the next non empty line from stdin.
+ *
+ * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ */
+static int read_line_stdin(char **line)
+{
+	if (!line)
+		return -EINVAL;
+
+	int value = fgetc(stdin);
+	while (value == '\n')
+		value = fgetc(stdin);
+
+	if (value == EOF) {
+		*line = NULL;
+		return 0;
+	}
+
+	unsigned int msize = STDIN_LINE_SIZE, pos = 0;
+	*line = malloc(msize * sizeof(char));
+	if (!*line)
+		return -ENOMEM;
+
+	while (value != EOF && value != '\n') {
+		(*line)[pos++] = value;
+		int ret = mem_realloc((void**)line, pos, &msize, sizeof(char));
+		if (ret) {
+			free(*line);
+			return ret;
+		}
+
+		value = fgetc(stdin);
+	}
+
+	(*line)[pos] = '\0';
+	return 0;
+}
+
+/*
+ * free_stdin - Free allocations made by read_lines_stdin()
+ *
+ * @input	An allocated array of strings
+ * @size:	The size of the allocated string array
+ */
+static void free_stdin(char **input, int size)
+{
+	for (int i = 0; i < size; i++)
+		free(input[i]);
+	free(input);
+}
+
+/*
+ * read_lines_stdin - Read non empty lines from stdin.
+ *
+ * Allocate an array of strings. populate it with non empty lines from stdin.
+ * Handle errors by printing an error message to the user, clear the allocated
+ * memory and propagate the error.
+ *
+ * @input	A pointer to where an allocated array of strings will be
+ *		written. Each string is a non empty line from stdin.
+ * @size:	A pointer to where the size of the allocated string array
+ *		will be written.
+ *
+ * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ */
+static int read_lines_stdin(char ***input, int *size)
+{
+	if (!input || !size) {
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, EINVAL, strerror(EINVAL));
+		return -EINVAL;
+	}
+
+	unsigned int msize = STDIN_LINES_COUNT, i = 0;
+	*input = malloc(msize * sizeof(char *));
+	if (!*input) {
+		perror("Out of memory");
+		return -ENOMEM;
+	}
+
+	char *line;
+	int ret = read_line_stdin(&line);
+	if (ret || !line)
+		goto cleanup;
+
+	while (line) {
+		(*input)[i++] = line;
+		ret = mem_realloc((void**)input, i, &msize, sizeof(char *));
+		if (ret)
+			goto cleanup;
+
+		ret = read_line_stdin(&line);
+		if (ret)
+			goto cleanup;
+	}
+
+	*size = i;
+	return 0;
+
+cleanup:
+	if (ret == -ENOMEM)
+		perror("Out of memory");
+	else if (ret == -EINVAL)
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, -ret, strerror(-ret));
+
+	free_stdin(*input, i);
+
+	*size = 0;
+	return ret;
 }
 
 /*
@@ -337,43 +495,12 @@ cleanup:
 
 	return NULL;
 }
-
-static struct strings_pair *parse_new_data_stdin(int *num_of_pairs, char *delim,
-						 bool is_bytes)
-{
-	char *buffer;
-	int num_of_changes = read_nonblock_stdin(&buffer);
-	if (num_of_changes < 0)
-		return NULL;
-
-	char **field_changes = malloc(sizeof(char *) * num_of_changes);
-	if (!field_changes) {
-		free(buffer);
-		num_of_changes = -1;
-		return NULL;
-	}
-
-	char *tok = strtok(buffer, "\n");
-	for (int i = 0; i < num_of_changes; i++) {
-		field_changes[i] = tok;
-		tok = strtok(NULL, "\n");
-	}
-
-	struct strings_pair *changes;
-	changes = parse_new_data(num_of_changes, field_changes, delim, is_bytes);
-
-	free(buffer);
-	free(field_changes);
-
-	*num_of_pairs = num_of_changes;
-	return changes;
-}
 #else
-static inline struct strings_pair *parse_new_data_stdin(int *num_of_pairs,
-							char *delim,
-							bool is_bytes)
+static inline void free_stdin(char **input, int size) {}
+
+static inline int read_lines_stdin(char ***input, int *size)
 {
-	return NULL;
+	return -ENOSYS;
 }
 
 static inline struct strings_pair *parse_new_data(int field_changes_size,
@@ -397,9 +524,11 @@ int main(int argc, char *argv[])
 	struct command *cmd;
 	enum layout_version layout_ver = LAYOUT_AUTODETECT;
 	enum action action = EEPROM_ACTION_INVALID;
-	struct strings_pair *new_data = NULL;
 	struct data_array data;
-	int i2c_bus = -1, i2c_addr = -1, new_data_size = -1, ret = -1;
+	int i2c_bus = -1, i2c_addr = -1, ret = -1;
+	char **input = NULL;
+	bool is_stdin = !isatty(STDIN_FILENO);
+	errno = 0;
 
 	if (argc <= 1)
 		usage_exit();
@@ -440,23 +569,21 @@ int main(int argc, char *argv[])
 	if (action == EEPROM_READ || action == EEPROM_CLEAR)
 		goto done;
 
-	char *delim = (action == EEPROM_WRITE_FIELDS) ? "=" : ",";
-	bool is_bytes = (action == EEPROM_WRITE_BYTES) ? true : false;
-	if (!isatty(STDIN_FILENO)) {
-		new_data = parse_new_data_stdin(&new_data_size, delim, is_bytes);
-	} else {
-		new_data = parse_new_data(argc, argv, delim, is_bytes);
-		new_data_size = argc;
-	}
-
-	if (!new_data)
+	input = argv;
+	if (is_stdin && read_lines_stdin(&input, &argc))
 		return 1;
 
-	data.size = new_data_size;
+	cond_usage_exit(argc == 0, STR_ENO_PARAMS);
+
+	data.size = argc;
 	if (action == EEPROM_WRITE_FIELDS)
-		data.fields_changes = new_data;
+		data.fields_changes = parse_new_data(argc, input, "=", false);
 	else if (action == EEPROM_WRITE_BYTES)
-		data.bytes_changes = new_data;
+		data.bytes_changes = parse_new_data(argc, input, ",", true);
+
+	// it is enough to test only one field in the union
+	if (!data.fields_changes)
+		goto clean_input;
 
 done:
 	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, &data);
@@ -465,13 +592,25 @@ done:
 	else
 		ret = cmd->execute(cmd);
 
-	for (int i = 0; i < new_data_size; i++) {
-		free(new_data[i].key);
-		free(new_data[i].value);
+	free_command(cmd);
+
+	if (action == EEPROM_WRITE_FIELDS) {
+		for (int i = 0; i < data.size; i++) {
+			free(data.fields_changes[i].key);
+			free(data.fields_changes[i].value);
+		}
+		free(data.fields_changes);
+	} else if (action == EEPROM_WRITE_BYTES) {
+		for (int i = 0; i < data.size; i++) {
+			free(data.bytes_changes[i].key);
+			free(data.bytes_changes[i].value);
+		}
+		free(data.bytes_changes);
 	}
 
-	free(new_data);
-	free_command(cmd);
+clean_input:
+	if (input && is_stdin)
+		free_stdin(input, argc);
 
 	return ret ? 1 : 0;
 }
