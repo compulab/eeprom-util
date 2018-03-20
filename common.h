@@ -29,11 +29,17 @@ struct strings_pair {
 	char *value;
 };
 
+struct bytes_change {
+	int start;
+	int end;
+	int value;
+};
+
 struct data_array {
 	int size;
 	union {
 		struct strings_pair *fields_changes;
-		struct strings_pair *bytes_changes;
+		struct bytes_change *bytes_changes;
 	};
 };
 

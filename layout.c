@@ -158,51 +158,41 @@ static void print_layout(const struct layout *layout)
 /*
  * Selectively update EEPROM data by bytes.
  * @layout:	An initialized layout.
- * @data:	A data array. Each element contains offset and value strings
+ * @data:	A data array. Each element contains the following:
+ * 		start: The first byte in EEPROM to be written.
+ * 		end: The last byte in EEPROM to be written.
+ * 		value: The value to be written to EEPROM.
  *
  * Returns: number of updated bytes.
  */
 static int update_bytes(struct layout *layout, struct data_array *data)
 {
 	int updated_bytes = 0;
+
 	for (int i = 0; i < data->size; i++) {
-		char *str = strtok(data->bytes_changes[i].key, "-");
-		if (!str)
-			return 0;
+		int offset_start = data->bytes_changes[i].start;
+		int offset_end = data->bytes_changes[i].end;
 
-		int offset = safe_strtoui(str, 0);
-		if (!(offset >= 0 && offset < EEPROM_SIZE)) {
-			fprintf(stderr, "Invalid offset '%s'; will not update!\n",
-				data->bytes_changes[i].key);
-			return 0;
-		}
+		if (offset_start < 0 || offset_start >= EEPROM_SIZE ||
+		    offset_end < offset_start || offset_end >= EEPROM_SIZE) {
+			fprintf(stderr, "Invalid offset '0x%02x", offset_start);
+			if (offset_end != offset_start)
+				fprintf(stderr, "-0x%02x", offset_end);
 
-		int value = safe_strtoui(data->bytes_changes[i].value, 0);
-		if (!(value >= 0 && value <= 255)) {
-			fprintf(stderr, "Invalid value '%s' at offset '%s'; "
-				"will not update!\n",
-				data->bytes_changes[i].value,
-				data->bytes_changes[i].key);
+			fprintf(stderr, "'; will not update!\n");
 			return 0;
 		}
 
-		/* in case of a range of bytes to write */
-		str = strtok(NULL, "-");
-		if (str) {
-			int offset_end = safe_strtoui(str, 0);
-			if (!(offset_end >= 0 && offset_end < EEPROM_SIZE)) {
-				fprintf(stderr, "Invalid offset '%s'; "
-					"will not update!\n", str);
-				return 0;
-			}
-
-			size_t range = offset_end - offset + 1;
-			memset(layout->data + offset, value, range);
-			updated_bytes += range;
-		} else {
-			layout->data[offset] = value;
-			updated_bytes++;
+		int value = data->bytes_changes[i].value;
+		if (value < 0 || value > 255){
+			fprintf(stderr, "Invalid value '0x%02x' at '0x%02x'; "
+				"will not update!\n", value, offset_start);
+			return 0;
 		}
+
+		size_t range = offset_end - offset_start + 1;
+		memset(layout->data + offset_start, value, range);
+		updated_bytes += range;
 	}
 
 	return updated_bytes;

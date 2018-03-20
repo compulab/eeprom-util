@@ -437,6 +437,103 @@ cleanup:
 
 	return NULL;
 }
+
+#define CHARS_REMAIN 1
+#define CHARS_END 2
+/*
+ * strtoi - convert to int and point to the first character after the number
+ *
+ * @str:	A pointer to a string containing an integer number at the
+ *		beginning. On success the pointer will point to the first
+ *		character after the number.
+ * @dest:	A pointer where to save the int result
+ *
+ * Returns:	CHARS_END on success and all characters read.
+ *		CHARS_REMAIN on success and additional characters remain.
+ *		-ERANGE or -EINVAL on failure
+ */
+static int strtoi(char **str, int *dest) {
+	if (!str || !dest || *str == '\0')
+		return -EINVAL;
+
+	char *endptr;
+	errno = 0;
+	int num = strtol(*str, &endptr, 0);
+
+	if (errno != 0)
+		return -errno;
+
+	if (*str == endptr)
+		return -EINVAL;
+
+	*dest = num;
+	*str = endptr;
+
+	if (*endptr == 0)
+		return CHARS_END;
+
+	return CHARS_REMAIN;
+}
+
+/*
+ * parse_bytes_changes - parse the strings representing new bytes values
+ *
+ * Allocate a bytes_change array, verify the syntax of the input strings and
+ * for each array element set the bytes 'start' offset, 'end' offset and the
+ * 'value' to be written as extracted from the input strings.
+ *
+ * @size:	The size of input[]
+ * @input:	A string array containing strings in the expected format:
+ * 		"<offset>[-<offset-end>],<value>"
+ *
+ * Returns:	Allocated and populated bytes_change array on success
+ * 		NULL on failure.
+ */
+static struct bytes_change *parse_bytes_changes(int size, char *input[])
+{
+	if (!input) {
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, EINVAL, strerror(EINVAL));
+		return NULL;
+	}
+
+	struct bytes_change *changes;
+	changes = malloc(sizeof(struct bytes_change) * size);
+	if (!changes) {
+		perror("Out of memory!");
+		return NULL;
+	}
+
+	int i;
+	for (i = 0; i < size ; i++) {
+		char *change = input[i];
+
+		if (strtoi(&change, &changes[i].start) != CHARS_REMAIN)
+			goto syntax_error;
+
+		if (*change == '-') {
+			change++;
+			if (strtoi(&change, &changes[i].end) != CHARS_REMAIN)
+				goto syntax_error;
+		} else {
+			changes[i].end = changes[i].start;
+		}
+
+		if (*change != ',')
+			goto syntax_error;
+
+		change++;
+		if (strtoi(&change, &changes[i].value) != CHARS_END)
+			goto syntax_error;
+	}
+
+	return changes;
+
+syntax_error:
+	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	free(changes);
+	return NULL;
+}
 #else
 static inline void free_stdin(char **input, int size) {}
 
@@ -449,6 +546,11 @@ static inline struct strings_pair *parse_new_data(int field_changes_size,
 						  char *field_changes[],
 						  char *delim,
 						  bool is_bytes)
+{
+	return NULL;
+}
+
+static inline struct bytes_change *parse_bytes_changes(int size, char *input[])
 {
 	return NULL;
 }
@@ -521,7 +623,7 @@ int main(int argc, char *argv[])
 	if (action == EEPROM_WRITE_FIELDS)
 		data.fields_changes = parse_new_data(argc, input, "=", false);
 	else if (action == EEPROM_WRITE_BYTES)
-		data.bytes_changes = parse_new_data(argc, input, ",", true);
+		data.bytes_changes = parse_bytes_changes(argc, input);
 
 	// it is enough to test only one field in the union
 	if (!data.fields_changes)
@@ -543,10 +645,6 @@ done:
 		}
 		free(data.fields_changes);
 	} else if (action == EEPROM_WRITE_BYTES) {
-		for (int i = 0; i < data.size; i++) {
-			free(data.bytes_changes[i].key);
-			free(data.bytes_changes[i].value);
-		}
 		free(data.bytes_changes);
 	}
 
