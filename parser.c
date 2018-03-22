@@ -50,7 +50,7 @@ static void print_help(void)
 
 	if (write_enabled()) {
 		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> CHANGES\n");
-		printf("       eeprom-util clear [fields] <bus_num> <device_addr> [LIST]\n");
+		printf("       eeprom-util clear [fields|bytes] <bus_num> <device_addr> [LIST]\n");
 	}
 
 	printf("       eeprom-util version|-v|--version\n");
@@ -91,12 +91,15 @@ static void print_help(void)
 			"Range is inclusive. Range changes can be mixed with non-range changes.\n"
 			"\n"
 			"LIST FORMAT\n"
-			"The list to the clear fields command can be passed inline:\n"
+			"The list to the clear fields or bytes commands can be passed inline:\n"
 			"       eeprom-util clear fields <bus_num> <device_addr> [<field_name> ]*\n"
+			"       eeprom-util clear bytes <bus_num> <device_addr> [<offset>[-<offset-end>] ]*\n"
 			"or via file input:\n"
 			"       eeprom-util clear fields <bus_num> <device_addr> < file\n"
 			"\nWhen file input is used, each <field_name> should be on its own line,\n"
 			"and no quote marks are necessary if there are spaces in <field_name>\n"
+			"\nWhen clearing a range of bytes use the syntax:	[<offset>[-<offset-end>] ]* \n"
+			"Range is inclusive. Range clears can be mixed with non-range clears.\n"
 			);
 
 	printf("\n");
@@ -127,6 +130,8 @@ static enum action parse_action(int argc, char *argv[])
 	} else if (write_enabled() && !strncmp(argv[0], "clear", 5)) {
 		if (argc > 1 && (!strncmp(argv[1], "fields", 6)))
 			return EEPROM_CLEAR_FIELDS;
+		if (argc > 1 && (!strncmp(argv[1], "bytes", 5)))
+			return EEPROM_CLEAR_BYTES;
 
 		return EEPROM_CLEAR;
 	} else if (write_enabled() && !strncmp(argv[0], "write", 5)) {
@@ -379,6 +384,59 @@ static int strtoi(char **str, int *dest) {
 }
 
 /*
+ * parse_bytes_list - parse the strings representing bytes offsets
+ *
+ * Allocate a bytes_range array, verify the syntax of the input strings and
+ * for each array element set the bytes 'start' offset and 'end' offset as
+ * extracted from the input strings.
+ *
+ * @size:	The size of input[]
+ * @input:	A string array containing strings in the expected format:
+ * 		"<offset>[-<offset-end>]"
+ *
+ * Returns:	Allocated and populated bytes_range array on success
+ * 		NULL on failure.
+ */
+static struct bytes_range *parse_bytes_list(int size, char *input[])
+{
+	if (!input) {
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, EINVAL, strerror(EINVAL));
+		return NULL;
+	}
+
+	struct bytes_range *bytes_list;
+	bytes_list = malloc(sizeof(struct bytes_range) * size);
+	if (!bytes_list) {
+		perror("Out of memory!");
+		return NULL;
+	}
+
+	int i;
+	for (i = 0; i < size ; i++) {
+		char *str = input[i];
+		int ret = strtoi(&str, &bytes_list[i].start);
+
+		if ((ret == CHARS_REMAIN) && (*str == '-')) {
+			str++;
+			if (strtoi(&str, &bytes_list[i].end) != CHARS_END)
+				goto syntax_error;
+		} else if (ret == CHARS_END) {
+			bytes_list[i].end = bytes_list[i].start;
+		} else {
+			goto syntax_error;
+		}
+	}
+
+	return bytes_list;
+
+syntax_error:
+	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	free(bytes_list);
+	return NULL;
+}
+
+/*
  * parse_bytes_changes - parse the strings representing new bytes values
  *
  * Allocate a bytes_change array, verify the syntax of the input strings and
@@ -494,6 +552,11 @@ static inline int read_lines_stdin(char ***input, int *size)
 	return -ENOSYS;
 }
 
+static inline struct bytes_range *parse_bytes_list(int size, char *input[])
+{
+	return NULL;
+}
+
 static inline struct bytes_change *parse_bytes_changes(int size, char *input[])
 {
 	return NULL;
@@ -540,7 +603,7 @@ int main(int argc, char *argv[])
 
 	// parse_action already took care of parsing the bytes/fields qualifier
 	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS ||
-	    action == EEPROM_CLEAR_FIELDS)
+	    action == EEPROM_CLEAR_FIELDS || action == EEPROM_CLEAR_BYTES)
 		NEXT_PARAM(argc, argv);
 
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
@@ -576,6 +639,8 @@ int main(int argc, char *argv[])
 		data.bytes_changes = parse_bytes_changes(argc, input);
 	else if (action == EEPROM_CLEAR_FIELDS)
 		data.fields_list = input;
+	else if (action == EEPROM_CLEAR_BYTES)
+		data.bytes_list = parse_bytes_list(argc,input);
 
 	// it is enough to test only one field in the union
 	if (!data.fields_changes)
@@ -594,6 +659,8 @@ done:
 		free(data.fields_changes);
 	else if (action == EEPROM_WRITE_BYTES)
 		free(data.bytes_changes);
+	else if (action == EEPROM_CLEAR_BYTES)
+		free(data.bytes_list);
 
 clean_input:
 	if (input && is_stdin)

@@ -157,6 +157,28 @@ static void print_layout(const struct layout *layout)
 }
 
 /*
+ * get_bytes_range() - Test offsets values and return range
+ * @offset_start:	The start offset
+ * @offset_end:		The end offset
+ *
+ * Returns: range on success, 0 on failure.
+ */
+static size_t get_bytes_range(int offset_start, int offset_end)
+{
+	if (offset_start < 0 || offset_start >= EEPROM_SIZE ||
+	    offset_end < offset_start || offset_end >= EEPROM_SIZE) {
+		fprintf(stderr, "Invalid offset '0x%02x", offset_start);
+		if (offset_end != offset_start)
+			fprintf(stderr, "-0x%02x", offset_end);
+
+		fprintf(stderr, "'; will not update!\n");
+		return 0;
+	}
+
+	return offset_end - offset_start + 1;
+}
+
+/*
  * Selectively update EEPROM data by bytes.
  * @layout:	An initialized layout.
  * @data:	A data array. Each element contains the following:
@@ -173,16 +195,9 @@ static int update_bytes(struct layout *layout, struct data_array *data)
 	for (int i = 0; i < data->size; i++) {
 		int offset_start = data->bytes_changes[i].start;
 		int offset_end = data->bytes_changes[i].end;
-
-		if (offset_start < 0 || offset_start >= EEPROM_SIZE ||
-		    offset_end < offset_start || offset_end >= EEPROM_SIZE) {
-			fprintf(stderr, "Invalid offset '0x%02x", offset_start);
-			if (offset_end != offset_start)
-				fprintf(stderr, "-0x%02x", offset_end);
-
-			fprintf(stderr, "'; will not update!\n");
+		size_t range = get_bytes_range(offset_start, offset_end);
+		if (range == 0)
 			return 0;
-		}
 
 		int value = data->bytes_changes[i].value;
 		if (value < 0 || value > 255){
@@ -191,12 +206,38 @@ static int update_bytes(struct layout *layout, struct data_array *data)
 			return 0;
 		}
 
-		size_t range = offset_end - offset_start + 1;
 		memset(layout->data + offset_start, value, range);
 		updated_bytes += range;
 	}
 
 	return updated_bytes;
+}
+
+/*
+ * Selectively clear EEPROM data by bytes.
+ * @layout:	An initialized layout.
+ * @data:	A data array. Each element contains the following:
+ * 		start: The first byte in EEPROM to be cleared.
+ * 		end: The last byte in EEPROM to be cleared.
+ *
+ * Returns: number of cleared bytes.
+ */
+static int clear_bytes(struct layout *layout, struct data_array *data)
+{
+	int cleared_bytes = 0;
+
+	for (int i = 0; i < data->size; i++) {
+		int offset_start = data->bytes_list[i].start;
+		int offset_end = data->bytes_list[i].end;
+		size_t range = get_bytes_range(offset_start, offset_end);
+		if (range == 0)
+			return 0;
+
+		memset(layout->data + offset_start, 0xff, range);
+		cleared_bytes += range;
+	}
+
+	return cleared_bytes;
 }
 
 /*
@@ -347,6 +388,7 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	layout->update_fields = update_fields;
 	layout->update_bytes = update_bytes;
 	layout->clear_fields = clear_fields;
+	layout->clear_bytes = clear_bytes;
 
 	return layout;
 }

@@ -35,12 +35,18 @@ struct bytes_change {
 	int value;
 };
 
+struct bytes_range {
+	int start;
+	int end;
+};
+
 struct data_array {
 	int size;
 	union {
 		struct field_change *fields_changes;
 		struct bytes_change *bytes_changes;
 		char **fields_list;
+		struct bytes_range *bytes_list;
 	};
 };
 

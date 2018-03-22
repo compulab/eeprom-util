@@ -115,6 +115,12 @@ static int execute_command(struct command *cmd)
 			goto done;
 		}
 		break;
+	case EEPROM_CLEAR_BYTES:
+		if (!layout->clear_bytes(layout, cmd->data)) {
+			ret = -1;
+			goto done;
+		}
+		break;
 	default:
 		goto done;
 	}

@@ -48,6 +48,8 @@ struct layout {
 			    struct data_array *data);
 	int (*update_bytes)(struct layout *layout,
 			    struct data_array *data);
+	int (*clear_bytes)(struct layout *layout,
+			   struct data_array *data);
 };
 
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
