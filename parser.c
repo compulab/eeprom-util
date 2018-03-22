@@ -50,7 +50,7 @@ static void print_help(void)
 
 	if (write_enabled()) {
 		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> CHANGES\n");
-		printf("       eeprom-util clear <bus_num> <device_addr>\n");
+		printf("       eeprom-util clear [fields] <bus_num> <device_addr> [LIST]\n");
 	}
 
 	printf("       eeprom-util version|-v|--version\n");
@@ -88,7 +88,16 @@ static void print_help(void)
 			"\nWhen file input is used, each <field_name>=<value> or <offset>,<value> pair should be on its own line,\n"
 			"and no quote marks are necessary if there are spaces in either <field_name> or <value>\n"
 			"\nWhen writing a range of bytes use the syntax:	[<offset>[-<offset-end>],<value> ]* \n"
-			"Range is inclusive. Range changes can be mixed with non-range changes.\n");
+			"Range is inclusive. Range changes can be mixed with non-range changes.\n"
+			"\n"
+			"LIST FORMAT\n"
+			"The list to the clear fields command can be passed inline:\n"
+			"       eeprom-util clear fields <bus_num> <device_addr> [<field_name> ]*\n"
+			"or via file input:\n"
+			"       eeprom-util clear fields <bus_num> <device_addr> < file\n"
+			"\nWhen file input is used, each <field_name> should be on its own line,\n"
+			"and no quote marks are necessary if there are spaces in <field_name>\n"
+			);
 
 	printf("\n");
 }
@@ -116,6 +125,9 @@ static enum action parse_action(int argc, char *argv[])
 	} else if (!strncmp(argv[0], "read", 4)) {
 		return EEPROM_READ;
 	} else if (write_enabled() && !strncmp(argv[0], "clear", 5)) {
+		if (argc > 1 && (!strncmp(argv[1], "fields", 6)))
+			return EEPROM_CLEAR_FIELDS;
+
 		return EEPROM_CLEAR;
 	} else if (write_enabled() && !strncmp(argv[0], "write", 5)) {
 		if (argc > 1) {
@@ -527,7 +539,8 @@ int main(int argc, char *argv[])
 	}
 
 	// parse_action already took care of parsing the bytes/fields qualifier
-	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS)
+	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS ||
+	    action == EEPROM_CLEAR_FIELDS)
 		NEXT_PARAM(argc, argv);
 
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
@@ -561,6 +574,8 @@ int main(int argc, char *argv[])
 		data.fields_changes = parse_field_changes(argc, input);
 	else if (action == EEPROM_WRITE_BYTES)
 		data.bytes_changes = parse_bytes_changes(argc, input);
+	else if (action == EEPROM_CLEAR_FIELDS)
+		data.fields_list = input;
 
 	// it is enough to test only one field in the union
 	if (!data.fields_changes)

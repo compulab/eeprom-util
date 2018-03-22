@@ -497,3 +497,15 @@ void print_reserved(const struct field *field)
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
 	printf("(%d bytes)\n", field->size);
 }
+
+/**
+ * clear_field() - clear a field
+ *
+ * A cleared field is defined by having all bytes set to 0xff.
+ *
+ * @field:	an initialized field to clear
+ */
+void clear_field(struct field *field)
+{
+	memset(field->buf, 0xff, field->size);
+}

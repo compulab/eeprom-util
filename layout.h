@@ -44,6 +44,8 @@ struct layout {
 	void (*print)(const struct layout *layout);
 	int (*update_fields)(struct layout *layout,
 			     struct data_array *data);
+	int (*clear_fields)(struct layout *layout,
+			    struct data_array *data);
 	int (*update_bytes)(struct layout *layout,
 			    struct data_array *data);
 };

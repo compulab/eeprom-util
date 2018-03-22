@@ -28,6 +28,7 @@ struct field {
 
 	void (*print)(const struct field *field);
 	int (*update)(struct field *field, char *value);
+	void (*clear)(struct field *field);
 };
 
 void print_bin(const struct field *field);
@@ -52,5 +53,7 @@ void print_reserved(const struct field *field);
 int update_reserved(struct field *field, char *value);
 
 void print_bin_raw(const struct field *field);
+
+void clear_field(struct field *field);
 
 #endif

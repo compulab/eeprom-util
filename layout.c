@@ -261,6 +261,29 @@ static int update_fields(struct layout *layout, struct data_array *data)
 	return updated_fields_cnt;
 }
 
+/*
+ * clear_fields() - Selectively clear EEPROM data by fields.
+ * @layout:	An initialized layout
+ * @data:	A data array. Each element contains field name string
+ *
+ * Returns: number of cleared fields.
+ */
+static int clear_fields(struct layout *layout, struct data_array *data)
+{
+	int cleared_fields_cnt = 0;
+
+	for (int i = 0; i < data->size; i++) {
+		struct field *field = find_field(layout, data->fields_list[i]);
+		if (!field)
+			return 0;
+
+		field->clear(field);
+		cleared_fields_cnt++;
+	}
+
+	return cleared_fields_cnt;
+}
+
 #define ARRAY_LEN(x)	(sizeof(x) / sizeof(x[0]))
 
 /*
@@ -316,12 +339,14 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		layout->fields[i].buf = buf;
 		buf += layout->fields[i].size;
+		layout->fields[i].clear = clear_field;
 	}
 
 	layout->data_size = buf_size;
 	layout->print = print_layout;
 	layout->update_fields = update_fields;
 	layout->update_bytes = update_bytes;
+	layout->clear_fields = clear_fields;
 
 	return layout;
 }

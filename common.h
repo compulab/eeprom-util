@@ -40,6 +40,7 @@ struct data_array {
 	union {
 		struct field_change *fields_changes;
 		struct bytes_change *bytes_changes;
+		char **fields_list;
 	};
 };
 

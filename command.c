@@ -109,6 +109,12 @@ static int execute_command(struct command *cmd)
 			goto done;
 		}
 		break;
+	case EEPROM_CLEAR_FIELDS:
+		if (!layout->clear_fields(layout, cmd->data)) {
+			ret = -1;
+			goto done;
+		}
+		break;
 	default:
 		goto done;
 	}
