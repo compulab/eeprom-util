@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <errno.h>
 #include "layout.h"
 #include "common.h"
 #include "field.h"
@@ -199,22 +200,21 @@ static int update_bytes(struct layout *layout, struct data_array *data)
 }
 
 /*
- * update_field() - update a single field in the layout data.
- * @layout:	A pointer to an existing struct layout.
- * @field_name:	The name of the field to update
- * @new_data:	The new field data (a string. Format depends on the field)
+ * find_field() - Find a field by name from the layout data.
+ * @layout:	An initialized layout
+ * @field_name:	The name of the field to find
  *
- * Returns: 0 on success, -1 on failure.
+ * Returns: A pointer to the field on success, NULL on failure.
  */
-static int update_field(struct layout *layout, char *field_name, char *new_data)
+static struct field* find_field(struct layout *layout, char *field_name)
 {
 	struct field *fields = layout->fields;
 
-	if (!new_data)
-		return 0;
-
-	if (!field_name)
-		return -1;
+	if (!field_name) {
+		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
+			__func__, EINVAL, strerror(EINVAL));
+		return NULL;
+	}
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		if (fields[i].name == RESERVED_FIELDS ||
@@ -222,16 +222,12 @@ static int update_field(struct layout *layout, char *field_name, char *new_data)
 		     strcmp(fields[i].short_name, field_name)))
 			continue;
 
-		int err = fields[i].update(&fields[i], new_data);
-		if (err)
-			fprintf(stderr, "Invalid data for field %s\n", field_name);
-
-		return err;
+		return &(fields[i]);
 	}
 
 	fprintf(stderr, "No such field '%s'\n", field_name);
 
-	return -1;
+	return NULL;
 }
 
 /*
@@ -246,8 +242,16 @@ static int update_fields(struct layout *layout, struct data_array *data)
 	int updated_fields_cnt = 0;
 
 	for (int i = 0; i < data->size; i++) {
-		if (update_field(layout, data->fields_changes[i].field,
-				 data->fields_changes[i].value)) {
+		char *field_name = data->fields_changes[i].field;
+		char *field_value = data->fields_changes[i].value;
+
+		struct field *field = find_field(layout, field_name);
+		if (!field)
+			return 0;
+
+		if (field->update(field, field_value)) {
+			fprintf(stderr, "Invalid data for field %s\n",
+				field_name);
 			return 0;
 		}
 
