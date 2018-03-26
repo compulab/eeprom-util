@@ -50,7 +50,7 @@ static void print_help(void)
 
 	if (write_enabled()) {
 		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> CHANGES\n");
-		printf("       eeprom-util clear [fields|bytes] <bus_num> <device_addr> [LIST]\n");
+		printf("       eeprom-util clear [fields|bytes|all] <bus_num> <device_addr> [LIST]\n");
 	}
 
 	printf("       eeprom-util version|-v|--version\n");
@@ -63,7 +63,7 @@ static void print_help(void)
 
 	if (write_enabled()) {
 		printf("       write\tWrite to EEPROM\n");
-		printf("       clear\tClear EEPROM\n");
+		printf("       clear\tClear EEPROM. Default is 'all'. Other options are clearing by 'fields' or by 'bytes'.\n");
         }
 
 	printf("       version\tPrint the version banner and exit\n"
@@ -604,6 +604,10 @@ int main(int argc, char *argv[])
 	// parse_action already took care of parsing the bytes/fields qualifier
 	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS ||
 	    action == EEPROM_CLEAR_FIELDS || action == EEPROM_CLEAR_BYTES)
+		NEXT_PARAM(argc, argv);
+
+	// The "all" qualifier is optional for clear command
+	if (action == EEPROM_CLEAR && argc > 0 && !strncmp(argv[0], "all", 3))
 		NEXT_PARAM(argc, argv);
 
 	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
