@@ -361,7 +361,7 @@ cleanup:
  *		-ERANGE or -EINVAL on failure
  */
 static int strtoi(char **str, int *dest) {
-	if (!str || !dest || *str == '\0')
+	if (!str || !dest || !*str || **str == '\0')
 		return -EINVAL;
 
 	char *endptr;
