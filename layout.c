@@ -35,7 +35,7 @@ struct field layout_legacy[5] = {
 	{ "Board Revision",		"rev",	2,	NULL, print_bin,	update_bin },
 	{ "Serial Number",		"sn",	8,	NULL, print_bin,	update_bin },
 	{ "Board Configuration",	"conf",	64,	 NULL, print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,		NULL,	176,	NULL, print_reserved,	update_ascii },
+	{ RESERVED_FIELDS,		NULL,	176,	NULL, print_reserved,	NULL },
 };
 
 struct field layout_v1[12] = {
@@ -45,12 +45,12 @@ struct field layout_v1[12] = {
 	{ "2nd MAC Address",	"mac2",		6,	NULL,	print_mac,	update_mac },
 	{ "Production Date",	"date",		4,	NULL,	print_date,	update_date },
 	{ "Serial Number",	"sn",		12,	NULL,	print_bin_rev,	update_bin_rev },
-	{ RESERVED_FIELDS,	NULL,		96,	NULL,	print_reserved,	update_reserved },
+	{ RESERVED_FIELDS,	NULL,		96,	NULL,	print_reserved,	NULL },
 	{ "Product Name",	"name",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #1",	"opt1",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #2",	"opt2",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #3",	"opt3",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,	NULL,		64,	NULL,	print_reserved,	update_ascii },
+	{ RESERVED_FIELDS,	NULL,		64,	NULL,	print_reserved,	NULL },
 };
 
 struct field layout_v2[15] = {
@@ -63,12 +63,12 @@ struct field layout_v2[15] = {
 	{ "3rd MAC Address (WIFI)",		"mac3",		6,	NULL,	print_mac,	update_mac },
 	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	NULL,	print_mac,	update_mac },
 	{ "Layout Version",			"layout",	1,	NULL,	print_bin,	update_bin },
-	{ RESERVED_FIELDS,			NULL,		83,	NULL,	print_reserved,	update_reserved },
+	{ RESERVED_FIELDS,			NULL,		83,	NULL,	print_reserved,	NULL },
 	{ "Product Name",			"name", 	16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #1",			"opt1", 	16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #2",			"opt2", 	16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #3",			"opt3", 	16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	update_ascii },
+	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
 };
 
 struct field layout_v3[16] = {
@@ -82,12 +82,12 @@ struct field layout_v3[16] = {
 	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	NULL,	print_mac,	update_mac },
 	{ "Layout Version",			"layout",	1,	NULL,	print_bin,	update_bin },
 	{ "CompuLab EEPROM ID",			"id",		3,	NULL,	print_bin,	update_bin },
-	{ RESERVED_FIELDS,			NULL,		80,	NULL,	print_reserved,	update_reserved },
+	{ RESERVED_FIELDS,			NULL,		80,	NULL,	print_reserved,	NULL },
 	{ "Product Name",			"name",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #1",			"opt1",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #2",			"opt2",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #3",			"opt3",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	update_ascii },
+	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
 };
 
 struct field layout_v4[21] = {
@@ -103,15 +103,15 @@ struct field layout_v4[21] = {
 	{ "CompuLab EEPROM ID",			"id",		3,	NULL,	print_bin,	update_bin },
 	{ "5th MAC Address",			"mac5",		6,	NULL,	print_mac,	update_mac },
 	{ "6th MAC Address",			"mac6",		6,	NULL,	print_mac,	update_mac },
-	{ RESERVED_FIELDS,			NULL,		4,	NULL,	print_reserved,	update_reserved },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	update_reserved },
+	{ RESERVED_FIELDS,			NULL,		4,	NULL,	print_reserved,	NULL },
+	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
 	{ "Product Name",			"name",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #1",			"opt1",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #2",			"opt2",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #3",			"opt3",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #4",			"opt4",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #5",			"opt5",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		32,	NULL,	print_reserved,	update_ascii },
+	{ RESERVED_FIELDS,			NULL,		32,	NULL,	print_reserved,	NULL },
 };
 
 struct field layout_unknown[1] = {
