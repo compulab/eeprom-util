@@ -250,26 +250,36 @@ void print_bin_ver(const struct field *field)
  */
 int update_bin_ver(struct field *field, char *value)
 {
-	char *endptr;
-	char *tok = strtok(value, ".");
-	if (!tok)
-		return -1;
+	char *version = value;
+	int num, remainder;
 
-	int num = strtol(tok, &endptr, 0);
-	if (*endptr != '\0')
+	if (strtoi(&version, &num) != STRTOI_STR_CON && *version != '.') {
+		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
+	}
 
-	tok = strtok(NULL, "");
-	if (!tok)
+	version++;
+	if (strtoi(&version, &remainder) != STRTOI_STR_END) {
+		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
+	}
 
-	int remainder = strtol(tok, &endptr, 0);
-	if (*endptr != '\0')
+	if (num < 0 || remainder < 0) {
+		fprintf(stderr, "%s: version must be positive\n", field->name);
 		return -1;
+	}
+
+	if (remainder > 99) {
+		fprintf(stderr, "%s: minor version limited to two digits\n",
+			field->name);
+		return -1;
+	}
 
 	num = num * 100 + remainder;
-	if (num >> 16)
+	if (num >> 16) {
+		fprintf(stderr, "%s: version is too big\n", field->name);
 		return -1;
+	}
 
 	field->buf[0] = (unsigned char)num;
 	field->buf[1] = num >> 8;
