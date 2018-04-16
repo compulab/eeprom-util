@@ -390,30 +390,37 @@ static int validate_date(unsigned char day, unsigned char month,
  */
 int update_date(struct field *field, char *value)
 {
-	char *endptr;
-	char *tok1 = strtok(value, "/");
-	char *tok2 = strtok(NULL, "/");
-	char *tok3 = strtok(NULL, "/");
+	char *date = value;
+	int day, month, year;
 
-	if (!tok1 || !tok2 || !tok3) {
+	if (strtoi(&date, &day) != STRTOI_STR_CON || *date != '/') {
 		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
 	}
 
-	unsigned char day = (unsigned char)strtol(tok1, &endptr, 0);
-	if (*endptr != '\0' || day == 0) {
+	if (day == 0) {
 		fprintf(stderr, "%s: invalid day\n", field->name);
 		return -1;
 	}
 
-	unsigned char month;
+	date++;
+	if (strlen(date) < 4 || *(date + 3) != '/') {
+		fprintf(stderr, "%s: syntax error\n", field->name);
+		return -1;
+	}
+
 	for (month = 1; month <= 12; month++)
-		if (!strcmp(tok2, months[month - 1]))
+		if (!strncmp(date, months[month - 1], 3))
 			break;
 
-	unsigned int year = strtol(tok3, &endptr, 0);
-	if (*endptr != '\0') {
-		fprintf(stderr, "%s: invalid year\n", field->name);
+	if (strncmp(date, months[month - 1], 3)) {
+		fprintf(stderr, "%s: invalid month\n", field->name);
+		return -1;
+	}
+
+	date += 4;
+	if (strtoi(&date, &year) != STRTOI_STR_END) {
+		fprintf(stderr, "%s: syntax error\n", field->name);
 		return -1;
 	}
 
@@ -427,8 +434,8 @@ int update_date(struct field *field, char *value)
 		return -1;
 	}
 
-	field->buf[0] = day;
-	field->buf[1] = month;
+	field->buf[0] = (unsigned char)day;
+	field->buf[1] = (unsigned char)month;
 	field->buf[2] = (unsigned char)year;
 	field->buf[3] = (unsigned char)(year >> 8);
 
