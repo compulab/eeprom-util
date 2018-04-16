@@ -346,43 +346,6 @@ cleanup:
 	return ret;
 }
 
-#define CHARS_REMAIN 1
-#define CHARS_END 2
-/*
- * strtoi - convert to int and point to the first character after the number
- *
- * @str:	A pointer to a string containing an integer number at the
- *		beginning. On success the pointer will point to the first
- *		character after the number.
- * @dest:	A pointer where to save the int result
- *
- * Returns:	CHARS_END on success and all characters read.
- *		CHARS_REMAIN on success and additional characters remain.
- *		-ERANGE or -EINVAL on failure
- */
-static int strtoi(char **str, int *dest) {
-	if (!str || !dest || !*str || **str == '\0')
-		return -EINVAL;
-
-	char *endptr;
-	errno = 0;
-	int num = strtol(*str, &endptr, 0);
-
-	if (errno != 0)
-		return -errno;
-
-	if (*str == endptr)
-		return -EINVAL;
-
-	*dest = num;
-	*str = endptr;
-
-	if (*endptr == 0)
-		return CHARS_END;
-
-	return CHARS_REMAIN;
-}
-
 /*
  * parse_bytes_list - parse the strings representing bytes offsets
  *
@@ -417,11 +380,11 @@ static struct bytes_range *parse_bytes_list(int size, char *input[])
 		char *str = input[i];
 		int ret = strtoi(&str, &bytes_list[i].start);
 
-		if ((ret == CHARS_REMAIN) && (*str == '-')) {
+		if ((ret == STRTOI_STR_CON) && (*str == '-')) {
 			str++;
-			if (strtoi(&str, &bytes_list[i].end) != CHARS_END)
+			if (strtoi(&str, &bytes_list[i].end) != STRTOI_STR_END)
 				goto syntax_error;
-		} else if (ret == CHARS_END) {
+		} else if (ret == STRTOI_STR_END) {
 			bytes_list[i].end = bytes_list[i].start;
 		} else {
 			goto syntax_error;
@@ -469,12 +432,12 @@ static struct bytes_change *parse_bytes_changes(int size, char *input[])
 	for (i = 0; i < size ; i++) {
 		char *change = input[i];
 
-		if (strtoi(&change, &changes[i].start) != CHARS_REMAIN)
+		if (strtoi(&change, &changes[i].start) != STRTOI_STR_CON)
 			goto syntax_error;
 
 		if (*change == '-') {
 			change++;
-			if (strtoi(&change, &changes[i].end) != CHARS_REMAIN)
+			if (strtoi(&change, &changes[i].end) != STRTOI_STR_CON)
 				goto syntax_error;
 		} else {
 			changes[i].end = changes[i].start;
@@ -484,7 +447,7 @@ static struct bytes_change *parse_bytes_changes(int size, char *input[])
 			goto syntax_error;
 
 		change++;
-		if (strtoi(&change, &changes[i].value) != CHARS_END)
+		if (strtoi(&change, &changes[i].value) != STRTOI_STR_END)
 			goto syntax_error;
 	}
 

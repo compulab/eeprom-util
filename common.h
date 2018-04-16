@@ -52,4 +52,8 @@ struct data_array {
 
 int safe_strtoui(char *str, int base);
 
+#define STRTOI_STR_CON 1
+#define STRTOI_STR_END 2
+int strtoi(char **str, int *dest);
+
 #endif

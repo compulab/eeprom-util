@@ -17,6 +17,8 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include "common.h"
 
 /*
  * Return a positive integer or -1 if conversion of string cannot be performed.
@@ -32,4 +34,40 @@ int safe_strtoui(char *str, int base)
 		return -1;
 
 	return val;
+}
+
+/*
+ * strtoi - convert to int and point to the first character after the number
+ *
+ * @str:	A pointer to a string containing an integer number at the
+ *		beginning. On success the pointer will point to the first
+ *		character after the number.
+ * @dest:	A pointer where to save the int result
+ *
+ * Returns:	STRTOI_STR_END on success and all characters read.
+ *		STRTOI_STR_CON on success and additional characters remain.
+ *		-ERANGE or -EINVAL on failure
+ */
+int strtoi(char **str, int *dest)
+{
+	if (!str || !dest || !*str || **str == '\0')
+		return -EINVAL;
+
+	char *endptr;
+	errno = 0;
+	int num = strtol(*str, &endptr, 0);
+
+	if (errno != 0)
+		return -errno;
+
+	if (*str == endptr)
+		return -EINVAL;
+
+	*dest = num;
+	*str = endptr;
+
+	if (*endptr == 0)
+		return STRTOI_STR_END;
+
+	return STRTOI_STR_CON;
 }
