@@ -45,15 +45,17 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 	int i = reverse ? len - 1 : 0;
 
 	/* each two characters in the string are fit in one byte */
-	if (len > field->size * 2)
+	if (len > field->size * 2) {
+		fprintf(stderr, "%s: value too long\n", field->name);
 		return -1;
+	}
 
 	/* pad with zeros */
 	memset(field->buf, 0, field->size);
 
 	/* i - string iterator, j - buf iterator */
 	for (int j = 0; j < field->size; j++) {
-		unsigned char byte = 0;
+		int byte = 0;
 		char tmp[3] = { 0, 0, 0 };
 
 		if ((reverse && i < 0) || (!reverse && i >= len))
@@ -68,11 +70,13 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 			tmp[k] = value[reverse ? i - 1 + k : i + k];
 		}
 
-		byte = safe_strtoui(tmp, 16);
-		if (byte < 0)
+		char *str = tmp;
+		if (strtoi_base(&str, &byte, 16) < 0 || byte < 0 || byte >> 8) {
+			fprintf(stderr, "%s: syntax error\n", field->name);
 			return -1;
+		}
 
-		field->buf[j] = byte;
+		field->buf[j] = (unsigned char)byte;
 		i = reverse ? i - 2 : i + 2;
 	}
 

@@ -21,22 +21,6 @@
 #include "common.h"
 
 /*
- * Return a positive integer or -1 if conversion of string cannot be performed.
- */
-int safe_strtoui(char *str, int base)
-{
-	if (!strcmp(str, ""))
-		return -1;
-
-	char* endptr;
-	int val = strtol(str, &endptr, base);
-	if (*endptr != '\0')
-		return -1;
-
-	return val;
-}
-
-/*
  * strtoi_base - convert to int using the given numerical base and point
  *		 to the first character after the number
  *
