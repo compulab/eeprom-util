@@ -49,8 +49,8 @@ static void print_help(void)
 
 
 	if (write_enabled()) {
-		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> CHANGES\n");
-		printf("       eeprom-util clear [fields|bytes|all] <bus_num> <device_addr> [LIST]\n");
+		printf("       eeprom-util write (fields|bytes) [-l <layout_version>] <bus_num> <device_addr> DATA\n");
+		printf("       eeprom-util clear [fields|bytes|all] <bus_num> <device_addr> [DATA]\n");
 	}
 
 	printf("       eeprom-util version|-v|--version\n");
@@ -58,49 +58,65 @@ static void print_help(void)
 
 	printf("\n"
 		"COMMANDS\n"
-		"       list\tList device addresses accessible via i2c\n"
-		"       read\tRead from EEPROM\n");
+		"   list 	List device addresses accessible via i2c\n"
+		"   read 	Read from EEPROM\n");
 
 	if (write_enabled()) {
-		printf("       write\tWrite to EEPROM\n");
-		printf("       clear\tClear EEPROM. Default is 'all'. Other options are clearing by 'fields' or by 'bytes'.\n");
-        }
+		printf("   write	Write to EEPROM. Must specify if writing to 'fields' or 'bytes'\n");
+		printf("   clear	Clear EEPROM. Default is 'all'. Other options are clearing 'fields' or 'bytes'.\n");
+	}
 
-	printf("       version\tPrint the version banner and exit\n"
-	       "       help\tPrint this help and exit\n");
+	printf("   version	Print the version banner and exit\n"
+	       "   help		Print this help and exit\n");
 	printf("\n"
 	       "LAYOUT VERSIONS\n"
-	       "The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
-	       "If the -l option is omitted, the utility will auto detect the layout based on the data in the EEPROM.\n"
-	       "The following values can be provided with the -l option:\n"
-	       "       auto			use auto-detection to print layout\n"
-	       "       legacy, 1, 2, 3, 4	print according to layout version\n"
-	       "       raw			print raw data\n");
+	       "   The -l option can be used to force the utility to interpret the EEPROM data using the chosen layout.\n"
+	       "   If the -l option is omitted, the utility will auto detect the layout based on the data in the EEPROM.\n"
+	       "   The following values can be provided with the -l option:\n"
+	       "      auto			use auto-detection to print layout\n"
+	       "      legacy, 1, 2, 3, 4	print according to layout version\n"
+	       "      raw			print raw data\n");
 
-	if (write_enabled())
+	if (write_enabled()) {
 		printf("\n"
-			"CHANGES FORMAT\n"
-			"The list of changes to the write command can be passed inline:\n"
-			"       eeprom-util write fields [-l <layout_version>] <bus_num> <device_addr> [<field_name>=<value> ]*\n"
-			"       eeprom-util write bytes [-l <layout_version>] <bus_num> <device_addr> [<offset>[-<offset-end>],<value> ]*\n"
-			"or via file input:\n"
-			"       eeprom-util write (fields | bytes) [-l <layout_version>] <bus_num> <device_addr> < file\n"
-			"\nWhen file input is used, each <field_name>=<value> or <offset>,<value> pair should be on its own line,\n"
-			"and no quote marks are necessary if there are spaces in either <field_name> or <value>\n"
-			"\nWhen writing a range of bytes use the syntax:	[<offset>[-<offset-end>],<value> ]* \n"
-			"Range is inclusive. Range changes can be mixed with non-range changes.\n"
-			"\n"
-			"LIST FORMAT\n"
-			"The list to the clear fields or bytes commands can be passed inline:\n"
-			"       eeprom-util clear fields <bus_num> <device_addr> [<field_name> ]*\n"
-			"       eeprom-util clear bytes <bus_num> <device_addr> [<offset>[-<offset-end>] ]*\n"
-			"or via file input:\n"
-			"       eeprom-util clear fields <bus_num> <device_addr> < file\n"
-			"\nWhen file input is used, each <field_name> should be on its own line,\n"
-			"and no quote marks are necessary if there are spaces in <field_name>\n"
-			"\nWhen clearing a range of bytes use the syntax:	[<offset>[-<offset-end>] ]* \n"
-			"Range is inclusive. Range clears can be mixed with non-range clears.\n"
+			"DATA FORMAT\n"
+			"   Some commands require additional data input. The data can be passed inline or from standard input.\n"
+			"   The patterns of the data input for each command are listed as follows:\n"
+			"      write fields:	[<field_name>=<value> ]*\n"
+			"      write bytes: 	[<offset>[-<offset-end>],<value> ]*\n"
+			"      clear fields:	[<field_name> ]*\n"
+			"      clear bytes: 	[<offset>[-<offset-end>] ]*\n\n"
+
+			"   When using inline input:\n"
+			"      * Each entry should be separated by a white space.\n"
+			"      * Quote marks are needed if spaces exist in an entry.\n\n"
+
+			"   When using standard input:\n"
+			"      * Each entry should be on its own line.\n"
+			"      * Quote marks are not needed if spaces exist in an entry.\n\n"
+
+			"   Notes for bytes:\n"
+			"      * Offset range is inclusive. Range inputs can be mixed with non-range inputs.\n"
+			"      * Writing a byte value to an offset:		<offset>,<value>\n"
+			"      * Writing a byte value to all offsets in range:	<offset>-<offset-end>,<value>\n\n"
+
+			"   Notes for fields:\n"
+			"      * The value input should be in the same pattern like in the output of the read command.\n"
 			);
+
+		printf("\n"
+			"USAGE EXAMPLE\n"
+			"   The input for the following command can be passed inline:\n"
+			"      eeprom-util write fields 6 0x20 \"Major Revision=1.20\" \"Production Date=01/Feb/2018\" \\\n"
+			"         \"1st MAC Address=01:23:45:67:89:ab\"\n"
+			"   or via the standard input:\n"
+			"      eeprom-util write fields 6 0x20 < fields_data\n"
+			"   Where fields_data is the name of a file containing 3 non empty lines:\n"
+			"      Major Revision=1.20\n"
+			"      Production Date=01/Feb/2018\n"
+			"      1st MAC Address=01:23:45:67:89:ab\n"
+			);
+	}
 
 	printf("\n");
 }
