@@ -157,6 +157,20 @@ static void print_layout(const struct layout *layout)
 }
 
 /*
+ * offset_to_string() - convert offset or range to string
+ * @dest_str:		A pointer to where the string will be written
+ * @offset_start:	The start offset
+ * @offset_end:		The end offset
+ */
+static void offset_to_string(char* dest_str, int offset_start, int offset_end)
+{
+	int chars = sprintf(dest_str, "'0x%02x", offset_start);
+	if (offset_end != offset_start)
+		chars += sprintf(dest_str + chars, "-0x%02x", offset_end);
+	sprintf(dest_str + chars, "'");
+}
+
+/*
  * get_bytes_range() - Test offsets values and return range
  * @offset_start:	The start offset
  * @offset_end:		The end offset
@@ -167,11 +181,9 @@ static size_t get_bytes_range(int offset_start, int offset_end)
 {
 	if (offset_start < 0 || offset_start >= EEPROM_SIZE ||
 	    offset_end < offset_start || offset_end >= EEPROM_SIZE) {
-		fprintf(stderr, "Invalid offset '0x%02x", offset_start);
-		if (offset_end != offset_start)
-			fprintf(stderr, "-0x%02x", offset_end);
-
-		fprintf(stderr, "'; will not update!\n");
+		char offset_str[30];
+		offset_to_string(offset_str, offset_start, offset_end);
+		ieprintf("Invalid offset %s", offset_str);
 		return 0;
 	}
 
@@ -200,14 +212,17 @@ static int update_bytes(struct layout *layout, struct data_array *data)
 			return 0;
 
 		int value = data->bytes_changes[i].value;
-		if (value < 0 || value > 255){
-			fprintf(stderr, "Invalid value '0x%02x' at '0x%02x'; "
-				"will not update!\n", value, offset_start);
-			return 0;
+		if (value >= 0 && value <= 255){
+			memset(layout->data + offset_start, value, range);
+			updated_bytes += range;
+			continue;
 		}
 
-		memset(layout->data + offset_start, value, range);
-		updated_bytes += range;
+		char value_str[60];
+		int chars = sprintf(value_str, "'0x%02x' at offset ", value);
+		offset_to_string(value_str + chars, offset_start, offset_end);
+		ieprintf("Invalid value %s", value_str);
+		return 0;
 	}
 
 	return updated_bytes;
@@ -266,7 +281,7 @@ static struct field* find_field(struct layout *layout, char *field_name)
 		return &(fields[i]);
 	}
 
-	fprintf(stderr, "No such field '%s'\n", field_name);
+	ieprintf("Field \"%s\" not found", field_name);
 
 	return NULL;
 }
@@ -290,11 +305,8 @@ static int update_fields(struct layout *layout, struct data_array *data)
 		if (!field)
 			return 0;
 
-		if (field->update(field, field_value)) {
-			fprintf(stderr, "Invalid data for field %s\n",
-				field_name);
+		if (field->update(field, field_value))
 			return 0;
-		}
 
 		updated_fields_cnt++;
 	}

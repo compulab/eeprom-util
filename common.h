@@ -24,6 +24,12 @@
 #define COLOR_GREEN  "\x1B[32m"
 #define COLOR_RESET  "\033[0m"
 
+// Macro for printing error messages
+#define eprintf(args...) fprintf (stderr, args)
+// Macro for printing input error messages
+#define ie_fmt(fmt) "Input error: " fmt " - Operation Aborted!\n"
+#define ieprintf(fmt, ...) eprintf(ie_fmt(fmt), ##__VA_ARGS__)
+
 struct field_change {
 	char *field;
 	char *value;

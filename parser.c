@@ -198,6 +198,9 @@ int parse_numeric_param(char *str, char *error_message)
 // The size of each reallocation of stdin line size or line count
 #define STDIN_REALLOC_SIZE 	10
 
+// Macro for printing input syntax error messages
+#define iseprintf(str) ieprintf("Syntax error in \"%s\"", str)
+
 /*
  * mem_realloc - Realloc memory if needed
  *
@@ -394,7 +397,7 @@ static struct bytes_range *parse_bytes_list(int size, char *input[])
 	return bytes_list;
 
 syntax_error:
-	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	iseprintf(input[i]);
 	free(bytes_list);
 	return NULL;
 }
@@ -454,7 +457,7 @@ static struct bytes_change *parse_bytes_changes(int size, char *input[])
 	return changes;
 
 syntax_error:
-	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	iseprintf(input[i]);
 	free(changes);
 	return NULL;
 }
@@ -502,7 +505,7 @@ static struct field_change *parse_field_changes(int size, char *input[])
 	return changes;
 
 syntax_error:
-	fprintf(stderr, "Invalid input \"%s\", will not update!\n", input[i]);
+	iseprintf(input[i]);
 	free(changes);
 	return NULL;
 }

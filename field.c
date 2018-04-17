@@ -25,6 +25,9 @@
 #include "field.h"
 
 #define PRINT_FIELD_SEGMENT	"%-30s"
+// Macro for printing field's input value error messages
+#define iveprintf(str, value, name) \
+	ieprintf("Invalid value \"%s\" for field \"%s\" - " str, value, name);
 
 static void __print_bin(const struct field *field,
 			char *delimiter, bool reverse)
@@ -46,7 +49,7 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 
 	/* each two characters in the string are fit in one byte */
 	if (len > field->size * 2) {
-		fprintf(stderr, "%s: value too long\n", field->name);
+		iveprintf("Value is too long", value, field->name);
 		return -1;
 	}
 
@@ -72,7 +75,7 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 
 		char *str = tmp;
 		if (strtoi_base(&str, &byte, 16) < 0 || byte < 0 || byte >> 8) {
-			fprintf(stderr, "%s: syntax error\n", field->name);
+			iveprintf("Syntax error", value, field->name);
 			return -1;
 		}
 
@@ -91,7 +94,7 @@ static int __update_bin_delim(struct field *field, char *value, char delimiter)
 	for (i = 0; i < (field->size - 1); i++) {
 		if (strtoi_base(&bin, &val, 16) != STRTOI_STR_CON ||
 		    *bin != delimiter || val < 0 || val >> 8) {
-			fprintf(stderr, "%s: syntax error\n", field->name);
+			iveprintf("Syntax error", value, field->name);
 			return -1;
 		}
 
@@ -101,7 +104,7 @@ static int __update_bin_delim(struct field *field, char *value, char delimiter)
 
 	if (strtoi_base(&bin, &val, 16) != STRTOI_STR_END ||
 	    val < 0 || val >> 8) {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
@@ -246,30 +249,29 @@ int update_bin_ver(struct field *field, char *value)
 	int num, remainder;
 
 	if (strtoi(&version, &num) != STRTOI_STR_CON && *version != '.') {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
 	version++;
 	if (strtoi(&version, &remainder) != STRTOI_STR_END) {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
 	if (num < 0 || remainder < 0) {
-		fprintf(stderr, "%s: version must be positive\n", field->name);
+		iveprintf("Version must be positive", value, field->name);
 		return -1;
 	}
 
 	if (remainder > 99) {
-		fprintf(stderr, "%s: minor version limited to two digits\n",
-			field->name);
+		iveprintf("Minor version is 1-2 digits", value, field->name);
 		return -1;
 	}
 
 	num = num * 100 + remainder;
 	if (num >> 16) {
-		fprintf(stderr, "%s: version is too big\n", field->name);
+		iveprintf("Version is too big", value, field->name);
 		return -1;
 	}
 
@@ -396,18 +398,18 @@ int update_date(struct field *field, char *value)
 	int day, month, year;
 
 	if (strtoi(&date, &day) != STRTOI_STR_CON || *date != '/') {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
 	if (day == 0) {
-		fprintf(stderr, "%s: invalid day\n", field->name);
+		iveprintf("Invalid day", value, field->name);
 		return -1;
 	}
 
 	date++;
 	if (strlen(date) < 4 || *(date + 3) != '/') {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
@@ -416,23 +418,23 @@ int update_date(struct field *field, char *value)
 			break;
 
 	if (strncmp(date, months[month - 1], 3)) {
-		fprintf(stderr, "%s: invalid month\n", field->name);
+		iveprintf("Invalid month", value, field->name);
 		return -1;
 	}
 
 	date += 4;
 	if (strtoi(&date, &year) != STRTOI_STR_END) {
-		fprintf(stderr, "%s: syntax error\n", field->name);
+		iveprintf("Syntax error", value, field->name);
 		return -1;
 	}
 
 	if (validate_date(day, month - 1, year)) {
-		fprintf(stderr, "%s: invalid date\n", field->name);
+		iveprintf("Invalid date", value, field->name);
 		return -1;
 	}
 
 	if (year >> 16) {
-		fprintf(stderr, "%s: year overflow\n", field->name);
+		iveprintf("Year overflow", value, field->name);
 		return -1;
 	}
 
@@ -481,7 +483,7 @@ void print_ascii(const struct field *field)
 int update_ascii(struct field *field, char *value)
 {
 	if (strlen(value) >= field->size) {
-		fprintf(stderr, "%s: new data too long\n", field->name);
+		iveprintf("Value is too long", value, field->name);
 		return -1;
 	}
 
