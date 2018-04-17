@@ -606,7 +606,8 @@ int main(int argc, char *argv[])
 	NEXT_PARAM(argc, argv);
 
 	i2c_addr = parse_numeric_param(argv[0], STR_EINVAL_ADDR);
-	cond_usage_exit(i2c_addr > MAX_I2C_BUS || i2c_addr < 0, STR_EINVAL_BUS);
+	cond_usage_exit(i2c_addr > MAX_I2C_BUS || i2c_addr < 0,
+		STR_EINVAL_ADDR);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_READ || action == EEPROM_CLEAR)
