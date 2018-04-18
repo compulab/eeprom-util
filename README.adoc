@@ -7,8 +7,8 @@ readable format.
 
 The utility provides a WYSIWYG UI for updating EEPROM contents; the user can
 specify the target field by name, and provide the new value in the same
-formatting as displayed by the `read` command. Direct offset/value mode of
-writing is also supported.
+formatting as displayed by the `read` command. The user can also clear a field
+by name. Direct offset/value mode of writing is also supported.
 
 Finally, the utility can list accessible devices on i2c buses, or a more
 concise listing of just the EEPROM devices, depending on the available
@@ -34,6 +34,7 @@ Product Options #3
 Reserved fields               (64 bytes)
 
 # ./eeprom-util write fields 2 0x50 "Production Date=01/Jun/2014"
+# ./eeprom-util clear fields 2 0x50 "Serial Number" "Minor Revision"
 ----
 
 = Requirements
