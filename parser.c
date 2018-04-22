@@ -574,14 +574,8 @@ int main(int argc, char *argv[])
 	NEXT_PARAM(argc, argv); // Skip program name
 	action = parse_action(argc, argv);
 	NEXT_PARAM(argc, argv);
-	if (action == EEPROM_LIST) {
-		if (argc >= 1) {
-			i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
-			cond_usage_exit(i2c_bus > MAX_I2C_BUS ||
-					i2c_bus < 0, STR_EINVAL_BUS);
-		}
+	if (action == EEPROM_LIST && argc == 0)
 		goto done;
-	}
 
 	// parse_action already took care of parsing the bytes/fields qualifier
 	if (action == EEPROM_WRITE_BYTES || action == EEPROM_WRITE_FIELDS ||
@@ -592,19 +586,22 @@ int main(int argc, char *argv[])
 	if (action == EEPROM_CLEAR && argc > 0 && !strncmp(argv[0], "all", 3))
 		NEXT_PARAM(argc, argv);
 
-	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
-	if (!strcmp(argv[0], "-l")) {
+	if (argc > 1 && !strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
 		layout_ver = parse_layout_version(argv[0]);
 		cond_usage_exit(layout_ver == LAYOUT_UNRECOGNIZED, STR_EINVAL_PARAM);
 		NEXT_PARAM(argc, argv);
 	}
 
-	cond_usage_exit(argc <= 1, STR_ENO_PARAMS);
+	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
 	i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
 	cond_usage_exit(i2c_bus > MAX_I2C_BUS || i2c_bus < 0, STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
+	if (action == EEPROM_LIST)
+		goto done;
+
+	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
 	i2c_addr = parse_numeric_param(argv[0], STR_EINVAL_ADDR);
 	cond_usage_exit(i2c_addr > MAX_I2C_BUS || i2c_addr < 0,
 		STR_EINVAL_ADDR);
