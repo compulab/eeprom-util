@@ -6,6 +6,18 @@ The format is based on http://keepachangelog.com/[Keep a Changelog]
 and this project adheres to http://semver.org/[Semantic Versioning]
 since version v3.0.0.
 
+== <<v3.1.0>> - 2018-04-18
+=== Added
+* 'clear' command can also clear by 'fields' or by 'bytes'.
+* Each field on the current layouts now has an additional short name. For the
+  'write' or 'clear' commmands, the user can now specify a field by its short
+  name or its full name.
+
+=== Fixed
+* Simultaneous access to the same device could resulted in a faulty read.
+* Syntax enforcement of input values for fields wasn't very strict, and it
+  caused some unexpected behaviors.
+
 == <<v3.0.1>> - 2018-03-20
 
 === Fixed
@@ -103,6 +115,9 @@ since version v3.0.0.
   strings.
 * List bus number and address of i2c accessible devices.
 * Works with both /dev/i2c interface, and with EEPROM driver.
+
+[[v3.1.0]]
+[v3.1.0]: https://github.com/compulab/eeprom-util/compare/v3.0.1…v3.1.0
 
 [[v3.0.1]]
 [v3.0.1]: https://github.com/compulab/eeprom-util/compare/v3.0.0…v3.0.1
