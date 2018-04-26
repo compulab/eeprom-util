@@ -21,3 +21,5 @@
 #
 eeprom-util
 auto_generated.h
+/dep
+/obj

@@ -23,32 +23,68 @@ PATCHLEVEL = 0
 EEPROM_UTIL_VERSION = $(VERSION).$(MINORVER).$(PATCHLEVEL)
 
 CROSS_COMPILE ?=
+CC = $(CROSS_COMPILE)gcc
 
-AUTO_GENERATED_FILE = auto_generated.h
+OBJDIR := obj
+DEPDIR := dep
 
-OBJS = common.o field.o parser.o layout.o command.o linux_api.o
-SOURCES	:= $(OBJS:.o=.c)
-CFLAGS = -Wall -std=gnu99
-COMPILE_CMD = $(CROSS_COMPILE)gcc $(CFLAGS) $(SOURCES) -o eeprom-util
+TARGET := eeprom-util
+GOAL_FILE := $(OBJDIR)/make_goal
+AUTO_GENERATED_FILE := auto_generated.h
 
-eeprom: $(AUTO_GENERATED_FILE) $(OBJS)
-	$(COMPILE_CMD)
+CORE := common.o field.o layout.o command.o linux_api.o
+MAIN := parser.o
 
-static: CFLAGS += -static
-static: eeprom
+OBJECTS := $(addprefix $(OBJDIR)/,$(CORE))
+DEPS    := $(addprefix $(DEPDIR)/,$(CORE:.o=.d) $(MAIN:.o=.d))
 
-write: CFLAGS += -D ENABLE_WRITE
-write: eeprom
+CFLAGS     = -Wall -std=gnu99
+DEPFLAGS   = -MMD -MF $(DEPDIR)/$(*F).d
+WRITEFLAGS = -D ENABLE_WRITE
 
-write_static: CFLAGS += -D ENABLE_WRITE -static
-write_static: eeprom
+$(TARGET): $(OBJECTS) $(AUTO_GENERATED_FILE) $(OBJDIR)/$(MAIN)
+	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJDIR)/$(MAIN) -o $(TARGET)
 
-$(AUTO_GENERATED_FILE): .FORCE
+$(OBJDIR)/%.o : %.c $(GOAL_FILE)
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
+
+# pull in dependency info for *existing* .o files
+-include $(DEPS)
+
+static: LDFLAGS += -static
+static: $(TARGET) ;
+
+write: CFLAGS += $(WRITEFLAGS)
+write: $(TARGET) ;
+
+write_static: LDFLAGS += -static
+write_static: write ;
+
+$(AUTO_GENERATED_FILE): $(OBJECTS) $(MAIN:.o=.c)
 	@( printf '#define VERSION "%s%s"\n' "$(EEPROM_UTIL_VERSION)" \
 	'$(shell ./setversion)' ) > $@
 	@date +'#define BUILD_DATE "%d %b %C%y"' >> $@
 	@date +'#define BUILD_TIME "%T"' >> $@
 
-.PHONY: clean .FORCE
+# make directory only if they don't exists (prevent unnecessary recompiling)
+$(OBJECTS): | $(OBJDIR)
+$(DEPS):    | $(DEPDIR)
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
+$(DEPDIR):
+	@mkdir -p $(DEPDIR)
+
+# save goal to file so target will recompile if goal changes
+$(GOAL_FILE): .FORCE | $(OBJDIR)
+ifneq ($(CROSS_COMPILE)$(MAKECMDGOALS),$(shell cat $(GOAL_FILE) 2>&1))
+	@echo '$(CROSS_COMPILE)$(MAKECMDGOALS)' > $@
+endif
+
+# fix implicit pattern rules to compile without liniking
+$(CORE:.o=): % : $(OBJDIR)/%.o ;
+$(MAIN:.o=): % : $(AUTO_GENERATED_FILE) $(OBJDIR)/%.o ;
+
 clean:
-	rm -f eeprom-util $(OBJS) $(AUTO_GENERATED_FILE)
+	rm -rf $(TARGET) $(OBJDIR) $(DEPDIR) $(AUTO_GENERATED_FILE)
+
+.PHONY: clean .FORCE
