@@ -121,16 +121,21 @@ static void print_help(void)
 	printf("\n");
 }
 
-static void cond_usage_exit(bool cond, const char *message)
+static void message_exit(const char *message)
 {
 	ASSERT(message);
 
+	eprintf(COLOR_RED "%s" COLOR_RESET, message);
+	print_help();
+	exit(1);
+}
+
+static void cond_usage_exit(bool cond, const char *message)
+{
 	if (!cond)
 		return;
 
-	fprintf(stderr, COLOR_RED "%s" COLOR_RESET, message);
-	print_help();
-	exit(1);
+	message_exit(message);
 }
 
 static void usage_exit(void)
@@ -173,7 +178,7 @@ static enum action parse_action(int argc, char *argv[])
 		exit(0);
 	}
 
-	cond_usage_exit(true, "Unknown function!\n");
+	message_exit("Unknown function!\n");
 	return EEPROM_ACTION_INVALID; //To appease the compiler
 }
 
