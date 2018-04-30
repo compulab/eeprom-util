@@ -186,8 +186,6 @@ static enum layout_version parse_layout_version(char *str)
 {
 	ASSERT(str);
 
-	char *endptr;
-
 	if (!strncmp(str, "legacy", 6))
 		return LAYOUT_LEGACY;
 	else if (!strncmp(str, "raw", 3))
@@ -197,12 +195,14 @@ static enum layout_version parse_layout_version(char *str)
 	else if(!strncmp(str, "v", 1))
 		str++;
 
-	int layout = strtol(str, &endptr, 10);
-	if (*endptr != '\0' || endptr == str ||
-	    layout < LAYOUT_AUTODETECT || layout >= LAYOUT_UNRECOGNIZED)
-		return LAYOUT_UNRECOGNIZED;
-	else
-		return (enum layout_version)layout;
+	int layout = LAYOUT_UNRECOGNIZED;
+	if (strtoi_base(&str, &layout, 10) != STRTOI_STR_END)
+		message_exit("Invalid layout version!\n");
+
+	if (layout < LAYOUT_AUTODETECT || layout >= LAYOUT_UNRECOGNIZED)
+		message_exit("Unknown layout version!\n");
+
+	return (enum layout_version)layout;
 }
 
 int parse_numeric_param(char *str, char *error_message)
@@ -584,7 +584,6 @@ int main(int argc, char *argv[])
 	if (argc > 1 && !strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
 		layout_ver = parse_layout_version(argv[0]);
-		cond_usage_exit(layout_ver == LAYOUT_UNRECOGNIZED, STR_EINVAL_PARAM);
 		NEXT_PARAM(argc, argv);
 	}
 
