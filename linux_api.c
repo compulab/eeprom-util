@@ -43,6 +43,8 @@ extern int errno;
  */
 static int open_device_file(char *dev_file, int i2c_addr)
 {
+	ASSERT(dev_file);
+
 	int fd = open(dev_file, O_RDWR);
 	if (fd < 0)
 		return -1;
@@ -72,6 +74,8 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
 
 static int i2c_read(unsigned char *buf, int offset, int size)
 {
+	ASSERT(buf);
+
 	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
@@ -99,6 +103,8 @@ static void msleep(unsigned int msecs)
 
 static int i2c_write(unsigned char *buf, int offset, int size)
 {
+	ASSERT(buf);
+
 	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
@@ -117,12 +123,14 @@ static int i2c_write(unsigned char *buf, int offset, int size)
 
 static int driver_read(unsigned char *buf, int offset, int size)
 {
+	ASSERT(buf);
 	lseek(fd, offset, SEEK_SET);
 	return read(fd, buf + offset, size);
 }
 
 static int driver_write(unsigned char *buf, int offset, int size)
 {
+	ASSERT(buf);
 	lseek(fd, offset, SEEK_SET);
 	return write(fd, buf + offset, size);
 }
@@ -144,6 +152,8 @@ static bool i2c_probe(int fd, int addr)
 #define DRIVER_HINT(x)	"Is "x" driver loaded?\n"
 static int list_i2c_accessible(int bus)
 {
+	ASSERT(bus < 256);
+
 	int fd, ret = -1;
 	char dev_file_name[13];
 	struct stat buf;
@@ -186,6 +196,8 @@ static int list_i2c_accessible(int bus)
 
 static int list_driver_accessible(int bus)
 {
+	ASSERT(bus < 256);
+
 	int ret = -1;
 	char dev_file_name[40];
 	struct stat buf;
@@ -251,6 +263,8 @@ static void configure_driver(struct api *api)
 
 int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 {
+	ASSERT(api);
+
 	char i2cdev_fname[13];
 	char eeprom_dev_fname[40];
 	int saved_errno;

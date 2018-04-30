@@ -41,6 +41,7 @@ DEPS    := $(addprefix $(DEPDIR)/,$(CORE:.o=.d) $(MAIN:.o=.d))
 CFLAGS     = -Wall -std=gnu99
 DEPFLAGS   = -MMD -MF $(DEPDIR)/$(*F).d
 WRITEFLAGS = -D ENABLE_WRITE
+DEBUGFLAGS = -g -D DEBUG
 
 $(TARGET): $(OBJECTS) $(AUTO_GENERATED_FILE) $(OBJDIR)/$(MAIN)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJDIR)/$(MAIN) -o $(TARGET)
@@ -59,6 +60,9 @@ write: $(TARGET) ;
 
 write_static: LDFLAGS += -static
 write_static: write ;
+
+debug: CFLAGS += $(DEBUGFLAGS)
+debug: write ;
 
 $(AUTO_GENERATED_FILE): $(OBJECTS) $(MAIN:.o=.c)
 	@( printf '#define VERSION "%s%s"\n' "$(EEPROM_UTIL_VERSION)" \

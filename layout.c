@@ -126,6 +126,8 @@ struct field layout_unknown[1] = {
  */
 static enum layout_version detect_layout(unsigned char *data)
 {
+	ASSERT(data);
+
 	switch (data[LAYOUT_CHECK_BYTE]) {
 	case 0xff:
 	case 0:
@@ -150,6 +152,8 @@ static enum layout_version detect_layout(unsigned char *data)
  */
 static void print_layout(const struct layout *layout)
 {
+	ASSERT(layout && layout->fields);
+
 	struct field *fields = layout->fields;
 
 	for (int i = 0; i < layout->num_of_fields; i++)
@@ -164,6 +168,7 @@ static void print_layout(const struct layout *layout)
  */
 static void offset_to_string(char* dest_str, int offset_start, int offset_end)
 {
+	ASSERT(dest_str);
 	int chars = sprintf(dest_str, "'0x%02x", offset_start);
 	if (offset_end != offset_start)
 		chars += sprintf(dest_str + chars, "-0x%02x", offset_end);
@@ -202,6 +207,8 @@ static size_t get_bytes_range(int offset_start, int offset_end)
  */
 static int update_bytes(struct layout *layout, struct data_array *data)
 {
+	ASSERT(layout && data && data->bytes_changes);
+
 	int updated_bytes = 0;
 
 	for (int i = 0; i < data->size; i++) {
@@ -239,6 +246,8 @@ static int update_bytes(struct layout *layout, struct data_array *data)
  */
 static int clear_bytes(struct layout *layout, struct data_array *data)
 {
+	ASSERT(layout && data && data->bytes_list);
+
 	int cleared_bytes = 0;
 
 	for (int i = 0; i < data->size; i++) {
@@ -264,13 +273,9 @@ static int clear_bytes(struct layout *layout, struct data_array *data)
  */
 static struct field* find_field(struct layout *layout, char *field_name)
 {
-	struct field *fields = layout->fields;
+	ASSERT(layout && layout->fields && field_name);
 
-	if (!field_name) {
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, EINVAL, strerror(EINVAL));
-		return NULL;
-	}
+	struct field *fields = layout->fields;
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		if (fields[i].name == RESERVED_FIELDS ||
@@ -295,6 +300,8 @@ static struct field* find_field(struct layout *layout, char *field_name)
  */
 static int update_fields(struct layout *layout, struct data_array *data)
 {
+	ASSERT(data && data->fields_changes);
+
 	int updated_fields_cnt = 0;
 
 	for (int i = 0; i < data->size; i++) {
@@ -323,6 +330,8 @@ static int update_fields(struct layout *layout, struct data_array *data)
  */
 static int clear_fields(struct layout *layout, struct data_array *data)
 {
+	ASSERT(data && data->fields_list);
+
 	int cleared_fields_cnt = 0;
 
 	for (int i = 0; i < data->size; i++) {
@@ -353,6 +362,8 @@ static int clear_fields(struct layout *layout, struct data_array *data)
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 			  enum layout_version layout_version)
 {
+	ASSERT(buf);
+
 	struct layout *layout = malloc(sizeof(struct layout));
 	if (!layout)
 		return NULL;

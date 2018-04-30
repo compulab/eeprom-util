@@ -68,17 +68,14 @@ static int print_i2c_accessible(struct command *cmd)
 
 static int execute_command(struct command *cmd)
 {
+	ASSERT(cmd && cmd->action != EEPROM_ACTION_INVALID);
+
 	int ret = -1;
 	struct layout *layout = NULL;
 
 	ret = setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr);
 	if (ret)
 		return ret;
-
-	if (cmd->action == EEPROM_ACTION_INVALID) {
-		api.system_error("Invalid command");
-		return -1;
-	}
 
 	if (cmd->action == EEPROM_LIST)
 		return print_i2c_accessible(cmd);

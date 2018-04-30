@@ -16,9 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "common.h"
+
+#ifdef DEBUG
+void failed_assert(const char* func, char *file, int line)
+{
+	eprintf("Assertion Failed in %s() (%s:%d)\n", func, file, line);
+	exit(1);
+}
+#endif /* ifdef DEBUG */
 
 /*
  * strtoi_base - convert to int using the given numerical base and point
@@ -37,7 +46,9 @@
  */
 int strtoi_base(char **str, int *dest, int base)
 {
-	if (!str || !dest || !*str || **str == '\0')
+	ASSERT(str && *str && dest);
+
+	if (**str == '\0')
 		return -EINVAL;
 
 	char *endptr;

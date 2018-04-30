@@ -30,6 +30,15 @@
 #define ie_fmt(fmt) "Input error: " fmt " - Operation Aborted!\n"
 #define ieprintf(fmt, ...) eprintf(ie_fmt(fmt), ##__VA_ARGS__)
 
+// Macro for handling debug checks
+#ifndef DEBUG
+#define ASSERT(args) ((void)0)
+#else // ifndef DEBUG
+void failed_assert(const char* func, char *file, int line);
+#define ASSERT(arg) ((arg) ? ((void)0) : \
+	failed_assert(__func__, __FILE__, __LINE__))
+#endif // ifndef DEBUG
+
 struct field_change {
 	char *field;
 	char *value;

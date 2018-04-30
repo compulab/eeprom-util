@@ -32,6 +32,8 @@
 static void __print_bin(const struct field *field,
 			char *delimiter, bool reverse)
 {
+	ASSERT(field && field->buf && field->name && delimiter);
+
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	int i;
 	int from = reverse ? field->size - 1 : 0;
@@ -44,6 +46,8 @@ static void __print_bin(const struct field *field,
 
 static int __update_bin(struct field *field, const char *value, bool reverse)
 {
+	ASSERT(field && field->buf && field->name && value);
+
 	int len = strlen(value);
 	int i = reverse ? len - 1 : 0;
 
@@ -88,6 +92,8 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 
 static int __update_bin_delim(struct field *field, char *value, char delimiter)
 {
+	ASSERT(field && field->buf && field->name && value);
+
 	int i, val;
 	char *bin = value;
 
@@ -135,6 +141,8 @@ void print_bin(const struct field *field)
  */
 void print_bin_raw(const struct field *field)
 {
+	ASSERT(field && field->buf && field->name);
+
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"
 	       "     0123456789abcdef\n");
@@ -219,6 +227,8 @@ int update_bin_rev(struct field *field, char *value)
  */
 void print_bin_ver(const struct field *field)
 {
+	ASSERT(field && field->buf && field->name);
+
 	if ((field->buf[0] == 0xff) && (field->buf[1] == 0xff)) {
 		field->buf[0] = 0;
 		field->buf[1] = 0;
@@ -245,6 +255,8 @@ void print_bin_ver(const struct field *field)
  */
 int update_bin_ver(struct field *field, char *value)
 {
+	ASSERT(field && field->buf && field->name && value);
+
 	char *version = value;
 	int num, remainder;
 
@@ -322,6 +334,8 @@ char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
  */
 void print_date(const struct field *field)
 {
+	ASSERT(field && field->buf && field->name);
+
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("%02d/", field->buf[0]);
 	if (field->buf[1] >= 1 && field->buf[1] <= 12)
@@ -394,6 +408,8 @@ static int validate_date(unsigned char day, unsigned char month,
  */
 int update_date(struct field *field, char *value)
 {
+	ASSERT(field && field->buf && field->name && value);
+
 	char *date = value;
 	int day, month, year;
 
@@ -452,6 +468,8 @@ int update_date(struct field *field, char *value)
  */
 void print_ascii(const struct field *field)
 {
+	ASSERT(field && field->buf && field->name);
+
 	char format[8];
 	int *str = (int*)field->buf;
 	int pattern = *str;
@@ -482,6 +500,8 @@ void print_ascii(const struct field *field)
  */
 int update_ascii(struct field *field, char *value)
 {
+	ASSERT(field && field->buf && field->name && value);
+
 	if (strlen(value) >= field->size) {
 		iveprintf("Value is too long", value, field->name);
 		return -1;
@@ -505,6 +525,7 @@ int update_ascii(struct field *field, char *value)
  */
 void print_reserved(const struct field *field)
 {
+	ASSERT(field);
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
 	printf("(%d bytes)\n", field->size);
 }
@@ -518,5 +539,6 @@ void print_reserved(const struct field *field)
  */
 void clear_field(struct field *field)
 {
+	ASSERT(field && field->buf);
 	memset(field->buf, 0xff, field->size);
 }

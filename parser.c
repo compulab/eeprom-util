@@ -123,6 +123,8 @@ static void print_help(void)
 
 static void cond_usage_exit(bool cond, const char *message)
 {
+	ASSERT(message);
+
 	if (!cond)
 		return;
 
@@ -139,6 +141,8 @@ static void usage_exit(void)
 
 static enum action parse_action(int argc, char *argv[])
 {
+	ASSERT(argv && argc > 0);
+
 	if (!strncmp(argv[0], "list", 4)) {
 		return EEPROM_LIST;
 	} else if (!strncmp(argv[0], "read", 4)) {
@@ -175,6 +179,8 @@ static enum action parse_action(int argc, char *argv[])
 
 static enum layout_version parse_layout_version(char *str)
 {
+	ASSERT(str);
+
 	char *endptr;
 
 	if (!strncmp(str, "legacy", 6))
@@ -196,6 +202,8 @@ static enum layout_version parse_layout_version(char *str)
 
 int parse_numeric_param(char *str, char *error_message)
 {
+	ASSERT(str);
+
 	char *endptr;
 	int value = strtol(str, &endptr, 0);
 	cond_usage_exit(*endptr != '\0', error_message);
@@ -228,13 +236,13 @@ int parse_numeric_param(char *str, char *error_message)
  * @mem_size	A pointer to where the current memory size (in blocks) is saved
  * @bytes	The size of every block of memory
  *
- * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ * Returns:	0 on success. -ENOMEM on failure.
  */
 static int mem_realloc(void **ptr, unsigned int mem_needed,
 			unsigned int *mem_size, size_t bytes)
 {
-	if (!ptr || !mem_size)
-		return -EINVAL;
+	ASSERT(ptr && mem_size);
+	ASSERT(mem_needed > 0 && *mem_size > 0 && bytes > 0);
 
 	if (mem_needed < *mem_size)
 		return 0;
@@ -255,12 +263,11 @@ static int mem_realloc(void **ptr, unsigned int mem_needed,
  * @line	A pointer to where a string will be allocated and populated
  *		with the next non empty line from stdin.
  *
- * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ * Returns:	0 on success. -ENOMEM on failure.
  */
 static int read_line_stdin(char **line)
 {
-	if (!line)
-		return -EINVAL;
+	ASSERT(line);
 
 	int value = fgetc(stdin);
 	while (value == '\n')
@@ -299,6 +306,7 @@ static int read_line_stdin(char **line)
  */
 static void free_stdin(char **input, int size)
 {
+	ASSERT(input);
 	for (int i = 0; i < size; i++)
 		free(input[i]);
 	free(input);
@@ -316,15 +324,11 @@ static void free_stdin(char **input, int size)
  * @size:	A pointer to where the size of the allocated string array
  *		will be written.
  *
- * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ * Returns:	0 on success. -ENOMEM on failure.
  */
 static int read_lines_stdin(char ***input, int *size)
 {
-	if (!input || !size) {
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, EINVAL, strerror(EINVAL));
-		return -EINVAL;
-	}
+	ASSERT(input && size);
 
 	unsigned int msize = STDIN_LINES_COUNT, i = 0;
 	*input = malloc(msize * sizeof(char *));
@@ -355,12 +359,7 @@ static int read_lines_stdin(char ***input, int *size)
 cleanup:
 	if (ret == -ENOMEM)
 		perror("Out of memory");
-	else if (ret == -EINVAL)
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, -ret, strerror(-ret));
-
 	free_stdin(*input, i);
-
 	*size = 0;
 	return ret;
 }
@@ -381,11 +380,8 @@ cleanup:
  */
 static struct bytes_range *parse_bytes_list(int size, char *input[])
 {
-	if (!input) {
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, EINVAL, strerror(EINVAL));
-		return NULL;
-	}
+	ASSERT(input && *input);
+	ASSERT(size > 0);
 
 	struct bytes_range *bytes_list;
 	bytes_list = malloc(sizeof(struct bytes_range) * size);
@@ -434,11 +430,8 @@ syntax_error:
  */
 static struct bytes_change *parse_bytes_changes(int size, char *input[])
 {
-	if (!input) {
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, EINVAL, strerror(EINVAL));
-		return NULL;
-	}
+	ASSERT(input && *input);
+	ASSERT(size > 0);
 
 	struct bytes_change *changes;
 	changes = malloc(sizeof(struct bytes_change) * size);
@@ -494,11 +487,8 @@ syntax_error:
  */
 static struct field_change *parse_field_changes(int size, char *input[])
 {
-	if (!input) {
-		fprintf(stderr, "%s: Internal error! (%d - %s)\n",
-			__func__, EINVAL, strerror(EINVAL));
-		return NULL;
-	}
+	ASSERT(input && *input);
+	ASSERT(size > 0);
 
 	struct field_change *changes;
 	changes = malloc(sizeof(struct field_change) * size);
