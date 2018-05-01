@@ -26,27 +26,35 @@ CROSS_COMPILE ?=
 CC = $(CROSS_COMPILE)gcc
 
 OBJDIR := obj
+LIBDIR := lib
 DEPDIR := dep
 
 TARGET := eeprom-util
 GOAL_FILE := $(OBJDIR)/make_goal
 AUTO_GENERATED_FILE := auto_generated.h
 
-CORE := common.o field.o layout.o command.o linux_api.o
-MAIN := parser.o
+LIBS := $(basename $(notdir $(wildcard $(LIBDIR)/*.c)))
+CORE := common field layout command linux_api
+MAIN := parser
 
-OBJECTS := $(addprefix $(OBJDIR)/,$(CORE))
-DEPS    := $(addprefix $(DEPDIR)/,$(CORE:.o=.d) $(MAIN:.o=.d))
+LIB_OBJS  := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(LIBS)))
+CORE_OBJS := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(CORE)))
+MAIN_OBJS := $(addprefix $(OBJDIR)/,$(addsuffix .o,$(MAIN)))
+ALL_OBJS  := $(LIB_OBJS) $(CORE_OBJS) $(MAIN_OBJS)
+DEPS      := $(addprefix $(DEPDIR)/,$(addsuffix .d,$(LIBS) $(CORE) $(MAIN)))
 
 CFLAGS     = -Wall -std=gnu99
 DEPFLAGS   = -MMD -MF $(DEPDIR)/$(*F).d
 WRITEFLAGS = -D ENABLE_WRITE
 DEBUGFLAGS = -g -D DEBUG
 
-$(TARGET): $(OBJECTS) $(AUTO_GENERATED_FILE) $(OBJDIR)/$(MAIN)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJDIR)/$(MAIN) -o $(TARGET)
+$(TARGET): $(LIB_OBJS) $(CORE_OBJS) $(AUTO_GENERATED_FILE) $(MAIN_OBJS)
+	$(CC) $(LDFLAGS) $(ALL_OBJS) -o $(TARGET)
 
-$(OBJDIR)/%.o : %.c $(GOAL_FILE)
+$(CORE_OBJS) $(MAIN_OBJS): $(OBJDIR)/%.o: %.c $(GOAL_FILE)
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
+
+$(LIB_OBJS): $(OBJDIR)/%.o : $(LIBDIR)/%.c
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 # pull in dependency info for *existing* .o files
@@ -64,15 +72,15 @@ write_static: write ;
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: write ;
 
-$(AUTO_GENERATED_FILE): $(OBJECTS) $(MAIN:.o=.c)
+$(AUTO_GENERATED_FILE): $(LIB_OBJS) $(CORE_OBJS) $(addsuffix .c,$(MAIN))
 	@( printf '#define VERSION "%s%s"\n' "$(EEPROM_UTIL_VERSION)" \
 	'$(shell ./setversion)' ) > $@
 	@date +'#define BUILD_DATE "%d %b %C%y"' >> $@
 	@date +'#define BUILD_TIME "%T"' >> $@
 
 # make directory only if they don't exists (prevent unnecessary recompiling)
-$(OBJECTS): | $(OBJDIR)
-$(DEPS):    | $(DEPDIR)
+$(ALL_OBJS): | $(OBJDIR)
+$(DEPS):     | $(DEPDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 $(DEPDIR):
@@ -85,8 +93,8 @@ ifneq ($(CROSS_COMPILE)$(MAKECMDGOALS),$(shell cat $(GOAL_FILE) 2>&1))
 endif
 
 # fix implicit pattern rules to compile without liniking
-$(CORE:.o=): % : $(OBJDIR)/%.o ;
-$(MAIN:.o=): % : $(AUTO_GENERATED_FILE) $(OBJDIR)/%.o ;
+$(CORE) $(LIBS): % : $(OBJDIR)/%.o ;
+$(MAIN): % : $(AUTO_GENERATED_FILE) $(OBJDIR)/%.o ;
 
 clean:
 	rm -rf $(TARGET) $(OBJDIR) $(DEPDIR) $(AUTO_GENERATED_FILE)
