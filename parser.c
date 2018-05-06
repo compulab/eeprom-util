@@ -83,7 +83,7 @@ static void print_help(void)
 			"   Some commands require additional data input. The data can be passed inline or from standard input.\n"
 			"   The patterns of the data input for each command are listed as follows:\n"
 			"      write fields:	[<field_name>=<value> ]*\n"
-			"      write bytes: 	[<offset>[-<offset-end>],<value> ]*\n"
+			"      write bytes: 	[[<offset>,<value>[,<value>]* ]|[<offset>-<offset-end>,<value> ]]*\n"
 			"      clear fields:	[<field_name> ]*\n"
 			"      clear bytes: 	[<offset>[-<offset-end>] ]*\n\n"
 
@@ -96,9 +96,10 @@ static void print_help(void)
 			"      * Quote marks are not needed if spaces exist in an entry.\n\n"
 
 			"   Notes for bytes:\n"
-			"      * Offset range is inclusive. Range inputs can be mixed with non-range inputs.\n"
-			"      * Writing a byte value to an offset:		<offset>,<value>\n"
-			"      * Writing a byte value to all offsets in range:	<offset>-<offset-end>,<value>\n\n"
+			"      * Offset range is inclusive. Range, non-range and sequence inputs can be mixed.\n"
+			"      * Writing a single byte value to an offset:		<offset>,<value>\n"
+			"      * Writing a single byte value to all offsets in range:	<offset>-<offset-end>,<value>\n"
+			"      * Writing a sequence of bytes starting at an offset:	<offset>,<value1>,<value2>,<value3>...\n\n"
 
 			"   Notes for fields:\n"
 			"      * The value input should be in the same pattern like in the output of the read command.\n"
@@ -424,12 +425,13 @@ syntax_error:
 /*
  * parse_bytes_changes - parse the strings representing new bytes values
  *
- * Allocate a bytes_change array, verify the syntax of the input strings and
- * for each array element set the bytes 'start' offset, 'end' offset and the
- * 'value' to be written as extracted from the input strings.
+ * Count the amount of bytes value changes in the input and allocate a struct
+ * bytes_change array of the same size. Verify the syntax of the input strings.
+ * For each array element, set the values of 'start', 'end' and 'value' as
+ * extracted from the input strings.
  *
  * @input:	A string array containing strings in the expected format:
- * 		"<offset>[-<offset-end>],<value>"
+ * 		"[[<offset>[,<value>]+ ]|[<offset>-<offset-end>,<value> ]]*"
  * @size:	The size of input[]
  * @data:	A pointer to a data array where to save the result
  *
@@ -440,38 +442,64 @@ static int parse_bytes_changes(char *input[], int size, struct data_array *data)
 	ASSERT(input && *input && data);
 	ASSERT(size > 0);
 
+	// Count the total amount of bytes value changes.
+	// It should be equal to the number of ',' symbols in the input.
+	int i, j, total_changes = 0;
+	for (i = 0; i < size; i++)
+		for (j = 0; input[i][j]; j++)
+			if (input[i][j] == ',')
+				total_changes++;
+
 	struct bytes_change *changes;
-	changes = malloc(sizeof(struct bytes_change) * size);
+	changes = malloc(sizeof(struct bytes_change) * total_changes);
 	if (!changes) {
 		perror("Out of memory!");
 		return -ENOMEM;
 	}
 
-	int i;
-	for (i = 0; i < size ; i++) {
-		char *change = input[i];
+	int count_changes = 0;
+	for (i = 0; i < size; i++) {
+		char *bytes_input = input[i];
+		int start, end, value;
 
-		if (strtoi(&change, &changes[i].start) != STRTOI_STR_CON)
+		if (strtoi(&bytes_input, &start) != STRTOI_STR_CON)
 			goto syntax_error;
 
-		if (*change == '-') {
-			change++;
-			if (strtoi(&change, &changes[i].end) != STRTOI_STR_CON)
+		if (*bytes_input == '-') {
+			bytes_input++;
+			if (strtoi(&bytes_input, &end) != STRTOI_STR_CON)
 				goto syntax_error;
 		} else {
-			changes[i].end = changes[i].start;
+			end = start;
 		}
 
-		if (*change != ',')
+		if (*bytes_input != ',')
 			goto syntax_error;
 
-		change++;
-		if (strtoi(&change, &changes[i].value) != STRTOI_STR_END)
+		// Each loop saves a change of one byte value. If offset is
+		// range (start != end), only one byte change is allowed.
+		do {
+			bytes_input++;
+			if (strtoi(&bytes_input, &value) < 0)
+				goto syntax_error;
+
+			if (count_changes >= total_changes)
+				goto syntax_error;
+
+			changes[count_changes].start = start++;
+			changes[count_changes].end = end++;
+			changes[count_changes++].value = value;
+
+		} while (*bytes_input == ',' && start == end);
+
+		if (*bytes_input != '\0')
 			goto syntax_error;
 	}
 
+	ASSERT(count_changes == total_changes);
+
 	data->bytes_changes = changes;
-	data->size = size;
+	data->size = count_changes;
 	return 0;
 
 syntax_error:
