@@ -376,23 +376,23 @@ cleanup:
  * for each array element set the bytes 'start' offset and 'end' offset as
  * extracted from the input strings.
  *
- * @size:	The size of input[]
  * @input:	A string array containing strings in the expected format:
  * 		"<offset>[-<offset-end>]"
+ * @size:	The size of input[]
+ * @data:	A pointer to a data array where to save the result
  *
- * Returns:	Allocated and populated bytes_range array on success
- * 		NULL on failure.
+ * Returns:	0 on success. -EINVAL or -ENOMEM on failure.
  */
-static struct bytes_range *parse_bytes_list(int size, char *input[])
+static int parse_bytes_list(char *input[], int size, struct data_array *data)
 {
-	ASSERT(input && *input);
+	ASSERT(input && *input && data);
 	ASSERT(size > 0);
 
 	struct bytes_range *bytes_list;
 	bytes_list = malloc(sizeof(struct bytes_range) * size);
 	if (!bytes_list) {
 		perror("Out of memory!");
-		return NULL;
+		return -ENOMEM;
 	}
 
 	int i;
@@ -411,12 +411,14 @@ static struct bytes_range *parse_bytes_list(int size, char *input[])
 		}
 	}
 
-	return bytes_list;
+	data->bytes_list = bytes_list;
+	data->size = size;
+	return 0;
 
 syntax_error:
 	iseprintf(input[i]);
 	free(bytes_list);
-	return NULL;
+	return -EINVAL;
 }
 
 /*
@@ -426,23 +428,23 @@ syntax_error:
  * for each array element set the bytes 'start' offset, 'end' offset and the
  * 'value' to be written as extracted from the input strings.
  *
- * @size:	The size of input[]
  * @input:	A string array containing strings in the expected format:
  * 		"<offset>[-<offset-end>],<value>"
+ * @size:	The size of input[]
+ * @data:	A pointer to a data array where to save the result
  *
- * Returns:	Allocated and populated bytes_change array on success
- * 		NULL on failure.
+ * Returns:	0 on success. -EINVAL or -ENOMEM on failure.
  */
-static struct bytes_change *parse_bytes_changes(int size, char *input[])
+static int parse_bytes_changes(char *input[], int size, struct data_array *data)
 {
-	ASSERT(input && *input);
+	ASSERT(input && *input && data);
 	ASSERT(size > 0);
 
 	struct bytes_change *changes;
 	changes = malloc(sizeof(struct bytes_change) * size);
 	if (!changes) {
 		perror("Out of memory!");
-		return NULL;
+		return -ENOMEM;
 	}
 
 	int i;
@@ -468,12 +470,14 @@ static struct bytes_change *parse_bytes_changes(int size, char *input[])
 			goto syntax_error;
 	}
 
-	return changes;
+	data->bytes_changes = changes;
+	data->size = size;
+	return 0;
 
 syntax_error:
 	iseprintf(input[i]);
 	free(changes);
-	return NULL;
+	return -EINVAL;
 }
 
 /*
@@ -483,23 +487,23 @@ syntax_error:
  * for each array element set the 'field' and 'value' strings as extracted
  * from the input strings.
  *
- * @size:	The size of input[]
  * @input:	A string array containing strings in the expected format:
  * 		"<field_name>=<value>"
+ * @size:	The size of input[]
+ * @data:	A pointer to a data array where to save the result
  *
- * Returns:	Allocated and populated field_change array on success
- * 		NULL on failue.
+ * Returns:	0 on success. -EINVAL or -ENOMEM on failure.
  */
-static struct field_change *parse_field_changes(int size, char *input[])
+static int parse_field_changes(char *input[], int size, struct data_array *data)
 {
-	ASSERT(input && *input);
+	ASSERT(input && *input && data);
 	ASSERT(size > 0);
 
 	struct field_change *changes;
 	changes = malloc(sizeof(struct field_change) * size);
 	if (!changes) {
 		perror("Out of memory!");
-		return NULL;
+		return -ENOMEM;
 	}
 
 	int i;
@@ -513,12 +517,14 @@ static struct field_change *parse_field_changes(int size, char *input[])
 		changes[i].value = delim + 1;
 	}
 
-	return changes;
+	data->fields_changes = changes;
+	data->size = size;
+	return 0;
 
 syntax_error:
 	iseprintf(input[i]);
 	free(changes);
-	return NULL;
+	return -EINVAL;
 }
 
 #else
@@ -529,19 +535,22 @@ static inline int read_lines_stdin(char ***input, int *size)
 	return -ENOSYS;
 }
 
-static inline struct bytes_range *parse_bytes_list(int size, char *input[])
+static inline int parse_bytes_list(char *input[], int size,
+	struct data_array *data)
 {
-	return NULL;
+	return -ENOSYS;
 }
 
-static inline struct bytes_change *parse_bytes_changes(int size, char *input[])
+static inline int parse_bytes_changes(char *input[], int size,
+	struct data_array *data)
 {
-	return NULL;
+	return -ENOSYS;
 }
 
-static inline struct field_change *parse_field_changes(int size, char *input[])
+static inline int parse_field_changes(char *input[], int size,
+	struct data_array *data)
 {
-	return NULL;
+	return -ENOSYS;
 }
 #endif
 
@@ -558,7 +567,7 @@ int main(int argc, char *argv[])
 	enum layout_version layout_ver = LAYOUT_AUTODETECT;
 	enum action action = EEPROM_ACTION_INVALID;
 	struct data_array data;
-	int i2c_bus = -1, i2c_addr = -1, ret = -1;
+	int i2c_bus = -1, i2c_addr = -1, ret = -1, parse_ret = 0;
 	char **input = NULL;
 	bool is_stdin = !isatty(STDIN_FILENO);
 	errno = 0;
@@ -609,18 +618,18 @@ int main(int argc, char *argv[])
 
 	cond_usage_exit(argc == 0, STR_ENO_PARAMS);
 
-	data.size = argc;
-	if (action == EEPROM_WRITE_FIELDS)
-		data.fields_changes = parse_field_changes(argc, input);
-	else if (action == EEPROM_WRITE_BYTES)
-		data.bytes_changes = parse_bytes_changes(argc, input);
-	else if (action == EEPROM_CLEAR_FIELDS)
+	if (action == EEPROM_WRITE_FIELDS) {
+		parse_ret = parse_field_changes(input, argc, &data);
+	} else if (action == EEPROM_WRITE_BYTES) {
+		parse_ret = parse_bytes_changes(input, argc, &data);
+	} else if (action == EEPROM_CLEAR_FIELDS) {
 		data.fields_list = input;
-	else if (action == EEPROM_CLEAR_BYTES)
-		data.bytes_list = parse_bytes_list(argc,input);
+		data.size = argc;
+	} else if (action == EEPROM_CLEAR_BYTES) {
+		parse_ret = parse_bytes_list(input, argc, &data);
+	}
 
-	// it is enough to test only one field in the union
-	if (!data.fields_changes)
+	if (parse_ret)
 		goto clean_input;
 
 done:
