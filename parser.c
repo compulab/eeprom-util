@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 #include "common.h"
 #include "command.h"
 #include "auto_generated.h"
@@ -95,7 +96,8 @@ static void print_help(void)
 
 			"   When using standard input:\n"
 			"      * Each entry should be on its own line.\n"
-			"      * Quote marks are not needed if spaces exist in an entry.\n\n"
+			"      * Quote marks are not needed if spaces exist in an entry.\n"
+			"      * Comments are supported. Any input from a ';' symbol to the end of the line is ignored.\n\n"
 
 			"   Notes for bytes:\n"
 			"      * Offset range is inclusive. Range, non-range and sequence inputs can be mixed.\n"
@@ -266,7 +268,7 @@ static int mem_realloc(void **ptr, unsigned int mem_needed,
 }
 
 /*
- * read_line_stdin - Read one line from stdin. Ignore empty lines.
+ * read_line_stdin - Read one line from stdin. Ignore empty lines and comments.
  *
  * @line	A pointer to where a string will be allocated and populated
  *		with the next non empty line from stdin.
@@ -291,7 +293,7 @@ static int read_line_stdin(char **line)
 	if (!*line)
 		return -ENOMEM;
 
-	while (value != EOF && value != '\n') {
+	while (value != EOF && value != '\n' && value != ';') {
 		(*line)[pos++] = value;
 		int ret = mem_realloc((void**)line, pos, &msize, sizeof(char));
 		if (ret) {
@@ -300,6 +302,21 @@ static int read_line_stdin(char **line)
 		}
 
 		value = fgetc(stdin);
+	}
+
+	// Consume the comment
+	if (value == ';')
+		while (value != EOF && value != '\n')
+			value = fgetc(stdin);
+
+	// Remove white space at the end or before the comment symbol
+	while (pos > 0 && isblank((*line)[pos - 1]))
+		pos--;
+
+	// Skip comment only lines or whitespace only lines
+	if (pos == 0) {
+		free(*line);
+		return read_line_stdin(line);
 	}
 
 	(*line)[pos] = '\0';
