@@ -81,6 +81,8 @@ static void print_help(void)
 		printf("\n"
 			"DATA FORMAT\n"
 			"   Some commands require additional data input. The data can be passed inline or from standard input.\n"
+			"   Inline and standard input can be mixed. The inline input gets executed before the standard input.\n\n"
+
 			"   The patterns of the data input for each command are listed as follows:\n"
 			"      write fields:	[<field_name>=<value> ]*\n"
 			"      write bytes: 	[[<offset>,<value>[,<value>]* ]|[<offset>-<offset-end>,<value> ]]*\n"
@@ -371,6 +373,54 @@ cleanup:
 }
 
 /*
+ * add_lines_from_stdin - Add non empty lines from stdin to a strings array.
+ *
+ * Read non empty lines from stdin. Copy the given array. Append lines from
+ * stream to the copied array. Replace the given array with the copied one.
+ *
+ * Note: The function does not free any allocations of the given array.
+ *
+ * @input	A pointer to a strings array and where to save the result.
+ * @size:	A pointer to the size of the array and where to save the size
+ *		of the result.
+ *
+ * Returns:	0 on success. -ENOMEM on failure.
+ */
+static int add_lines_from_stdin(char ***input, int *size)
+{
+	ASSERT(input && size);
+
+	char **stdin_input;
+	int stdin_size, i, ret, input_size = *size;
+	ret = read_lines_stdin(&stdin_input, &stdin_size);
+	if (ret)
+		return ret;
+
+	int total_size = input_size + stdin_size;
+	char **lines = malloc(total_size * sizeof(char *));
+	if (!lines) {
+		free_stdin(stdin_input, stdin_size);
+		perror("Out of memory");
+		return -ENOMEM;
+	}
+
+	// Copy command line input
+	for (i = 0; i < input_size; i++)
+		lines[i] = (*input)[i];
+
+	// Copy input lines from stream
+	for (i = 0; i < stdin_size; i++)
+		lines[input_size + i] = stdin_input[i];
+
+	free(stdin_input);
+
+	*input = lines;
+	*size = total_size;
+
+	return 0;
+}
+
+/*
  * parse_bytes_list - parse the strings representing bytes offsets
  *
  * Allocate a bytes_range array, verify the syntax of the input strings and
@@ -556,9 +606,7 @@ syntax_error:
 }
 
 #else
-static inline void free_stdin(char **input, int size) {}
-
-static inline int read_lines_stdin(char ***input, int *size)
+static inline int add_lines_from_stdin(char ***input, int *size)
 {
 	return -ENOSYS;
 }
@@ -596,6 +644,7 @@ int main(int argc, char *argv[])
 	enum action action = EEPROM_ACTION_INVALID;
 	struct data_array data;
 	int i2c_bus = -1, i2c_addr = -1, ret = -1, parse_ret = 0;
+	int input_size = 0;
 	char **input = NULL;
 	bool is_stdin = !isatty(STDIN_FILENO);
 	errno = 0;
@@ -641,20 +690,21 @@ int main(int argc, char *argv[])
 		goto done;
 
 	input = argv;
-	if (is_stdin && read_lines_stdin(&input, &argc))
+	input_size = argc;
+	if (is_stdin && add_lines_from_stdin(&input, &input_size))
 		return 1;
 
-	cond_usage_exit(argc == 0, STR_ENO_PARAMS);
+	cond_usage_exit(input_size == 0, STR_ENO_PARAMS);
 
 	if (action == EEPROM_WRITE_FIELDS) {
-		parse_ret = parse_field_changes(input, argc, &data);
+		parse_ret = parse_field_changes(input, input_size, &data);
 	} else if (action == EEPROM_WRITE_BYTES) {
-		parse_ret = parse_bytes_changes(input, argc, &data);
+		parse_ret = parse_bytes_changes(input, input_size, &data);
 	} else if (action == EEPROM_CLEAR_FIELDS) {
 		data.fields_list = input;
-		data.size = argc;
+		data.size = input_size;
 	} else if (action == EEPROM_CLEAR_BYTES) {
-		parse_ret = parse_bytes_list(input, argc, &data);
+		parse_ret = parse_bytes_list(input, input_size, &data);
 	}
 
 	if (parse_ret)
@@ -677,8 +727,12 @@ done:
 		free(data.bytes_list);
 
 clean_input:
-	if (input && is_stdin)
-		free_stdin(input, argc);
+	if (input && is_stdin) {
+		// Free input data from stdin. Don't free command line input
+		for (int i = argc; i < input_size; i++)
+			free(input[i]);
+		free(input);
+	}
 
 	return ret ? 1 : 0;
 }
