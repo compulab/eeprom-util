@@ -214,9 +214,9 @@ int parse_numeric_param(char *str, char *error_message)
 {
 	ASSERT(str);
 
-	char *endptr;
-	int value = strtol(str, &endptr, 0);
-	cond_usage_exit(*endptr != '\0', error_message);
+	int value;
+	if (strtoi(&str, &value) != STRTOI_STR_END)
+		message_exit(error_message);
 
 	return value;
 }
