@@ -671,7 +671,6 @@ static inline int parse_field_changes(char *input[], int size,
 #endif
 
 #define NEXT_PARAM(argc, argv)	{(argc)--; (argv)++;}
-#define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
