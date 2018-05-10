@@ -157,18 +157,19 @@ static int list_i2c_accessible(int bus)
 
 	int fd, ret = -1;
 	char dev_file_name[13];
-	struct stat buf;
 	bool i2c_bus_found = false;
 
 	int i = (bus < 0) ? MIN_I2C_BUS : bus;
 	int end = (bus < 0) ? MAX_I2C_BUS : bus;
 	for (; i <= end; i++) {
 		sprintf(dev_file_name, "/dev/i2c-%d", i);
-		if (stat(dev_file_name, &buf) == -1)
+
+		fd = open(dev_file_name, O_RDWR);
+		if (fd < 0 && (errno == ENOENT || errno == ENOTDIR))
 			continue;
 
 		i2c_bus_found = true;
-		fd = open(dev_file_name, O_RDWR);
+
 		if (fd < 0) {
 			eprintf("Failed accessing I2C bus %d: %s (%d)\n",
 				i, strerror(errno), -errno);
