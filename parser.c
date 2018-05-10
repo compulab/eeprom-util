@@ -210,13 +210,24 @@ static enum layout_version parse_layout_version(char *str)
 	return (enum layout_version)layout;
 }
 
-int parse_numeric_param(char *str, char *error_message)
+static int parse_i2c_bus(char *str)
 {
 	ASSERT(str);
 
 	int value;
 	if (strtoi(&str, &value) != STRTOI_STR_END)
-		message_exit(error_message);
+		message_exit("Invalid bus number!\n");
+
+	return value;
+}
+
+static int parse_i2c_addr(char *str)
+{
+	ASSERT(str);
+
+	int value;
+	if (strtoi(&str, &value) != STRTOI_STR_END)
+		message_exit("Invalid address number!\n");
 
 	return value;
 }
@@ -691,7 +702,7 @@ int main(int argc, char *argv[])
 	}
 
 	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
-	i2c_bus = parse_numeric_param(argv[0], STR_EINVAL_BUS);
+	i2c_bus = parse_i2c_bus(argv[0]);
 	cond_usage_exit(i2c_bus > MAX_I2C_BUS || i2c_bus < 0, STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
@@ -699,7 +710,7 @@ int main(int argc, char *argv[])
 		goto done;
 
 	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
-	i2c_addr = parse_numeric_param(argv[0], STR_EINVAL_ADDR);
+	i2c_addr = parse_i2c_addr(argv[0]);
 	cond_usage_exit(i2c_addr > 0x77 || i2c_addr < 0x03, STR_EINVAL_ADDR);
 	NEXT_PARAM(argc, argv);
 
