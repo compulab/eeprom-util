@@ -205,7 +205,6 @@ static int list_driver_accessible(int bus)
 
 	int ret = -1;
 	char dev_file_name[40];
-	struct stat buf;
 	bool driver_found = false;
 
 	int i = (bus < 0) ? MIN_I2C_BUS : bus;
@@ -213,7 +212,7 @@ static int list_driver_accessible(int bus)
 	for (; i <= end; i++) {
 		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
 			sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom", i, j);
-			int res = stat(dev_file_name, &buf);
+			int res = access(dev_file_name, F_OK);
 			if (res < 0 && (errno == ENOENT || errno == ENOTDIR))
 				continue;
 
