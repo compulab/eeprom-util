@@ -270,7 +270,7 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	int saved_errno;
 
 	/* In this case we can still do an i2c probe, so setup for i2c */
-	if (i2c_bus < 0 && i2c_addr < 0) {
+	if (i2c_bus < 0 || i2c_addr < 0) {
 		configure_i2c(api);
 		return 0;
 	}
