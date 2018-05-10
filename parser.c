@@ -218,6 +218,12 @@ static int parse_i2c_bus(char *str)
 	if (strtoi(&str, &value) != STRTOI_STR_END)
 		message_exit("Invalid bus number!\n");
 
+	if (value < MIN_I2C_BUS || value > MAX_I2C_BUS) {
+		ieprintf("Bus '%d' is out of range (%d-%d)", value,
+			MIN_I2C_BUS, MAX_I2C_BUS);
+		exit(1);
+	}
+
 	return value;
 }
 
@@ -228,6 +234,12 @@ static int parse_i2c_addr(char *str)
 	int value;
 	if (strtoi(&str, &value) != STRTOI_STR_END)
 		message_exit("Invalid address number!\n");
+
+	if (value < MIN_I2C_ADDR || value > MAX_I2C_ADDR) {
+		ieprintf("Address '0x%02x' is out of range (0x%02x-0x%02x)",
+			value, MIN_I2C_ADDR, MAX_I2C_ADDR);
+		exit(1);
+	}
 
 	return value;
 }
@@ -659,12 +671,9 @@ static inline int parse_field_changes(char *input[], int size,
 #endif
 
 #define NEXT_PARAM(argc, argv)	{(argc)--; (argv)++;}
-#define STR_EINVAL_BUS		"Invalid bus number!\n"
-#define STR_EINVAL_ADDR		"Invalid device address!\n"
 #define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
 #define STR_ENO_PARAMS		"Missing parameters!\n"
 #define STR_ENO_MEM		"Out of memory!\n"
-#define MAX_I2C_BUS		255
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
@@ -703,7 +712,6 @@ int main(int argc, char *argv[])
 
 	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
 	i2c_bus = parse_i2c_bus(argv[0]);
-	cond_usage_exit(i2c_bus > MAX_I2C_BUS || i2c_bus < 0, STR_EINVAL_BUS);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_LIST)
@@ -711,7 +719,6 @@ int main(int argc, char *argv[])
 
 	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
 	i2c_addr = parse_i2c_addr(argv[0]);
-	cond_usage_exit(i2c_addr > 0x77 || i2c_addr < 0x03, STR_EINVAL_ADDR);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_READ || action == EEPROM_CLEAR)

@@ -24,6 +24,12 @@
 #define COLOR_GREEN  "\x1B[32m"
 #define COLOR_RESET  "\033[0m"
 
+#define MIN_I2C_BUS 0
+#define MAX_I2C_BUS 255
+
+#define MIN_I2C_ADDR 0x03
+#define MAX_I2C_ADDR 0x77
+
 // Macro for printing error messages
 #define eprintf(args...) fprintf (stderr, args)
 // Macro for printing input error messages
