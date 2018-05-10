@@ -173,17 +173,18 @@ static int list_i2c_accessible(int bus)
 		if (fd < 0) {
 			eprintf("Failed accessing I2C bus %d: %s (%d)\n",
 				i, strerror(errno), -errno);
-		} else {
-			/*
-			 * only if dev_file_name exists and
-			 * can be opened, success is returned
-			 */
-			ret = 0;
-			printf("On i2c-%d:\n\t", i);
-			for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
-				if (i2c_probe(fd, j))
-					printf("0x%x ", j);
-			}
+			continue;
+		}
+
+		/*
+		 * only if dev_file_name exists and
+		 * can be opened, success is returned
+		 */
+		ret = 0;
+		printf("On i2c-%d:\n\t", i);
+		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
+			if (i2c_probe(fd, j))
+				printf("0x%x ", j);
 		}
 
 		printf("\n");
