@@ -152,16 +152,16 @@ static bool i2c_probe(int fd, int addr)
 #define DRIVER_HINT(x)	"Is "x" driver loaded?\n"
 static int list_i2c_accessible(int bus)
 {
-	ASSERT(bus < 256);
+	ASSERT(bus <= MAX_I2C_BUS);
 
 	int fd, ret = -1;
 	char dev_file_name[13];
 	struct stat buf;
 	bool i2c_bus_found = false;
 
-	int i = (bus < 0) ? 0 : bus;
-	int end = (bus < 0) ? 256 : bus + 1;
-	for (; i < end; i++) {
+	int i = (bus < 0) ? MIN_I2C_BUS : bus;
+	int end = (bus < 0) ? MAX_I2C_BUS : bus;
+	for (; i <= end; i++) {
 		sprintf(dev_file_name, "/dev/i2c-%d", i);
 		if (stat(dev_file_name, &buf) == -1)
 			continue;
@@ -178,7 +178,7 @@ static int list_i2c_accessible(int bus)
 			 */
 			ret = 0;
 			printf("On i2c-%d:\n\t", i);
-			for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
+			for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
 				if (i2c_probe(fd, j))
 					printf("0x%x ", j);
 			}
@@ -196,17 +196,17 @@ static int list_i2c_accessible(int bus)
 
 static int list_driver_accessible(int bus)
 {
-	ASSERT(bus < 256);
+	ASSERT(bus <= MAX_I2C_BUS);
 
 	int ret = -1;
 	char dev_file_name[40];
 	struct stat buf;
 	bool driver_found = false;
 
-	int i = (bus < 0) ? 0 : bus;
-	int end = (bus < 0) ? 256 : bus + 1;
-	for (; i < end; i++) {
-		for (int j = 0; j < 128; j++) { /* Assuming 7 bit addresses */
+	int i = (bus < 0) ? MIN_I2C_BUS : bus;
+	int end = (bus < 0) ? MAX_I2C_BUS : bus;
+	for (; i <= end; i++) {
+		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
 			sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom", i, j);
 			if (stat(dev_file_name, &buf) == -1)
 				continue;
