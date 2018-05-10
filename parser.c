@@ -672,7 +672,6 @@ static inline int parse_field_changes(char *input[], int size,
 
 #define NEXT_PARAM(argc, argv)	{(argc)--; (argv)++;}
 #define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
-#define STR_ENO_PARAMS		"Missing parameters!\n"
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
@@ -709,14 +708,14 @@ int main(int argc, char *argv[])
 		NEXT_PARAM(argc, argv);
 	}
 
-	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
+	cond_usage_exit(argc < 1, "Missing I2C bus & address parameters!\n");
 	i2c_bus = parse_i2c_bus(argv[0]);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_LIST)
 		goto done;
 
-	cond_usage_exit(argc < 1, STR_ENO_PARAMS);
+	cond_usage_exit(argc < 1, "Missing I2C address parameter!\n");
 	i2c_addr = parse_i2c_addr(argv[0]);
 	NEXT_PARAM(argc, argv);
 
@@ -728,7 +727,7 @@ int main(int argc, char *argv[])
 	if (is_stdin && add_lines_from_stdin(&input, &input_size))
 		return 1;
 
-	cond_usage_exit(input_size == 0, STR_ENO_PARAMS);
+	cond_usage_exit(input_size == 0, "Missing data input!\n");
 
 	if (action == EEPROM_WRITE_FIELDS) {
 		parse_ret = parse_field_changes(input, input_size, &data);
