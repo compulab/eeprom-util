@@ -30,6 +30,8 @@
 #define MIN_I2C_ADDR 0x03
 #define MAX_I2C_ADDR 0x77
 
+#define STR_ENO_MEM "Out of memory"
+
 // Macro for printing error messages
 #define eprintf(args...) fprintf (stderr, args)
 // Macro for printing input error messages

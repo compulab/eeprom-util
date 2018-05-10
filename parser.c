@@ -381,7 +381,7 @@ static int read_lines_stdin(char ***input, int *size)
 	unsigned int msize = STDIN_LINES_COUNT, i = 0;
 	*input = malloc(msize * sizeof(char *));
 	if (!*input) {
-		perror("Out of memory");
+		perror(STR_ENO_MEM);
 		return -ENOMEM;
 	}
 
@@ -406,7 +406,7 @@ static int read_lines_stdin(char ***input, int *size)
 
 cleanup:
 	if (ret == -ENOMEM)
-		perror("Out of memory");
+		perror(STR_ENO_MEM);
 	free_stdin(*input, i);
 	*size = 0;
 	return ret;
@@ -440,7 +440,7 @@ static int add_lines_from_stdin(char ***input, int *size)
 	char **lines = malloc(total_size * sizeof(char *));
 	if (!lines) {
 		free_stdin(stdin_input, stdin_size);
-		perror("Out of memory");
+		perror(STR_ENO_MEM);
 		return -ENOMEM;
 	}
 
@@ -482,7 +482,7 @@ static int parse_bytes_list(char *input[], int size, struct data_array *data)
 	struct bytes_range *bytes_list;
 	bytes_list = malloc(sizeof(struct bytes_range) * size);
 	if (!bytes_list) {
-		perror("Out of memory!");
+		perror(STR_ENO_MEM);
 		return -ENOMEM;
 	}
 
@@ -543,7 +543,7 @@ static int parse_bytes_changes(char *input[], int size, struct data_array *data)
 	struct bytes_change *changes;
 	changes = malloc(sizeof(struct bytes_change) * total_changes);
 	if (!changes) {
-		perror("Out of memory!");
+		perror(STR_ENO_MEM);
 		return -ENOMEM;
 	}
 
@@ -620,7 +620,7 @@ static int parse_field_changes(char *input[], int size, struct data_array *data)
 	struct field_change *changes;
 	changes = malloc(sizeof(struct field_change) * size);
 	if (!changes) {
-		perror("Out of memory!");
+		perror(STR_ENO_MEM);
 		return -ENOMEM;
 	}
 
@@ -673,7 +673,6 @@ static inline int parse_field_changes(char *input[], int size,
 #define NEXT_PARAM(argc, argv)	{(argc)--; (argv)++;}
 #define STR_EINVAL_PARAM	"Invalid parameter for action!\n"
 #define STR_ENO_PARAMS		"Missing parameters!\n"
-#define STR_ENO_MEM		"Out of memory!\n"
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
