@@ -148,8 +148,9 @@ static bool i2c_probe(int fd, int addr)
 	return true;
 }
 
-#define NOT_FOUND(x)	"No "x" was found"
-#define DRIVER_HINT(x)	"Is "x" driver loaded?\n"
+#define PRINT_NOT_FOUND(x) eprintf("No "x" was found")
+#define PRINT_BUS_NUM(x) (x >= 0) ? eprintf(" on bus %d\n", x) : eprintf("\n")
+#define PRINT_DRIVER_HINT(x) eprintf("Is "x" driver loaded?\n")
 static int list_i2c_accessible(int bus)
 {
 	ASSERT(bus <= MAX_I2C_BUS);
@@ -169,8 +170,8 @@ static int list_i2c_accessible(int bus)
 		i2c_bus_found = true;
 		fd = open(dev_file_name, O_RDWR);
 		if (fd < 0) {
-			fprintf(stderr, "Failed accessing I2C bus "
-				"%d: %s (%d)\n", i, strerror(errno), -errno);
+			eprintf("Failed accessing I2C bus %d: %s (%d)\n",
+				i, strerror(errno), -errno);
 		} else {
 			/*
 			 * only if dev_file_name exists and
@@ -188,8 +189,11 @@ static int list_i2c_accessible(int bus)
 		close(fd);
 	}
 
-	if (!i2c_bus_found)
-		fprintf(stderr, NOT_FOUND("I2C bus")"\n"DRIVER_HINT("i2c-dev"));
+	if (!i2c_bus_found) {
+		PRINT_NOT_FOUND("I2C device");
+		PRINT_BUS_NUM(bus);
+		PRINT_DRIVER_HINT("i2c-dev");
+	}
 
 	return ret;
 }
@@ -218,11 +222,10 @@ static int list_driver_accessible(int bus)
 		}
 	}
 
-	if (!driver_found && bus < 0) {
-		fprintf(stderr, NOT_FOUND("EEPROM driver")"\n"DRIVER_HINT("EEPROM"));
-	} else if (!driver_found && bus >=0) {
-		fprintf(stderr, NOT_FOUND("EEPROM driver")" on bus number %d.\n"
-		      DRIVER_HINT("EEPROM"), bus);
+	if (!driver_found) {
+		PRINT_NOT_FOUND("EEPROM device");
+		PRINT_BUS_NUM(bus);
+		PRINT_DRIVER_HINT("EEPROM");
 	}
 
 	return ret;
@@ -289,23 +292,22 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	fd = open_device_file(eeprom_dev_fname, -1);
 	if (fd < 0) {
 		/* print error which occurred when opening i2c-dev file */
-		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
+		eprintf("Error, %s access failed: %s (%d)\n",
 			i2cdev_fname, strerror(saved_errno), -saved_errno);
 		if (saved_errno == ENOENT)
-			fprintf(stderr,	DRIVER_HINT("i2c-dev"));
+			PRINT_DRIVER_HINT("i2c-dev");
 
 		/* print error which occurred when opening eeprom-dev file */
-		fprintf(stderr,	"Error, %s access failed: %s (%d)\n",
+		eprintf("Error, %s access failed: %s (%d)\n",
 			eeprom_dev_fname, strerror(errno), -errno);
 		if (errno == ENOENT)
-			fprintf(stderr,	DRIVER_HINT("EEPROM"));
+			PRINT_DRIVER_HINT("EEPROM");
 	} else {
 		configure_driver(api);
 		return 0;
 	}
 
-	fprintf(stderr,
-		"Neither EEPROM driver nor i2c device interface is available\n");
+	eprintf("Neither EEPROM driver nor i2c device interface is available\n");
 
 	return -1;
 }
