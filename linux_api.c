@@ -213,12 +213,20 @@ static int list_driver_accessible(int bus)
 	for (; i <= end; i++) {
 		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
 			sprintf(dev_file_name, "/sys/bus/i2c/devices/%d-00%x/eeprom", i, j);
-			if (stat(dev_file_name, &buf) == -1)
+			int res = stat(dev_file_name, &buf);
+			if (res < 0 && (errno == ENOENT || errno == ENOTDIR))
 				continue;
 
-			/* only if dev_file_name exists success is returned */
-			ret = 0;
 			driver_found = true;
+
+			if (res < 0) {
+				eprintf("Failed accessing device %s: %s (%d)\n",
+					dev_file_name, strerror(errno), -errno);
+				continue;
+			}
+
+			// return success only if device exists and accessible
+			ret = 0;
 			printf("EEPROM device file found at: %s\n", dev_file_name);
 		}
 	}
