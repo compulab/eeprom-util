@@ -627,7 +627,7 @@ static int parse_field_changes(char *input[], int size, struct data_array *data)
 	int i;
 	for (i = 0; i < size; i++) {
 		char *delim = strchr(input[i], '=');
-		if (!delim || input[i] == delim || *(delim + 1) == '\0')
+		if (!delim || input[i] == delim)
 			goto syntax_error;
 
 		*delim = '\0';

@@ -312,7 +312,9 @@ static int update_fields(struct layout *layout, struct data_array *data)
 		if (!field)
 			return 0;
 
-		if (field->update(field, field_value))
+		if (*field_value == '\0')
+			field->clear(field);
+		else if (field->update(field, field_value))
 			return 0;
 
 		updated_fields_cnt++;
