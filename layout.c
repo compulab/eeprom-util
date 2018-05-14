@@ -103,7 +103,7 @@ struct field layout_v4[21] = {
 	{ "CompuLab EEPROM ID",			"id",		3,	NULL,	print_bin,	update_bin },
 	{ "5th MAC Address",			"mac5",		6,	NULL,	print_mac,	update_mac },
 	{ "6th MAC Address",			"mac6",		6,	NULL,	print_mac,	update_mac },
-	{ RESERVED_FIELDS,			NULL,		4,	NULL,	print_reserved,	NULL },
+	{ "Scratchpad",				"spad",		4,	NULL,	print_bin,	update_bin },
 	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
 	{ "Product Name",			"name",		16,	NULL,	print_ascii,	update_ascii },
 	{ "Product Options #1",			"opt1",		16,	NULL,	print_ascii,	update_ascii },
