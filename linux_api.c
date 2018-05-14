@@ -176,16 +176,12 @@ static int list_i2c_accessible(int bus)
 			continue;
 		}
 
-		/*
-		 * only if dev_file_name exists and
-		 * can be opened, success is returned
-		 */
+		// return success only if i2c bus exists and can be open
 		ret = 0;
 		printf("On i2c-%d:\n\t", i);
-		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
+		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++)
 			if (i2c_probe(fd, j))
 				printf("0x%x ", j);
-		}
 
 		printf("\n");
 		close(fd);
@@ -206,6 +202,7 @@ static int list_driver_accessible(int bus)
 	ASSERT(bus <= MAX_I2C_BUS);
 
 	int ret = -1;
+	char *dev_file_format = DRIVER_DEV_PATH"/%d-00%02x/eeprom";
 	char dev_file_name[40];
 	bool driver_found = false;
 
@@ -219,7 +216,7 @@ static int list_driver_accessible(int bus)
 	int end = (bus < 0) ? MAX_I2C_BUS : bus;
 	for (; i <= end; i++) {
 		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
-			sprintf(dev_file_name, DRIVER_DEV_PATH"/%d-00%02x/eeprom", i, j);
+			sprintf(dev_file_name, dev_file_format, i, j);
 			int res = access(dev_file_name, F_OK);
 			if (res < 0 && (errno == ENOENT || errno == ENOTDIR))
 				continue;
@@ -234,7 +231,9 @@ static int list_driver_accessible(int bus)
 
 			// return success only if device exists and accessible
 			ret = 0;
-			printf("EEPROM device file found at: %s\n", dev_file_name);
+
+			printf("EEPROM device file found at: %s\n",
+				dev_file_name);
 		}
 	}
 
@@ -323,7 +322,8 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 		return 0;
 	}
 
-	eprintf("Neither EEPROM driver nor i2c device interface is available\n");
+	eprintf("Neither EEPROM driver nor i2c device interface is available");
+	eprintf("\n");
 
 	return -1;
 }
