@@ -219,7 +219,7 @@ static int list_driver_accessible(int bus)
 	int end = (bus < 0) ? MAX_I2C_BUS : bus;
 	for (; i <= end; i++) {
 		for (int j = MIN_I2C_ADDR; j <= MAX_I2C_ADDR; j++) {
-			sprintf(dev_file_name, DRIVER_DEV_PATH"/%d-00%x/eeprom", i, j);
+			sprintf(dev_file_name, DRIVER_DEV_PATH"/%d-00%02x/eeprom", i, j);
 			int res = access(dev_file_name, F_OK);
 			if (res < 0 && (errno == ENOENT || errno == ENOTDIR))
 				continue;
@@ -303,7 +303,7 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 
 	saved_errno = errno;
 
-	sprintf(eeprom_dev_fname, DRIVER_DEV_PATH"/%d-00%x/eeprom",
+	sprintf(eeprom_dev_fname, DRIVER_DEV_PATH"/%d-00%02x/eeprom",
 		i2c_bus, i2c_addr);
 	fd = open_device_file(eeprom_dev_fname, -1);
 	if (fd < 0) {
