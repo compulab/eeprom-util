@@ -29,6 +29,7 @@
 #define LAYOUT_CHECK_BYTE	44
 #define RESERVED_FIELDS		NULL
 #define NO_LAYOUT_FIELDS	"Unknown layout. Dumping raw data\n"
+#define ARRAY_LEN(x)		(sizeof(x) / sizeof((x)[0]))
 
 struct field layout_legacy[5] = {
 	{ "MAC address",		"mac",	6,	NULL, print_mac,	update_mac },
@@ -144,6 +145,42 @@ static enum layout_version detect_layout(unsigned char *data)
 		return LAYOUT_LEGACY;
 
 	return LAYOUT_UNRECOGNIZED;
+}
+
+/*
+ * build_layout() - Detect layout and build it with a predefined array
+ * @layout:	An allocated layout
+ */
+static void build_layout(struct layout *layout)
+{
+	if (layout->layout_version == LAYOUT_AUTODETECT)
+		layout->layout_version = detect_layout(layout->data);
+
+	switch (layout->layout_version) {
+	case LAYOUT_LEGACY:
+		layout->fields = layout_legacy;
+		layout->num_of_fields = ARRAY_LEN(layout_legacy);
+		break;
+	case LAYOUT_VER1:
+		layout->fields = layout_v1;
+		layout->num_of_fields = ARRAY_LEN(layout_v1);
+		break;
+	case LAYOUT_VER2:
+		layout->fields = layout_v2;
+		layout->num_of_fields = ARRAY_LEN(layout_v2);
+		break;
+	case LAYOUT_VER3:
+		layout->fields = layout_v3;
+		layout->num_of_fields = ARRAY_LEN(layout_v3);
+		break;
+	case LAYOUT_VER4:
+		layout->fields = layout_v4;
+		layout->num_of_fields = ARRAY_LEN(layout_v4);
+		break;
+	default:
+		layout->fields = layout_unknown;
+		layout->num_of_fields = ARRAY_LEN(layout_unknown);
+	}
 }
 
 /*
@@ -348,8 +385,6 @@ static int clear_fields(struct layout *layout, struct data_array *data)
 	return cleared_fields_cnt;
 }
 
-#define ARRAY_LEN(x)	(sizeof(x) / sizeof(x[0]))
-
 /*
  * new_layout() - Allocate a new layout based on the data given in buf.
  * @buf:	Data seed for layout
@@ -370,45 +405,18 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	if (!layout)
 		return NULL;
 
-	if (layout_version == LAYOUT_AUTODETECT)
-		layout->layout_version = detect_layout(buf);
-	else
-		layout->layout_version = layout_version;
-
-	switch (layout->layout_version) {
-	case LAYOUT_LEGACY:
-		layout->fields = layout_legacy;
-		layout->num_of_fields = ARRAY_LEN(layout_legacy);
-		break;
-	case LAYOUT_VER1:
-		layout->fields = layout_v1;
-		layout->num_of_fields = ARRAY_LEN(layout_v1);
-		break;
-	case LAYOUT_VER2:
-		layout->fields = layout_v2;
-		layout->num_of_fields = ARRAY_LEN(layout_v2);
-		break;
-	case LAYOUT_VER3:
-		layout->fields = layout_v3;
-		layout->num_of_fields = ARRAY_LEN(layout_v3);
-		break;
-	case LAYOUT_VER4:
-		layout->fields = layout_v4;
-		layout->num_of_fields = ARRAY_LEN(layout_v4);
-		break;
-	default:
-		layout->fields = layout_unknown;
-		layout->num_of_fields = ARRAY_LEN(layout_unknown);
-	}
-
+	layout->layout_version = layout_version;
 	layout->data = buf;
+	layout->data_size = buf_size;
+
+	build_layout(layout);
+
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		layout->fields[i].buf = buf;
 		buf += layout->fields[i].size;
 		layout->fields[i].clear = clear_field;
 	}
 
-	layout->data_size = buf_size;
 	layout->print = print_layout;
 	layout->update_fields = update_fields;
 	layout->update_bytes = update_bytes;
