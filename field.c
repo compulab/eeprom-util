@@ -542,3 +542,38 @@ void clear_field(struct field *field)
 	ASSERT(field && field->buf);
 	memset(field->buf, 0xff, field->size);
 }
+
+#define OPS_UPDATABLE(type) { \
+	.print		= print_##type, \
+	.update		= update_##type, \
+	.clear		= clear_field, \
+}
+
+#define OPS_PRINTABLE(type) { \
+	.print		= print_##type, \
+	.update		= NULL, \
+	.clear		= NULL, \
+}
+
+static struct field_ops field_ops[] = {
+	[FIELD_BINARY]		= OPS_UPDATABLE(bin),
+	[FIELD_REVERSED]	= OPS_UPDATABLE(bin_rev),
+	[FIELD_VERSION]		= OPS_UPDATABLE(bin_ver),
+	[FIELD_ASCII]		= OPS_UPDATABLE(ascii),
+	[FIELD_MAC]		= OPS_UPDATABLE(mac),
+	[FIELD_DATE]		= OPS_UPDATABLE(date),
+	[FIELD_RESERVED]	= OPS_PRINTABLE(reserved),
+	[FIELD_RAW]		= OPS_PRINTABLE(bin_raw)
+};
+
+/**
+ * init_field() - init field according to field.type
+ *
+ * @field:	an initialized field with a known field.type to init
+ */
+void init_field(struct field *field)
+{
+	ASSERT(field);
+
+	field->ops = &field_ops[field->type];
+}

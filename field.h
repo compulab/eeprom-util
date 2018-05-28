@@ -20,12 +20,27 @@
 #ifndef _FIELD_
 #define _FIELD_
 
+enum field_type {
+	FIELD_BINARY,
+	FIELD_REVERSED,
+	FIELD_VERSION,
+	FIELD_ASCII,
+	FIELD_MAC,
+	FIELD_DATE,
+	FIELD_RESERVED,
+	FIELD_RAW,
+};
+
 struct field {
 	char *name;
 	char *short_name;
 	int size;
+	enum field_type type;
 	unsigned char *buf;
+	struct field_ops *ops;
+};
 
+struct field_ops {
 	void (*print)(const struct field *field);
 	int (*update)(struct field *field, char *value);
 	void (*clear)(struct field *field);
@@ -54,5 +69,7 @@ void print_reserved(const struct field *field);
 void print_bin_raw(const struct field *field);
 
 void clear_field(struct field *field);
+
+void init_field(struct field *field);
 
 #endif

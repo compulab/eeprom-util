@@ -32,91 +32,91 @@
 #define ARRAY_LEN(x)		(sizeof(x) / sizeof((x)[0]))
 
 struct field layout_legacy[5] = {
-	{ "MAC address",		"mac",	6,	NULL, print_mac,	update_mac },
-	{ "Board Revision",		"rev",	2,	NULL, print_bin,	update_bin },
-	{ "Serial Number",		"sn",	8,	NULL, print_bin,	update_bin },
-	{ "Board Configuration",	"conf",	64,	 NULL, print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,		NULL,	176,	NULL, print_reserved,	NULL },
+	{ "MAC address",		"mac",	6,	FIELD_MAC },
+	{ "Board Revision",		"rev",	2,	FIELD_BINARY },
+	{ "Serial Number",		"sn",	8,	FIELD_BINARY },
+	{ "Board Configuration",	"conf",	64,	FIELD_ASCII },
+	{ RESERVED_FIELDS,		NULL,	176,	FIELD_RESERVED },
 };
 
 struct field layout_v1[12] = {
-	{ "Major Revision",	"major",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "Minor Revision",	"minor",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "1st MAC Address",	"mac1",		6,	NULL,	print_mac,	update_mac },
-	{ "2nd MAC Address",	"mac2",		6,	NULL,	print_mac,	update_mac },
-	{ "Production Date",	"date",		4,	NULL,	print_date,	update_date },
-	{ "Serial Number",	"sn",		12,	NULL,	print_bin_rev,	update_bin_rev },
-	{ RESERVED_FIELDS,	NULL,		96,	NULL,	print_reserved,	NULL },
-	{ "Product Name",	"name",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #1",	"opt1",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #2",	"opt2",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #3",	"opt3",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,	NULL,		64,	NULL,	print_reserved,	NULL },
+	{ "Major Revision",	"major",	2,	FIELD_VERSION },
+	{ "Minor Revision",	"minor",	2,	FIELD_VERSION },
+	{ "1st MAC Address",	"mac1",		6,	FIELD_MAC },
+	{ "2nd MAC Address",	"mac2",		6,	FIELD_MAC },
+	{ "Production Date",	"date",		4,	FIELD_DATE },
+	{ "Serial Number",	"sn",		12,	FIELD_REVERSED },
+	{ RESERVED_FIELDS,	NULL,		96,	FIELD_RESERVED },
+	{ "Product Name",	"name",		16,	FIELD_ASCII },
+	{ "Product Options #1",	"opt1",		16,	FIELD_ASCII },
+	{ "Product Options #2",	"opt2",		16,	FIELD_ASCII },
+	{ "Product Options #3",	"opt3",		16,	FIELD_ASCII },
+	{ RESERVED_FIELDS,	NULL,		64,	FIELD_RESERVED },
 };
 
 struct field layout_v2[15] = {
-	{ "Major Revision",			"major",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "Minor Revision",			"minor",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "1st MAC Address",			"mac1",		6,	NULL,	print_mac,	update_mac },
-	{ "2nd MAC Address",			"mac2",		6,	NULL,	print_mac,	update_mac },
-	{ "Production Date",			"date",		4,	NULL,	print_date,	update_date },
-	{ "Serial Number",			"sn",		12,	NULL,	print_bin_rev,	update_bin_rev },
-	{ "3rd MAC Address (WIFI)",		"mac3",		6,	NULL,	print_mac,	update_mac },
-	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	NULL,	print_mac,	update_mac },
-	{ "Layout Version",			"layout",	1,	NULL,	print_bin,	update_bin },
-	{ RESERVED_FIELDS,			NULL,		83,	NULL,	print_reserved,	NULL },
-	{ "Product Name",			"name", 	16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #1",			"opt1", 	16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #2",			"opt2", 	16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #3",			"opt3", 	16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
+	{ "Major Revision",			"major",	2,	FIELD_VERSION },
+	{ "Minor Revision",			"minor",	2,	FIELD_VERSION },
+	{ "1st MAC Address",			"mac1",		6,	FIELD_MAC },
+	{ "2nd MAC Address",			"mac2",		6,	FIELD_MAC },
+	{ "Production Date",			"date",		4,	FIELD_DATE },
+	{ "Serial Number",			"sn",		12,	FIELD_REVERSED },
+	{ "3rd MAC Address (WIFI)",		"mac3",		6,	FIELD_MAC },
+	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	FIELD_MAC },
+	{ "Layout Version",			"layout",	1,	FIELD_BINARY },
+	{ RESERVED_FIELDS,			NULL,		83,	FIELD_RESERVED },
+	{ "Product Name",			"name", 	16,	FIELD_ASCII },
+	{ "Product Options #1",			"opt1", 	16,	FIELD_ASCII },
+	{ "Product Options #2",			"opt2", 	16,	FIELD_ASCII },
+	{ "Product Options #3",			"opt3", 	16,	FIELD_ASCII },
+	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
 };
 
 struct field layout_v3[16] = {
-	{ "Major Revision",			"major",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "Minor Revision",			"minor",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "1st MAC Address",			"mac1",		6,	NULL,	print_mac,	update_mac },
-	{ "2nd MAC Address",			"mac2",		6,	NULL,	print_mac,	update_mac },
-	{ "Production Date",			"date",		4,	NULL,	print_date,	update_date },
-	{ "Serial Number",			"sn",		12,	NULL,	print_bin_rev,	update_bin_rev },
-	{ "3rd MAC Address (WIFI)",		"mac3",		6,	NULL,	print_mac,	update_mac },
-	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	NULL,	print_mac,	update_mac },
-	{ "Layout Version",			"layout",	1,	NULL,	print_bin,	update_bin },
-	{ "CompuLab EEPROM ID",			"id",		3,	NULL,	print_bin,	update_bin },
-	{ RESERVED_FIELDS,			NULL,		80,	NULL,	print_reserved,	NULL },
-	{ "Product Name",			"name",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #1",			"opt1",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #2",			"opt2",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #3",			"opt3",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
+	{ "Major Revision",			"major",	2,	FIELD_VERSION },
+	{ "Minor Revision",			"minor",	2,	FIELD_VERSION },
+	{ "1st MAC Address",			"mac1",		6,	FIELD_MAC },
+	{ "2nd MAC Address",			"mac2",		6,	FIELD_MAC },
+	{ "Production Date",			"date",		4,	FIELD_DATE },
+	{ "Serial Number",			"sn",		12,	FIELD_REVERSED },
+	{ "3rd MAC Address (WIFI)",		"mac3",		6,	FIELD_MAC },
+	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	FIELD_MAC },
+	{ "Layout Version",			"layout",	1,	FIELD_BINARY },
+	{ "CompuLab EEPROM ID",			"id",		3,	FIELD_BINARY },
+	{ RESERVED_FIELDS,			NULL,		80,	FIELD_RESERVED },
+	{ "Product Name",			"name",		16,	FIELD_ASCII },
+	{ "Product Options #1",			"opt1",		16,	FIELD_ASCII },
+	{ "Product Options #2",			"opt2",		16,	FIELD_ASCII },
+	{ "Product Options #3",			"opt3",		16,	FIELD_ASCII },
+	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
 };
 
 struct field layout_v4[21] = {
-	{ "Major Revision",			"major",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "Minor Revision",			"minor",	2,	NULL,	print_bin_ver,	update_bin_ver },
-	{ "1st MAC Address",			"mac1",		6,	NULL,	print_mac,	update_mac },
-	{ "2nd MAC Address",			"mac2",		6,	NULL,	print_mac,	update_mac },
-	{ "Production Date",			"date",		4,	NULL,	print_date,	update_date },
-	{ "Serial Number",			"sn",		12,	NULL,	print_bin_rev,	update_bin_rev },
-	{ "3rd MAC Address (WIFI)",		"mac3",		6,	NULL,	print_mac,	update_mac },
-	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	NULL,	print_mac,	update_mac },
-	{ "Layout Version",			"layout",	1,	NULL,	print_bin,	update_bin },
-	{ "CompuLab EEPROM ID",			"id",		3,	NULL,	print_bin,	update_bin },
-	{ "5th MAC Address",			"mac5",		6,	NULL,	print_mac,	update_mac },
-	{ "6th MAC Address",			"mac6",		6,	NULL,	print_mac,	update_mac },
-	{ "Scratchpad",				"spad",		4,	NULL,	print_bin,	update_bin },
-	{ RESERVED_FIELDS,			NULL,		64,	NULL,	print_reserved,	NULL },
-	{ "Product Name",			"name",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #1",			"opt1",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #2",			"opt2",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #3",			"opt3",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #4",			"opt4",		16,	NULL,	print_ascii,	update_ascii },
-	{ "Product Options #5",			"opt5",		16,	NULL,	print_ascii,	update_ascii },
-	{ RESERVED_FIELDS,			NULL,		32,	NULL,	print_reserved,	NULL },
+	{ "Major Revision",			"major",	2,	FIELD_VERSION },
+	{ "Minor Revision",			"minor",	2,	FIELD_VERSION },
+	{ "1st MAC Address",			"mac1",		6,	FIELD_MAC },
+	{ "2nd MAC Address",			"mac2",		6,	FIELD_MAC },
+	{ "Production Date",			"date",		4,	FIELD_DATE },
+	{ "Serial Number",			"sn",		12,	FIELD_REVERSED },
+	{ "3rd MAC Address (WIFI)",		"mac3",		6,	FIELD_MAC },
+	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	FIELD_MAC },
+	{ "Layout Version",			"layout",	1,	FIELD_BINARY },
+	{ "CompuLab EEPROM ID",			"id",		3,	FIELD_BINARY },
+	{ "5th MAC Address",			"mac5",		6,	FIELD_MAC },
+	{ "6th MAC Address",			"mac6",		6,	FIELD_MAC },
+	{ "Scratchpad",				"spad",		4,	FIELD_BINARY },
+	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
+	{ "Product Name",			"name",		16,	FIELD_ASCII },
+	{ "Product Options #1",			"opt1",		16,	FIELD_ASCII },
+	{ "Product Options #2",			"opt2",		16,	FIELD_ASCII },
+	{ "Product Options #3",			"opt3",		16,	FIELD_ASCII },
+	{ "Product Options #4",			"opt4",		16,	FIELD_ASCII },
+	{ "Product Options #5",			"opt5",		16,	FIELD_ASCII },
+	{ RESERVED_FIELDS,			NULL,		32,	FIELD_RESERVED },
 };
 
 struct field layout_unknown[1] = {
-	{ NO_LAYOUT_FIELDS, NULL, 256, NULL, print_bin_raw, NULL },
+	{ NO_LAYOUT_FIELDS, NULL, 256, FIELD_RAW },
 };
 
 /*
@@ -194,7 +194,7 @@ static void print_layout(const struct layout *layout)
 	struct field *fields = layout->fields;
 
 	for (int i = 0; i < layout->num_of_fields; i++)
-		fields[i].print(&fields[i]);
+		fields[i].ops->print(&fields[i]);
 }
 
 /*
@@ -356,8 +356,8 @@ static int update_fields(struct layout *layout, struct data_array *data)
 			return 0;
 
 		if (*field_value == '\0')
-			field->clear(field);
-		else if (field->update(field, field_value))
+			field->ops->clear(field);
+		else if (field->ops->update(field, field_value))
 			return 0;
 
 		updated_fields_cnt++;
@@ -384,7 +384,7 @@ static int clear_fields(struct layout *layout, struct data_array *data)
 		if (!field)
 			return 0;
 
-		field->clear(field);
+		field->ops->clear(field);
 		cleared_fields_cnt++;
 	}
 
@@ -418,9 +418,9 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	build_layout(layout);
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
+		init_field(&layout->fields[i]);
 		layout->fields[i].buf = buf;
 		buf += layout->fields[i].size;
-		layout->fields[i].clear = clear_field;
 	}
 
 	layout->print = print_layout;
