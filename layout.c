@@ -116,7 +116,7 @@ struct field layout_v4[21] = {
 };
 
 struct field layout_unknown[1] = {
-	{ NO_LAYOUT_FIELDS, NULL, 256, NULL, print_bin_raw, update_bin },
+	{ NO_LAYOUT_FIELDS, NULL, 256, NULL, print_bin_raw, NULL },
 };
 
 /*
@@ -313,6 +313,12 @@ static struct field* find_field(struct layout *layout, char *field_name)
 	ASSERT(layout && layout->fields && field_name);
 
 	struct field *fields = layout->fields;
+
+	if (fields == layout_unknown) {
+		eprintf("Layout error: Can't operate on fields. "
+			"The layout is unknown.\n");
+		return NULL;
+	}
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		if (fields[i].name == RESERVED_FIELDS ||
