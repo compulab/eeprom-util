@@ -46,30 +46,6 @@ struct field_ops {
 	void (*clear)(struct field *field);
 };
 
-void print_bin(const struct field *field);
-int update_bin(struct field *field, char *value);
-
-void print_bin_ver(const struct field *field);
-int update_bin_ver(struct field *field, char *value);
-
-void print_bin_rev(const struct field *field);
-int update_bin_rev(struct field *field, char *value);
-
-void print_mac(const struct field *field);
-int update_mac(struct field *field, char *value);
-
-void print_date(const struct field *field);
-int update_date(struct field *field, char *value);
-
-void print_ascii(const struct field *field);
-int update_ascii(struct field *field, char *value);
-
-void print_reserved(const struct field *field);
-
-void print_bin_raw(const struct field *field);
-
-void clear_field(struct field *field);
-
 void init_field(struct field *field);
 
 #endif

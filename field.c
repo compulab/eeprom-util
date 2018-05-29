@@ -129,7 +129,7 @@ static int __update_bin_delim(struct field *field, char *value, char delimiter)
  *
  * @field:	an initialized field to print
  */
-void print_bin(const struct field *field)
+static void print_bin(const struct field *field)
 {
 	__print_bin(field, "", false);
 }
@@ -139,7 +139,7 @@ void print_bin(const struct field *field)
  *
  * @field:	an initialized field to print
  */
-void print_bin_raw(const struct field *field)
+static void print_bin_raw(const struct field *field)
 {
 	ASSERT(field && field->buf && field->name);
 
@@ -174,7 +174,7 @@ void print_bin_raw(const struct field *field)
  * @field:	an initialized field
  * @value:	a string of values (i.e. "10b234a")
  */
-int update_bin(struct field *field, char *value)
+static int update_bin(struct field *field, char *value)
 {
 	return __update_bin(field, value, false);
 }
@@ -192,7 +192,7 @@ int update_bin(struct field *field, char *value)
  *
  * @field:	an initialized field to print
  */
-void print_bin_rev(const struct field *field)
+static void print_bin_rev(const struct field *field)
 {
 	__print_bin(field, "", true);
 }
@@ -208,7 +208,7 @@ void print_bin_rev(const struct field *field)
  * @field:	an initialized field
  * @value:	a string of byte values
  */
-int update_bin_rev(struct field *field, char *value)
+static int update_bin_rev(struct field *field, char *value)
 {
 	return __update_bin(field, value, true);
 }
@@ -225,7 +225,7 @@ int update_bin_rev(struct field *field, char *value)
  *
  * @field:	an initialized field to print
  */
-void print_bin_ver(const struct field *field)
+static void print_bin_ver(const struct field *field)
 {
 	ASSERT(field && field->buf && field->name);
 
@@ -253,7 +253,7 @@ void print_bin_ver(const struct field *field)
  *
  * Returns 0 on success, -1 on failure.
  */
-int update_bin_ver(struct field *field, char *value)
+static int update_bin_ver(struct field *field, char *value)
 {
 	ASSERT(field && field->buf && field->name && value);
 
@@ -303,7 +303,7 @@ int update_bin_ver(struct field *field, char *value)
  *
  * @field:	an initialized field to print
  */
-void print_mac(const struct field *field)
+static void print_mac(const struct field *field)
 {
 	__print_bin(field, ":", false);
 }
@@ -314,12 +314,12 @@ void print_mac(const struct field *field)
  * @field:	an initialized field
  * @value:	a colon delimited string of byte values (i.e. "1:02:3:ff")
  */
-int update_mac(struct field *field, char *value)
+static int update_mac(struct field *field, char *value)
 {
 	return __update_bin_delim(field, value, ':');
 }
 
-char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 /**
@@ -332,7 +332,7 @@ char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
  *
  * @field:	an initialized field to print
  */
-void print_date(const struct field *field)
+static void print_date(const struct field *field)
 {
 	ASSERT(field && field->buf && field->name);
 
@@ -406,7 +406,7 @@ static int validate_date(unsigned char day, unsigned char month,
  *
  * Returns 0 on success, -1 on failure.
  */
-int update_date(struct field *field, char *value)
+static int update_date(struct field *field, char *value)
 {
 	ASSERT(field && field->buf && field->name && value);
 
@@ -466,7 +466,7 @@ int update_date(struct field *field, char *value)
  * print_ascii() - print a field which contains ASCII data
  * @field:	an initialized field to print
  */
-void print_ascii(const struct field *field)
+static void print_ascii(const struct field *field)
 {
 	ASSERT(field && field->buf && field->name);
 
@@ -498,7 +498,7 @@ void print_ascii(const struct field *field)
  *
  * Returns 0 on success, -1 of failure (new string too long).
  */
-int update_ascii(struct field *field, char *value)
+static int update_ascii(struct field *field, char *value)
 {
 	ASSERT(field && field->buf && field->name && value);
 
@@ -523,7 +523,7 @@ int update_ascii(struct field *field, char *value)
  *
  * @field:	an initialized field to print
  */
-void print_reserved(const struct field *field)
+static void print_reserved(const struct field *field)
 {
 	ASSERT(field);
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
@@ -537,7 +537,7 @@ void print_reserved(const struct field *field)
  *
  * @field:	an initialized field to clear
  */
-void clear_field(struct field *field)
+static void clear_field(struct field *field)
 {
 	ASSERT(field && field->buf);
 	memset(field->buf, 0xff, field->size);
