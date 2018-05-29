@@ -32,36 +32,36 @@
 static void __print_bin(const struct field *field,
 			char *delimiter, bool reverse)
 {
-	ASSERT(field && field->buf && field->name && delimiter);
+	ASSERT(field && field->data && field->name && delimiter);
 
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	int i;
-	int from = reverse ? field->size - 1 : 0;
-	int to = reverse ? 0 : field->size - 1;
+	int from = reverse ? field->data_size - 1 : 0;
+	int to = reverse ? 0 : field->data_size - 1;
 	for (i = from; i != to; reverse ? i-- : i++)
-		printf("%02x%s", field->buf[i], delimiter);
+		printf("%02x%s", field->data[i], delimiter);
 
-	printf("%02x\n", field->buf[i]);
+	printf("%02x\n", field->data[i]);
 }
 
 static int __update_bin(struct field *field, const char *value, bool reverse)
 {
-	ASSERT(field && field->buf && field->name && value);
+	ASSERT(field && field->data && field->name && value);
 
 	int len = strlen(value);
 	int i = reverse ? len - 1 : 0;
 
 	/* each two characters in the string are fit in one byte */
-	if (len > field->size * 2) {
+	if (len > field->data_size * 2) {
 		iveprintf("Value is too long", value, field->name);
 		return -1;
 	}
 
 	/* pad with zeros */
-	memset(field->buf, 0, field->size);
+	memset(field->data, 0, field->data_size);
 
-	/* i - string iterator, j - buf iterator */
-	for (int j = 0; j < field->size; j++) {
+	/* i - string iterator, j - data iterator */
+	for (int j = 0; j < field->data_size; j++) {
 		int byte = 0;
 		char tmp[3] = { 0, 0, 0 };
 
@@ -83,7 +83,7 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 			return -1;
 		}
 
-		field->buf[j] = (unsigned char)byte;
+		field->data[j] = (unsigned char)byte;
 		i = reverse ? i - 2 : i + 2;
 	}
 
@@ -92,19 +92,19 @@ static int __update_bin(struct field *field, const char *value, bool reverse)
 
 static int __update_bin_delim(struct field *field, char *value, char delimiter)
 {
-	ASSERT(field && field->buf && field->name && value);
+	ASSERT(field && field->data && field->name && value);
 
 	int i, val;
 	char *bin = value;
 
-	for (i = 0; i < (field->size - 1); i++) {
+	for (i = 0; i < (field->data_size - 1); i++) {
 		if (strtoi_base(&bin, &val, 16) != STRTOI_STR_CON ||
 		    *bin != delimiter || val < 0 || val >> 8) {
 			iveprintf("Syntax error", value, field->name);
 			return -1;
 		}
 
-		field->buf[i] = (unsigned char)val;
+		field->data[i] = (unsigned char)val;
 		bin++;
 	}
 
@@ -114,7 +114,7 @@ static int __update_bin_delim(struct field *field, char *value, char delimiter)
 		return -1;
 	}
 
-	field->buf[i] = (unsigned char)val;
+	field->data[i] = (unsigned char)val;
 
 	return 0;
 }
@@ -141,7 +141,7 @@ static void print_bin(const struct field *field)
  */
 static void print_bin_raw(const struct field *field)
 {
-	ASSERT(field && field->buf && field->name);
+	ASSERT(field && field->data && field->name);
 
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"
@@ -151,18 +151,18 @@ static void print_bin_raw(const struct field *field)
 	for (i = 0; i < 256; i += 16) {
 		printf("%02x: ", i);
 		for (j = 0; j < 16; j++) {
-			printf("%02x", field->buf[i+j]);
+			printf("%02x", field->data[i+j]);
 			printf(" ");
 		}
 		printf("    ");
 
 		for (j = 0; j < 16; j++) {
-			if (field->buf[i+j] == 0x00 || field->buf[i+j] == 0xff)
+			if (field->data[i+j] == 0x00 || field->data[i+j] == 0xff)
 				printf(".");
-			else if (field->buf[i+j] < 32 || field->buf[i+j] >= 127)
+			else if (field->data[i+j] < 32 || field->data[i+j] >= 127)
 				printf("?");
 			else
-				printf("%c", field->buf[i+j]);
+				printf("%c", field->data[i+j]);
 		}
 		printf("\n");
 	}
@@ -227,15 +227,15 @@ static int update_bin_rev(struct field *field, char *value)
  */
 static void print_bin_ver(const struct field *field)
 {
-	ASSERT(field && field->buf && field->name);
+	ASSERT(field && field->data && field->name);
 
-	if ((field->buf[0] == 0xff) && (field->buf[1] == 0xff)) {
-		field->buf[0] = 0;
-		field->buf[1] = 0;
+	if ((field->data[0] == 0xff) && (field->data[1] == 0xff)) {
+		field->data[0] = 0;
+		field->data[1] = 0;
 	}
 
 	printf(PRINT_FIELD_SEGMENT, field->name);
-	printf("%#.2f\n", (field->buf[1] << 8 | field->buf[0]) / 100.0);
+	printf("%#.2f\n", (field->data[1] << 8 | field->data[0]) / 100.0);
 }
 
 /**
@@ -255,7 +255,7 @@ static void print_bin_ver(const struct field *field)
  */
 static int update_bin_ver(struct field *field, char *value)
 {
-	ASSERT(field && field->buf && field->name && value);
+	ASSERT(field && field->data && field->name && value);
 
 	char *version = value;
 	int num, remainder;
@@ -287,8 +287,8 @@ static int update_bin_ver(struct field *field, char *value)
 		return -1;
 	}
 
-	field->buf[0] = (unsigned char)num;
-	field->buf[1] = num >> 8;
+	field->data[0] = (unsigned char)num;
+	field->data[1] = num >> 8;
 
 	return 0;
 }
@@ -334,16 +334,16 @@ static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
  */
 static void print_date(const struct field *field)
 {
-	ASSERT(field && field->buf && field->name);
+	ASSERT(field && field->data && field->name);
 
 	printf(PRINT_FIELD_SEGMENT, field->name);
-	printf("%02d/", field->buf[0]);
-	if (field->buf[1] >= 1 && field->buf[1] <= 12)
-		printf("%s", months[field->buf[1] - 1]);
+	printf("%02d/", field->data[0]);
+	if (field->data[1] >= 1 && field->data[1] <= 12)
+		printf("%s", months[field->data[1] - 1]);
 	else
 		printf("BAD");
 
-	printf("/%d\n", field->buf[3] << 8 | field->buf[2]);
+	printf("/%d\n", field->data[3] << 8 | field->data[2]);
 }
 
 static int validate_date(unsigned char day, unsigned char month,
@@ -408,7 +408,7 @@ static int validate_date(unsigned char day, unsigned char month,
  */
 static int update_date(struct field *field, char *value)
 {
-	ASSERT(field && field->buf && field->name && value);
+	ASSERT(field && field->data && field->name && value);
 
 	char *date = value;
 	int day, month, year;
@@ -454,10 +454,10 @@ static int update_date(struct field *field, char *value)
 		return -1;
 	}
 
-	field->buf[0] = (unsigned char)day;
-	field->buf[1] = (unsigned char)month;
-	field->buf[2] = (unsigned char)year;
-	field->buf[3] = (unsigned char)(year >> 8);
+	field->data[0] = (unsigned char)day;
+	field->data[1] = (unsigned char)month;
+	field->data[2] = (unsigned char)year;
+	field->data[3] = (unsigned char)(year >> 8);
 
 	return 0;
 }
@@ -468,25 +468,25 @@ static int update_date(struct field *field, char *value)
  */
 static void print_ascii(const struct field *field)
 {
-	ASSERT(field && field->buf && field->name);
+	ASSERT(field && field->data && field->name);
 
 	char format[8];
-	int *str = (int*)field->buf;
+	int *str = (int*)field->data;
 	int pattern = *str;
-	/* assuming field->size is a multiple of 32bit! */
-	int block_count = field->size / sizeof(int);
+	/* assuming field->data_size is a multiple of 32bit! */
+	int block_count = field->data_size / sizeof(int);
 	char *print_buf = "";
 
 	/* check if str is trivial (contains only 0's or only 0xff's), if so print nothing */
 	for (int i = 0; i < block_count - 1; i++) {
 		str++;
 		if (*str != pattern || (pattern != 0 && pattern != -1)) {
-			print_buf = (char*)field->buf;
+			print_buf = (char*)field->data;
 			break;
 		}
 	}
 
-	sprintf(format, "%%.%ds\n", field->size);
+	sprintf(format, "%%.%ds\n", field->data_size);
 	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf(format, print_buf);
 }
@@ -500,15 +500,15 @@ static void print_ascii(const struct field *field)
  */
 static int update_ascii(struct field *field, char *value)
 {
-	ASSERT(field && field->buf && field->name && value);
+	ASSERT(field && field->data && field->name && value);
 
-	if (strlen(value) >= field->size) {
+	if (strlen(value) >= field->data_size) {
 		iveprintf("Value is too long", value, field->name);
 		return -1;
 	}
 
-	strncpy((char *)field->buf, value, field->size - 1);
-	field->buf[field->size - 1] = '\0';
+	strncpy((char *)field->data, value, field->data_size - 1);
+	field->data[field->data_size - 1] = '\0';
 
 	return 0;
 }
@@ -527,7 +527,7 @@ static void print_reserved(const struct field *field)
 {
 	ASSERT(field);
 	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
-	printf("(%d bytes)\n", field->size);
+	printf("(%d bytes)\n", field->data_size);
 }
 
 /**
@@ -539,8 +539,8 @@ static void print_reserved(const struct field *field)
  */
 static void clear_field(struct field *field)
 {
-	ASSERT(field && field->buf);
-	memset(field->buf, 0xff, field->size);
+	ASSERT(field && field->data);
+	memset(field->data, 0xff, field->data_size);
 }
 
 #define OPS_UPDATABLE(type) { \

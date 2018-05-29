@@ -34,9 +34,9 @@ enum field_type {
 struct field {
 	char *name;
 	char *short_name;
-	int size;
+	int data_size;
 	enum field_type type;
-	unsigned char *buf;
+	unsigned char *data;
 	struct field_ops *ops;
 };
 
