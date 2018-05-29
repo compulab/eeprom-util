@@ -41,11 +41,12 @@ struct field {
 };
 
 struct field_ops {
+	int (*get_data_size)(const struct field *field);
 	void (*print)(const struct field *field);
 	int (*update)(struct field *field, char *value);
 	void (*clear)(struct field *field);
 };
 
-void init_field(struct field *field);
+void init_field(struct field *field, unsigned char *data);
 
 #endif

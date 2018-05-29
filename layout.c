@@ -418,9 +418,9 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 	build_layout(layout);
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
-		init_field(&layout->fields[i]);
-		layout->fields[i].data = buf;
-		buf += layout->fields[i].data_size;
+		struct field *field = &layout->fields[i];
+		init_field(field, buf);
+		buf += field->ops->get_data_size(field);
 	}
 
 	layout->print = print_layout;

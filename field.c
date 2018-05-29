@@ -543,13 +543,28 @@ static void clear_field(struct field *field)
 	memset(field->data, 0xff, field->data_size);
 }
 
+/**
+ * get_data_size() - get the size of field's data
+ *
+ * @field:	an initialized field
+ *
+ * return: the size of field's data
+ */
+static int get_data_size(const struct field *field)
+{
+	ASSERT(field);
+	return field->data_size;
+}
+
 #define OPS_UPDATABLE(type) { \
+	.get_data_size	= get_data_size, \
 	.print		= print_##type, \
 	.update		= update_##type, \
 	.clear		= clear_field, \
 }
 
 #define OPS_PRINTABLE(type) { \
+	.get_data_size	= get_data_size, \
 	.print		= print_##type, \
 	.update		= NULL, \
 	.clear		= NULL, \
@@ -570,10 +585,12 @@ static struct field_ops field_ops[] = {
  * init_field() - init field according to field.type
  *
  * @field:	an initialized field with a known field.type to init
+ * @data:	the binary data of the field
  */
-void init_field(struct field *field)
+void init_field(struct field *field, unsigned char *data)
 {
-	ASSERT(field);
+	ASSERT(field && data);
 
 	field->ops = &field_ops[field->type];
+	field->data = data;
 }
