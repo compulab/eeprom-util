@@ -321,7 +321,7 @@ static struct field* find_field(struct layout *layout, char *field_name)
 	}
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
-		if (fields[i].name == RESERVED_FIELDS ||
+		if (fields[i].type == FIELD_RESERVED ||
 		    (strcmp(fields[i].name, field_name) &&
 		     strcmp(fields[i].short_name, field_name)))
 			continue;
