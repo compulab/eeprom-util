@@ -27,7 +27,6 @@
 #include "field.h"
 
 #define LAYOUT_CHECK_BYTE	44
-#define RESERVED_FIELDS		NULL
 #define NO_LAYOUT_FIELDS	"Unknown layout. Dumping raw data\n"
 #define ARRAY_LEN(x)		(sizeof(x) / sizeof((x)[0]))
 
@@ -36,7 +35,7 @@ struct field layout_legacy[5] = {
 	{ "Board Revision",		"rev",	2,	FIELD_BINARY },
 	{ "Serial Number",		"sn",	8,	FIELD_BINARY },
 	{ "Board Configuration",	"conf",	64,	FIELD_ASCII },
-	{ RESERVED_FIELDS,		NULL,	176,	FIELD_RESERVED },
+	{ "Reserved fields",		"rsvd",	176,	FIELD_RESERVED },
 };
 
 struct field layout_v1[12] = {
@@ -46,12 +45,12 @@ struct field layout_v1[12] = {
 	{ "2nd MAC Address",	"mac2",		6,	FIELD_MAC },
 	{ "Production Date",	"date",		4,	FIELD_DATE },
 	{ "Serial Number",	"sn",		12,	FIELD_REVERSED },
-	{ RESERVED_FIELDS,	NULL,		96,	FIELD_RESERVED },
+	{ "Reserved fields",	"rsvd",		96,	FIELD_RESERVED },
 	{ "Product Name",	"name",		16,	FIELD_ASCII },
 	{ "Product Options #1",	"opt1",		16,	FIELD_ASCII },
 	{ "Product Options #2",	"opt2",		16,	FIELD_ASCII },
 	{ "Product Options #3",	"opt3",		16,	FIELD_ASCII },
-	{ RESERVED_FIELDS,	NULL,		64,	FIELD_RESERVED },
+	{ "Reserved fields",	"rsvd",		64,	FIELD_RESERVED },
 };
 
 struct field layout_v2[15] = {
@@ -64,12 +63,12 @@ struct field layout_v2[15] = {
 	{ "3rd MAC Address (WIFI)",		"mac3",		6,	FIELD_MAC },
 	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	FIELD_MAC },
 	{ "Layout Version",			"layout",	1,	FIELD_BINARY },
-	{ RESERVED_FIELDS,			NULL,		83,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		83,	FIELD_RESERVED },
 	{ "Product Name",			"name", 	16,	FIELD_ASCII },
 	{ "Product Options #1",			"opt1", 	16,	FIELD_ASCII },
 	{ "Product Options #2",			"opt2", 	16,	FIELD_ASCII },
 	{ "Product Options #3",			"opt3", 	16,	FIELD_ASCII },
-	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		64,	FIELD_RESERVED },
 };
 
 struct field layout_v3[16] = {
@@ -83,12 +82,12 @@ struct field layout_v3[16] = {
 	{ "4th MAC Address (Bluetooth)",	"mac4",		6,	FIELD_MAC },
 	{ "Layout Version",			"layout",	1,	FIELD_BINARY },
 	{ "CompuLab EEPROM ID",			"id",		3,	FIELD_BINARY },
-	{ RESERVED_FIELDS,			NULL,		80,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		80,	FIELD_RESERVED },
 	{ "Product Name",			"name",		16,	FIELD_ASCII },
 	{ "Product Options #1",			"opt1",		16,	FIELD_ASCII },
 	{ "Product Options #2",			"opt2",		16,	FIELD_ASCII },
 	{ "Product Options #3",			"opt3",		16,	FIELD_ASCII },
-	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		64,	FIELD_RESERVED },
 };
 
 struct field layout_v4[21] = {
@@ -105,18 +104,18 @@ struct field layout_v4[21] = {
 	{ "5th MAC Address",			"mac5",		6,	FIELD_MAC },
 	{ "6th MAC Address",			"mac6",		6,	FIELD_MAC },
 	{ "Scratchpad",				"spad",		4,	FIELD_BINARY },
-	{ RESERVED_FIELDS,			NULL,		64,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		64,	FIELD_RESERVED },
 	{ "Product Name",			"name",		16,	FIELD_ASCII },
 	{ "Product Options #1",			"opt1",		16,	FIELD_ASCII },
 	{ "Product Options #2",			"opt2",		16,	FIELD_ASCII },
 	{ "Product Options #3",			"opt3",		16,	FIELD_ASCII },
 	{ "Product Options #4",			"opt4",		16,	FIELD_ASCII },
 	{ "Product Options #5",			"opt5",		16,	FIELD_ASCII },
-	{ RESERVED_FIELDS,			NULL,		32,	FIELD_RESERVED },
+	{ "Reserved fields",			"rsvd",		32,	FIELD_RESERVED },
 };
 
 struct field layout_unknown[1] = {
-	{ NO_LAYOUT_FIELDS, NULL, 256, FIELD_RAW },
+	{ NO_LAYOUT_FIELDS, "raw", 256, FIELD_RAW },
 };
 
 /*
