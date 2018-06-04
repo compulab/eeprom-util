@@ -45,6 +45,7 @@ struct field {
 struct field_ops {
 	int (*get_data_size)(const struct field *field);
 	bool (*is_named)(const struct field *field, const char *str);
+	void (*print_value)(const struct field *field);
 	void (*print)(const struct field *field);
 	int (*update)(struct field *field, char *value);
 	void (*clear)(struct field *field);

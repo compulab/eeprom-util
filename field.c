@@ -24,7 +24,6 @@
 #include "common.h"
 #include "field.h"
 
-#define PRINT_FIELD_SEGMENT	"%-30s"
 // Macro for printing field's input value error messages
 #define iveprintf(str, value, name) \
 	ieprintf("Invalid value \"%s\" for field \"%s\" - " str, value, name);
@@ -32,9 +31,8 @@
 static void __print_bin(const struct field *field,
 			char *delimiter, bool reverse)
 {
-	ASSERT(field && field->data && field->name && delimiter);
+	ASSERT(field && field->data && delimiter);
 
-	printf(PRINT_FIELD_SEGMENT, field->name);
 	int i;
 	int from = reverse ? field->data_size - 1 : 0;
 	int to = reverse ? 0 : field->data_size - 1;
@@ -120,12 +118,11 @@ static int __update_bin_delim(struct field *field, char *value, char delimiter)
 }
 
 /**
- * print_bin() - print a field which contains binary data
+ * print_bin() - print the value of a field from type "binary"
  *
  * Treat the field data as simple binary data, and print it as two digit
  * hexadecimal values.
- * Sample output:
- * 	Field Name	0102030405060708090a
+ * Sample output: 0102030405060708090a
  *
  * @field:	an initialized field to print
  */
@@ -141,9 +138,8 @@ static void print_bin(const struct field *field)
  */
 static void print_bin_raw(const struct field *field)
 {
-	ASSERT(field && field->data && field->name);
+	ASSERT(field && field->data);
 
-	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f"
 	       "     0123456789abcdef\n");
 	int i, j;
@@ -180,15 +176,13 @@ static int update_bin(struct field *field, char *value)
 }
 
 /**
- * print_bin_rev() - print a field which contains binary data in reverse order
+ * print_bin_rev() - print the value of a field from type "reversed"
  *
  * Treat the field data as simple binary data, and print it in reverse order
  * as two digit hexadecimal values.
  *
- * Data in field:
- *  			0102030405060708090a
- * Sample output:
- * 	Field Name	0a090807060504030201
+ * Data in field: 0102030405060708090a
+ * Sample output: 0a090807060504030201
  *
  * @field:	an initialized field to print
  */
@@ -214,27 +208,25 @@ static int update_bin_rev(struct field *field, char *value)
 }
 
 /**
- * print_bin_ver() - print a "version field" which contains binary data
+ * print_bin_ver() - print the value of a field from type "version"
  *
  * Treat the field data as simple binary data, and print it formatted as a
  * version number (2 digits after decimal point).
  * The field size must be exactly 2 bytes.
  *
- * Sample output:
- * 	Field Name	123.45
+ * Sample output: 123.45
  *
  * @field:	an initialized field to print
  */
 static void print_bin_ver(const struct field *field)
 {
-	ASSERT(field && field->data && field->name);
+	ASSERT(field && field->data);
 
 	if ((field->data[0] == 0xff) && (field->data[1] == 0xff)) {
 		field->data[0] = 0;
 		field->data[1] = 0;
 	}
 
-	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("%#.2f\n", (field->data[1] << 8 | field->data[0]) / 100.0);
 }
 
@@ -294,12 +286,11 @@ static int update_bin_ver(struct field *field, char *value)
 }
 
 /**
- * print_mac_addr() - print a field which contains a mac address
+ * print_mac_addr() - print the value of a field from type "mac"
  *
  * Treat the field data as simple binary data, and print it formatted as a MAC
  * address.
- * Sample output:
- * 	Field Name	01:02:03:04:05:06
+ * Sample output: 01:02:03:04:05:06
  *
  * @field:	an initialized field to print
  */
@@ -323,20 +314,18 @@ static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 /**
- * print_date() - print a field which contains date data
+ * print_date() - print the value of a field from type "date"
  *
  * Treat the field data as simple binary data, and print it formatted as a date.
- * Sample output:
- * 	Field Name	07/Feb/2014
- * 	Field Name	56/BAD/9999
+ * Sample output: 07/Feb/2014
+ * 		  56/BAD/9999
  *
  * @field:	an initialized field to print
  */
 static void print_date(const struct field *field)
 {
-	ASSERT(field && field->data && field->name);
+	ASSERT(field && field->data);
 
-	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf("%02d/", field->data[0]);
 	if (field->data[1] >= 1 && field->data[1] <= 12)
 		printf("%s", months[field->data[1] - 1]);
@@ -463,12 +452,12 @@ static int update_date(struct field *field, char *value)
 }
 
 /**
- * print_ascii() - print a field which contains ASCII data
+ * print_ascii() - print the value of a field from type "ascii"
  * @field:	an initialized field to print
  */
 static void print_ascii(const struct field *field)
 {
-	ASSERT(field && field->data && field->name);
+	ASSERT(field && field->data);
 
 	char format[8];
 	int *str = (int*)field->data;
@@ -487,7 +476,6 @@ static void print_ascii(const struct field *field)
 	}
 
 	sprintf(format, "%%.%ds\n", field->data_size);
-	printf(PRINT_FIELD_SEGMENT, field->name);
 	printf(format, print_buf);
 }
 
@@ -514,19 +502,17 @@ static int update_ascii(struct field *field, char *value)
 }
 
 /**
- * print_reserved() - print the "Reserved fields" field
+ * print_reserved() - print the size of a field from type "reserved"
  *
  * Print a notice that the following field_size bytes are reserved.
  *
- * Sample output:
- * 	Reserved fields	              (64 bytes)
+ * Sample output: (64 bytes)
  *
  * @field:	an initialized field to print
  */
 static void print_reserved(const struct field *field)
 {
 	ASSERT(field);
-	printf(PRINT_FIELD_SEGMENT, "Reserved fields\t");
 	printf("(%d bytes)\n", field->data_size);
 }
 
@@ -575,10 +561,24 @@ static bool is_named(const struct field *field, const char *str)
 	return false;
 }
 
+/**
+ * print_field() - print the given field
+ *
+ * @field:	an initialized field to to print
+ */
+static void print_field(const struct field *field)
+{
+	ASSERT(field && field->name && field->ops);
+
+	printf("%-30s", field->name);
+	field->ops->print_value(field);
+}
+
 #define OPS_UPDATABLE(type) { \
 	.get_data_size	= get_data_size, \
 	.is_named	= is_named, \
-	.print		= print_##type, \
+	.print_value	= print_##type, \
+	.print		= print_field, \
 	.update		= update_##type, \
 	.clear		= clear_field, \
 }
@@ -586,7 +586,8 @@ static bool is_named(const struct field *field, const char *str)
 #define OPS_PRINTABLE(type) { \
 	.get_data_size	= get_data_size, \
 	.is_named	= is_named, \
-	.print		= print_##type, \
+	.print_value	= print_##type, \
+	.print		= print_field, \
 	.update		= NULL, \
 	.clear		= NULL, \
 }
