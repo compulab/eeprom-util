@@ -556,8 +556,28 @@ static int get_data_size(const struct field *field)
 	return field->data_size;
 }
 
+/**
+ * is_named() - check if any of the field's names match the given string
+ *
+ * @field:	an initialized field to check
+ * @str:	the string to check
+ *
+ * Returns:	true if field's names matches, false otherwise.
+ */
+static bool is_named(const struct field *field, const char *str)
+{
+	ASSERT(field && field->name && field->short_name && str);
+
+	if (field->type != FIELD_RESERVED && field->type != FIELD_RAW &&
+	    (!strcmp(field->name, str) || !strcmp(field->short_name, str)))
+		return true;
+
+	return false;
+}
+
 #define OPS_UPDATABLE(type) { \
 	.get_data_size	= get_data_size, \
+	.is_named	= is_named, \
 	.print		= print_##type, \
 	.update		= update_##type, \
 	.clear		= clear_field, \
@@ -565,6 +585,7 @@ static int get_data_size(const struct field *field)
 
 #define OPS_PRINTABLE(type) { \
 	.get_data_size	= get_data_size, \
+	.is_named	= is_named, \
 	.print		= print_##type, \
 	.update		= NULL, \
 	.clear		= NULL, \

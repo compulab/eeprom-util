@@ -20,6 +20,8 @@
 #ifndef _FIELD_
 #define _FIELD_
 
+#include <stdbool.h>
+
 enum field_type {
 	FIELD_BINARY,
 	FIELD_REVERSED,
@@ -42,6 +44,7 @@ struct field {
 
 struct field_ops {
 	int (*get_data_size)(const struct field *field);
+	bool (*is_named)(const struct field *field, const char *str);
 	void (*print)(const struct field *field);
 	int (*update)(struct field *field, char *value);
 	void (*clear)(struct field *field);
