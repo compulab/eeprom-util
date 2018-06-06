@@ -704,9 +704,18 @@ int main(int argc, char *argv[])
 	if (action == EEPROM_CLEAR && argc > 0 && !strncmp(argv[0], "all", 3))
 		NEXT_PARAM(argc, argv);
 
-	if (argc > 1 && !strcmp(argv[0], "-l")) {
-		NEXT_PARAM(argc, argv);
-		options.layout_ver = parse_layout_version(argv[0]);
+	// parse optional parameters
+	while (argc > 0 && argv[0][0] == '-') {
+		switch (argv[0][1]) {
+		case 'l':
+			NEXT_PARAM(argc, argv);
+			cond_usage_exit(argc < 1, "Missing layout version!\n");
+			options.layout_ver = parse_layout_version(argv[0]);
+			break;
+		default:
+			message_exit("Invalid option parameter!\n");
+		}
+
 		NEXT_PARAM(argc, argv);
 	}
 
