@@ -54,7 +54,8 @@ static struct layout *prepare_layout(struct command *cmd)
 	if (read_eeprom(buf) < 0)
 		return NULL;
 
-	struct layout *layout = new_layout(buf, EEPROM_SIZE, cmd->layout_ver);
+	struct layout *layout = NULL;
+	layout = new_layout(buf, EEPROM_SIZE, cmd->opts->layout_ver);
 	if (!layout)
 		api.system_error("Memory allocation error");
 
@@ -63,7 +64,7 @@ static struct layout *prepare_layout(struct command *cmd)
 
 static int print_i2c_accessible(struct command *cmd)
 {
-	return api.probe(cmd->i2c_bus);
+	return api.probe(cmd->opts->i2c_bus);
 }
 
 static int execute_command(struct command *cmd)
@@ -73,7 +74,7 @@ static int execute_command(struct command *cmd)
 	int ret = -1;
 	struct layout *layout = NULL;
 
-	ret = setup_interface(&api, cmd->i2c_bus, cmd->i2c_addr);
+	ret = setup_interface(&api, cmd->opts->i2c_bus, cmd->opts->i2c_addr);
 	if (ret)
 		return ret;
 
@@ -129,17 +130,15 @@ done:
 	return ret;
 }
 
-struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
-		enum layout_version layout_ver, struct data_array *data)
+struct command *new_command(enum action action, struct options *options,
+		struct data_array *data)
 {
 	struct command *cmd = malloc(sizeof(struct command));
 	if (!cmd)
 		return cmd;
 
 	cmd->action = action;
-	cmd->i2c_bus = i2c_bus;
-	cmd->i2c_addr = i2c_addr;
-	cmd->layout_ver = layout_ver;
+	cmd->opts = options;
 	cmd->data = data;
 	cmd->execute = execute_command;
 

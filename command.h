@@ -34,18 +34,21 @@ enum action {
 	EEPROM_ACTION_INVALID,
 };
 
-struct command {
-	enum action action;
+struct options {
 	int i2c_bus;
 	int i2c_addr;
 	enum layout_version layout_ver;
+};
+
+struct command {
+	enum action action;
+	struct options *opts;
 	struct data_array *data;
 
 	int (*execute)(struct command *cmd);
 };
 
-struct command *new_command(enum action action, int i2c_bus, int i2c_addr,
-			    enum layout_version layout_ver,
+struct command *new_command(enum action action, struct options *options,
 			    struct data_array *data);
 void free_command(struct command *cmd);
 

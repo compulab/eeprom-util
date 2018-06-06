@@ -674,11 +674,14 @@ static inline int parse_field_changes(char *input[], int size,
 int main(int argc, char *argv[])
 {
 	struct command *cmd;
-	enum layout_version layout_ver = LAYOUT_AUTODETECT;
 	enum action action = EEPROM_ACTION_INVALID;
+	struct options options = {
+		.i2c_bus	= -1,
+		.i2c_addr	= -1,
+		.layout_ver	= LAYOUT_AUTODETECT,
+	};
 	struct data_array data;
-	int i2c_bus = -1, i2c_addr = -1, ret = -1, parse_ret = 0;
-	int input_size = 0;
+	int ret = -1, parse_ret = 0, input_size = 0;
 	char **input = NULL;
 	bool is_stdin = !isatty(STDIN_FILENO);
 	errno = 0;
@@ -703,19 +706,19 @@ int main(int argc, char *argv[])
 
 	if (argc > 1 && !strcmp(argv[0], "-l")) {
 		NEXT_PARAM(argc, argv);
-		layout_ver = parse_layout_version(argv[0]);
+		options.layout_ver = parse_layout_version(argv[0]);
 		NEXT_PARAM(argc, argv);
 	}
 
 	cond_usage_exit(argc < 1, "Missing I2C bus & address parameters!\n");
-	i2c_bus = parse_i2c_bus(argv[0]);
+	options.i2c_bus = parse_i2c_bus(argv[0]);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_LIST)
 		goto done;
 
 	cond_usage_exit(argc < 1, "Missing I2C address parameter!\n");
-	i2c_addr = parse_i2c_addr(argv[0]);
+	options.i2c_addr = parse_i2c_addr(argv[0]);
 	NEXT_PARAM(argc, argv);
 
 	if (action == EEPROM_READ || action == EEPROM_CLEAR)
@@ -743,7 +746,7 @@ int main(int argc, char *argv[])
 		goto clean_input;
 
 done:
-	cmd = new_command(action, i2c_bus, i2c_addr, layout_ver, &data);
+	cmd = new_command(action, &options, &data);
 	if (!cmd)
 		perror(STR_ENO_MEM);
 	else
