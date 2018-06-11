@@ -38,6 +38,7 @@ struct options {
 	int i2c_bus;
 	int i2c_addr;
 	enum layout_version layout_ver;
+	enum print_format print_format;
 };
 
 struct command {

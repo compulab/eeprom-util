@@ -46,7 +46,7 @@ static void print_help(void)
 {
 	print_banner();
 	printf("Usage: eeprom-util list [<bus_num>]\n");
-	printf("       eeprom-util read [-l <layout_version>] <bus_num> <device_addr>\n");
+	printf("       eeprom-util read [-f <print_format>] [-l <layout_version>] <bus_num> <device_addr>\n");
 
 
 	if (write_enabled()) {
@@ -77,6 +77,11 @@ static void print_help(void)
 	       "      auto			use auto-detection to print layout\n"
 	       "      legacy, 1, 2, 3, 4	print according to layout version\n"
 	       "      raw			print raw data\n");
+	printf("\n"
+	       "PRINT FORMAT\n"
+	       "   The following values can be provided with the -f option:\n"
+	       "      default	use the default user friendly output\n"
+	       "      dump	dump the data (usable for later input using \"write fields\")\n");
 
 	if (write_enabled()) {
 		printf("\n"
@@ -208,6 +213,19 @@ static enum layout_version parse_layout_version(char *str)
 		message_exit("Unknown layout version!\n");
 
 	return (enum layout_version)layout;
+}
+
+static enum print_format parse_print_format(char *str)
+{
+	ASSERT(str);
+
+	if (!strncmp(str, "default", 7))
+		return FORMAT_DEFAULT;
+	else if (!strncmp(str, "dump", 4))
+		return FORMAT_DUMP;
+
+	message_exit("Unknown print format!\n");
+	return FORMAT_DEFAULT; //To appease the compiler
 }
 
 static int parse_i2c_bus(char *str)
@@ -679,6 +697,7 @@ int main(int argc, char *argv[])
 		.i2c_bus	= -1,
 		.i2c_addr	= -1,
 		.layout_ver	= LAYOUT_AUTODETECT,
+		.print_format	= FORMAT_DEFAULT,
 	};
 	struct data_array data;
 	int ret = -1, parse_ret = 0, input_size = 0;
@@ -711,6 +730,11 @@ int main(int argc, char *argv[])
 			NEXT_PARAM(argc, argv);
 			cond_usage_exit(argc < 1, "Missing layout version!\n");
 			options.layout_ver = parse_layout_version(argv[0]);
+			break;
+		case 'f':
+			NEXT_PARAM(argc, argv);
+			cond_usage_exit(argc < 1, "Missing print format!\n");
+			options.print_format = parse_print_format(argv[0]);;
 			break;
 		default:
 			message_exit("Invalid option parameter!\n");

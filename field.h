@@ -33,6 +33,11 @@ enum field_type {
 	FIELD_RAW,
 };
 
+enum print_format {
+	FORMAT_DEFAULT,
+	FORMAT_DUMP,
+};
+
 struct field {
 	char *name;
 	char *short_name;
@@ -51,6 +56,7 @@ struct field_ops {
 	void (*clear)(struct field *field);
 };
 
-void init_field(struct field *field, unsigned char *data);
+void init_field(struct field *field, unsigned char *data,
+		enum print_format print_format);
 
 #endif

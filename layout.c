@@ -397,7 +397,8 @@ static int clear_fields(struct layout *layout, struct data_array *data)
  * Returns: pointer to a new layout on success, NULL on failure
  */
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
-			  enum layout_version layout_version)
+			  enum layout_version layout_version,
+			  enum print_format print_format)
 {
 	ASSERT(buf);
 
@@ -413,7 +414,7 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		struct field *field = &layout->fields[i];
-		init_field(field, buf);
+		init_field(field, buf, print_format);
 		buf += field->ops->get_data_size(field);
 	}
 

@@ -562,23 +562,45 @@ static bool is_named(const struct field *field, const char *str)
 }
 
 /**
- * print_field() - print the given field
+ * print_field() - print the given field using the given string format
+ *
+ * @field:	an initialized field to to print
+ * @format:	the string format for printf()
+ */
+static void print_field(const struct field *field, char *format)
+{
+	ASSERT(field && field->name && field->ops && format);
+
+	printf(format, field->name);
+	field->ops->print_value(field);
+}
+
+/**
+ * print_default() - print the given field using the default format
  *
  * @field:	an initialized field to to print
  */
-static void print_field(const struct field *field)
+static void print_default(const struct field *field)
 {
-	ASSERT(field && field->name && field->ops);
+	print_field(field, "%-30s");
+}
 
-	printf("%-30s", field->name);
-	field->ops->print_value(field);
+/**
+ * print_dump() - print the given field using the dump format
+ *
+ * @field:	an initialized field to dump
+ */
+static void print_dump(const struct field *field)
+{
+	if (field->type != FIELD_RESERVED)
+		print_field(field, "%s=");
 }
 
 #define OPS_UPDATABLE(type) { \
 	.get_data_size	= get_data_size, \
 	.is_named	= is_named, \
 	.print_value	= print_##type, \
-	.print		= print_field, \
+	.print		= print_default, \
 	.update		= update_##type, \
 	.clear		= clear_field, \
 }
@@ -587,7 +609,7 @@ static void print_field(const struct field *field)
 	.get_data_size	= get_data_size, \
 	.is_named	= is_named, \
 	.print_value	= print_##type, \
-	.print		= print_field, \
+	.print		= print_default, \
 	.update		= NULL, \
 	.clear		= NULL, \
 }
@@ -606,13 +628,18 @@ static struct field_ops field_ops[] = {
 /**
  * init_field() - init field according to field.type
  *
- * @field:	an initialized field with a known field.type to init
- * @data:	the binary data of the field
+ * @field:		an initialized field with a known field.type to init
+ * @data:		the binary data of the field
+ * @print_format:	the print format of the field
  */
-void init_field(struct field *field, unsigned char *data)
+void init_field(struct field *field, unsigned char *data,
+		enum print_format print_format)
 {
 	ASSERT(field && data);
 
 	field->ops = &field_ops[field->type];
 	field->data = data;
+
+	if (print_format == FORMAT_DUMP)
+		field->ops->print = print_dump;
 }
