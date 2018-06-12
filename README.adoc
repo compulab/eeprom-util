@@ -51,23 +51,38 @@ To build the utility you can type one of the following:
 * `make static` - Only read functionality, force static linking of libraries.
 * `make write_static` - Enable the write capabilities, force static linking of libraries.
 
-= Adding EEPROM layouts
+= Adding custom EEPROM layouts
 
-To extend the EEPROM layouts do the following:
+To add support for your custom EEPROM layouts do the following:
 
 *layout.c*:
 
-* Create or extend an existing layout. Note that if your layout does not retain
-  backward compatibility with CompuLab layouts, some features on Compulab
-  software releases may not work correctly.
-* Update `detect_layout()` function to properly detect your layout.
-* Update `new_layout()` function to choose your layout.
+* Create a new `struct field` array with the fields of your layout.
++
+Each field must define a name, a short name, a size (in bytes) and a type.
++
+The available field's types are listed under `enum field_type` in `field.h`.
++
+The total size of all fields must not exceed the defined `EEPROM_SIZE` in
+`layout.h`
+* Update `detect_layout()` function to properly auto-detect your layout.
++
+Notice the value of `LAYOUT_CHECK_BYTE`. It is the offset of the "layout
+version" field.
+* Update `build_layout()` function to select the fields array of your layout.
 
 *layout.h*:
 
-* Add your layout to `enum layout_names`
+* Add the version or the name of your layout to `enum layout_version`
 
 *parser.c*:
 
-* (optional) Update the parsing of -l option to enable manually selecting your layout.
+* (optional) Update `parse_layout_version()` to enable manual selection of your
+layout using the `-l <layout_version>` command line option.
 
+WARNING: Some features of the utility may not work correctly if your custom layout
+does not retain backward compatibility with existing Compulab layouts. To
+ensure full support, your custom layout should expand existing layouts only
+within the reserved fields area. In any case, try not to change the offset of
+the "Layout Version" field to avoid complicating the auto detection of your
+layout by the utility.
