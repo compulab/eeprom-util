@@ -50,6 +50,7 @@ To build the utility you can type one of the following:
 * `make write` - Enable the write capabilities, system default linking type.
 * `make static` - Only read functionality, force static linking of libraries.
 * `make write_static` - Enable the write capabilities, force static linking of libraries.
+* `make debug` - Enable the write capabilities, compile with debug flags.
 
 = Adding custom EEPROM layouts
 
