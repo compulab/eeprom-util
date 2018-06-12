@@ -8,9 +8,9 @@ since version v3.0.0.
 
 == <<v3.1.0>> - 2018-04-18
 === Added
-* 'clear' command can also clear by 'fields' or by 'bytes'.
+* `clear` command can also clear by `fields` or by `bytes`.
 * Each field on the current layouts now has an additional short name. For the
-  'write' or 'clear' commmands, the user can now specify a field by its short
+  `write` or `clear` commmands, the user can now specify a field by its short
   name or its full name.
 
 === Fixed
