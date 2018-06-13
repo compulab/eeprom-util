@@ -247,14 +247,16 @@ static int list_driver_accessible(int bus)
 	return ret;
 }
 
-static int list_accessible(int bus)
+static int list_accessible(struct api *api)
 {
+	ASSERT(api);
+
 	int ret1, ret2;
 
 	printf(COLOR_GREEN "I2C buses:\n" COLOR_RESET);
-	ret1 = list_i2c_accessible(bus);
+	ret1 = list_i2c_accessible(api->i2c_bus);
 	printf(COLOR_GREEN "\nEEPROM device files:\n" COLOR_RESET);
-	ret2 = list_driver_accessible(bus);
+	ret2 = list_driver_accessible(api->i2c_bus);
 
 	return -(ret1 && ret2); /* return -1 only if both fail */
 }
@@ -287,6 +289,9 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	char i2cdev_fname[13];
 	char eeprom_dev_fname[40];
 	int saved_errno;
+
+	api->i2c_bus = i2c_bus;
+	api->i2c_addr = i2c_addr;
 
 	/* In this case we can still do an i2c probe, so setup for i2c */
 	if (i2c_bus < 0 || i2c_addr < 0) {

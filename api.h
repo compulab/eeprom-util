@@ -22,10 +22,12 @@
 
 struct api {
 	int fd;
+	int i2c_bus;
+	int i2c_addr;
 
 	int (*read)(struct api *api, unsigned char *buf, int offset, int size);
 	int (*write)(struct api *api, unsigned char *buf, int offset, int size);
-	int (*probe)(int bus);
+	int (*probe)(struct api *api);
 	void (*system_error)(const char *message);
 };
 

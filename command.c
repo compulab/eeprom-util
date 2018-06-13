@@ -64,11 +64,6 @@ static struct layout *prepare_layout(struct command *cmd)
 	return layout;
 }
 
-static int print_i2c_accessible(struct command *cmd)
-{
-	return api.probe(cmd->opts->i2c_bus);
-}
-
 static int execute_command(struct command *cmd)
 {
 	ASSERT(cmd && cmd->action != EEPROM_ACTION_INVALID);
@@ -81,7 +76,7 @@ static int execute_command(struct command *cmd)
 		return ret;
 
 	if (cmd->action == EEPROM_LIST)
-		return print_i2c_accessible(cmd);
+		return api.probe(&api);
 
 	if (cmd->action == EEPROM_CLEAR) {
 		memset(buf, 0xff, EEPROM_SIZE);
