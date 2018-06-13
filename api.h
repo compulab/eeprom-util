@@ -21,8 +21,10 @@
 #define API_H_
 
 struct api {
-	int (*read)(unsigned char *buf, int offset, int size);
-	int (*write)(unsigned char *buf, int offset, int size);
+	int fd;
+
+	int (*read)(struct api *api, unsigned char *buf, int offset, int size);
+	int (*write)(struct api *api, unsigned char *buf, int offset, int size);
 	int (*probe)(int bus);
 	void (*system_error)(const char *message);
 };

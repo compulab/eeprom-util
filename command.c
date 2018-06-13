@@ -31,7 +31,7 @@ static unsigned char buf[EEPROM_SIZE];
 
 static int read_eeprom(unsigned char *buf)
 {
-	int ret = api.read(buf, 0, EEPROM_SIZE);
+	int ret = api.read(&api, buf, 0, EEPROM_SIZE);
 
 	if (ret < 0)
 		api.system_error("Read error");
@@ -41,7 +41,7 @@ static int read_eeprom(unsigned char *buf)
 
 static int write_eeprom(unsigned char *data)
 {
-	int ret = api.write(data, 0, EEPROM_SIZE);
+	int ret = api.write(&api, data, 0, EEPROM_SIZE);
 
 	if (ret < 0)
 		api.system_error("Write error");

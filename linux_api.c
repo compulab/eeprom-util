@@ -32,7 +32,6 @@
 #include "api.h"
 #include "common.h"
 
-static int fd;
 extern int errno;
 
 /*
@@ -72,15 +71,15 @@ static inline __s32 i2c_smbus_access(int file, char read_write, __u8 command,
 	return ioctl(file, I2C_SMBUS, &args);
 }
 
-static int i2c_read(unsigned char *buf, int offset, int size)
+static int i2c_read(struct api *api, unsigned char *buf, int offset, int size)
 {
-	ASSERT(buf);
+	ASSERT(api && buf);
 
 	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
 	for (int i = offset; i < size; i++) {
-		if (i2c_smbus_access(fd, I2C_SMBUS_READ, i,
+		if (i2c_smbus_access(api->fd, I2C_SMBUS_READ, i,
 				I2C_SMBUS_BYTE_DATA, &data) < 0)
 			return -1;
 
@@ -101,16 +100,16 @@ static void msleep(unsigned int msecs)
 	nanosleep(&time, NULL);
 }
 
-static int i2c_write(unsigned char *buf, int offset, int size)
+static int i2c_write(struct api *api, unsigned char *buf, int offset, int size)
 {
-	ASSERT(buf);
+	ASSERT(api && buf);
 
 	int bytes_transferred = 0;
 	union i2c_smbus_data data;
 
 	for (int i = offset; i < size; i++) {
 		data.byte = buf[i];
-		if (i2c_smbus_access(fd, I2C_SMBUS_WRITE, i,
+		if (i2c_smbus_access(api->fd, I2C_SMBUS_WRITE, i,
 				I2C_SMBUS_BYTE_DATA, &data) < 0)
 			return -1;
 
@@ -121,18 +120,20 @@ static int i2c_write(unsigned char *buf, int offset, int size)
 	return bytes_transferred;
 }
 
-static int driver_read(unsigned char *buf, int offset, int size)
+static int driver_read(struct api *api, unsigned char *buf, int offset,
+			int size)
 {
-	ASSERT(buf);
-	lseek(fd, offset, SEEK_SET);
-	return read(fd, buf + offset, size);
+	ASSERT(api && buf);
+	lseek(api->fd, offset, SEEK_SET);
+	return read(api->fd, buf + offset, size);
 }
 
-static int driver_write(unsigned char *buf, int offset, int size)
+static int driver_write(struct api *api, unsigned char *buf, int offset,
+			int size)
 {
-	ASSERT(buf);
-	lseek(fd, offset, SEEK_SET);
-	return write(fd, buf + offset, size);
+	ASSERT(api && buf);
+	lseek(api->fd, offset, SEEK_SET);
+	return write(api->fd, buf + offset, size);
 }
 
 static bool i2c_probe(int fd, int addr)
@@ -294,8 +295,8 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	}
 
 	sprintf(i2cdev_fname, "/dev/i2c-%d", i2c_bus);
-	fd = open_device_file(i2cdev_fname, i2c_addr);
-	if (fd >= 0) {
+	api->fd = open_device_file(i2cdev_fname, i2c_addr);
+	if (api->fd >= 0) {
 		configure_i2c(api);
 		return 0;
 	}
@@ -304,8 +305,8 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 
 	sprintf(eeprom_dev_fname, DRIVER_DEV_PATH"/%d-00%02x/eeprom",
 		i2c_bus, i2c_addr);
-	fd = open_device_file(eeprom_dev_fname, -1);
-	if (fd < 0) {
+	api->fd = open_device_file(eeprom_dev_fname, -1);
+	if (api->fd < 0) {
 		/* print error which occurred when opening i2c-dev file */
 		eprintf("Error, %s access failed: %s (%d)\n",
 			i2cdev_fname, strerror(saved_errno), -saved_errno);
