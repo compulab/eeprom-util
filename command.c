@@ -71,9 +71,7 @@ static int execute_command(struct command *cmd)
 	int ret = -1;
 	struct layout *layout = NULL;
 
-	ret = setup_interface(&api, cmd->opts->i2c_bus, cmd->opts->i2c_addr);
-	if (ret)
-		return ret;
+	api_init(&api, cmd->opts->i2c_bus, cmd->opts->i2c_addr);
 
 	if (cmd->action == EEPROM_LIST)
 		return api.probe(&api);

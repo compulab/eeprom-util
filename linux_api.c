@@ -266,50 +266,28 @@ static void system_error(const char *message)
 	perror(message);
 }
 
-static void configure_i2c(struct api *api)
-{
-	api->read = i2c_read;
-	api->write = i2c_write;
-	api->probe = list_accessible;
-	api->system_error = system_error;
-}
-
-static void configure_driver(struct api *api)
-{
-	api->read = driver_read;
-	api->write = driver_write;
-	api->probe = list_accessible;
-	api->system_error = system_error;
-}
-
-int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
+static int setup_interface(struct api *api)
 {
 	ASSERT(api);
+	ASSERT(api->i2c_bus >= MIN_I2C_BUS && api->i2c_bus <= MAX_I2C_BUS);
+	ASSERT(api->i2c_addr >= MIN_I2C_ADDR && api->i2c_addr <= MAX_I2C_ADDR);
 
 	char i2cdev_fname[13];
 	char eeprom_dev_fname[40];
 	int saved_errno;
 
-	api->i2c_bus = i2c_bus;
-	api->i2c_addr = i2c_addr;
-
-	/* In this case we can still do an i2c probe, so setup for i2c */
-	if (i2c_bus < 0 || i2c_addr < 0) {
-		configure_i2c(api);
-		return 0;
-	}
-
-	sprintf(i2cdev_fname, "/dev/i2c-%d", i2c_bus);
-	api->fd = open_device_file(i2cdev_fname, i2c_addr);
+	sprintf(i2cdev_fname, "/dev/i2c-%d", api->i2c_bus);
+	api->fd = open_device_file(i2cdev_fname, api->i2c_addr);
 	if (api->fd >= 0) {
-		configure_i2c(api);
+		api->read = i2c_read;
+		api->write = i2c_write;
 		return 0;
 	}
 
 	saved_errno = errno;
 
 	sprintf(eeprom_dev_fname, DRIVER_DEV_PATH"/%d-00%02x/eeprom",
-		i2c_bus, i2c_addr);
+		api->i2c_bus, api->i2c_addr);
 	api->fd = open_device_file(eeprom_dev_fname, -1);
 	if (api->fd < 0) {
 		/* print error which occurred when opening i2c-dev file */
@@ -324,7 +302,8 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 		if (errno == ENOENT)
 			PRINT_DRIVER_HINT("EEPROM");
 	} else {
-		configure_driver(api);
+		api->read = driver_read;
+		api->write = driver_write;
 		return 0;
 	}
 
@@ -332,4 +311,39 @@ int setup_interface(struct api *api, int i2c_bus, int i2c_addr)
 	eprintf("\n");
 
 	return -1;
+}
+
+static int api_read_before_setup(struct api *api, unsigned char *buf,
+				 int offset, int size)
+{
+	ASSERT(api);
+
+	// Setup sets the api->read and api->write function pointers on success
+	if (setup_interface(api) == 0)
+		return api->read(api, buf, offset, size);
+
+	return -1;
+}
+
+static int api_write_before_setup(struct api *api, unsigned char *buf,
+				  int offset, int size)
+{
+	ASSERT(api);
+
+	// Setup sets the api->read and api->write function pointers on success
+	if (setup_interface(api) == 0)
+		return api->write(api, buf, offset, size);
+
+	return -1;
+}
+
+void api_init(struct api *api, int i2c_bus, int i2c_addr)
+{
+	api->i2c_bus = i2c_bus;
+	api->i2c_addr = i2c_addr;
+
+	api->read = api_read_before_setup;
+	api->write = api_write_before_setup;
+	api->probe = list_accessible;
+	api->system_error = system_error;
 }

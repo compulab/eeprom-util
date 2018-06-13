@@ -694,8 +694,6 @@ int main(int argc, char *argv[])
 	struct command *cmd;
 	enum action action = EEPROM_ACTION_INVALID;
 	struct options options = {
-		.i2c_bus	= -1,
-		.i2c_addr	= -1,
 		.layout_ver	= LAYOUT_AUTODETECT,
 		.print_format	= FORMAT_DEFAULT,
 	};

@@ -31,6 +31,6 @@ struct api {
 	void (*system_error)(const char *message);
 };
 
-int setup_interface(struct api *api, int i2c_bus, int i2c_addr);
+void api_init(struct api *api, int i2c_bus, int i2c_addr);
 
 #endif
