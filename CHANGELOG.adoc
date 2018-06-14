@@ -6,6 +6,29 @@ The format is based on http://keepachangelog.com/[Keep a Changelog]
 and this project adheres to http://semver.org/[Semantic Versioning]
 since version v3.0.0.
 
+== <<v3.2.0>> - 2018-06-13
+=== Added
+* Add a "dump" print format for the `read` command. The output of this format is
+  usable for later input using the `write fields` command.
+* Extend the `write bytes` command to accept a sequence of bytes with different
+  values. The input syntax is: `<offset>,<value1>,<value2>,<value3>...`.
+* Add the ability to accept input from both the command line and the standard
+  input simultaneously.
+* Support comments in input files using the ';' symbol.
+* Add a "scratchpad" binary field on layout version 4.
+
+=== Changed
+* Change the accepted address range for I2C device to 0x03 - 0x77.
+* Change the `write fields` command to clear fields with empty values, instead
+  of rejecting an input that contains fields with empty values.
+* Refine the errors about invalid command line arguments.
+
+=== Fixed
+* Fix a segmentation fault when calling the `write fields` or `clear fields`
+  commands when the layout is unknown.
+* Fix problems with `list` command not reporting some access errors or printing
+  wrong output on some bus numbers.
+
 == <<v3.1.0>> - 2018-04-18
 === Added
 * `clear` command can also clear by `fields` or by `bytes`.
@@ -115,6 +138,9 @@ since version v3.0.0.
   strings.
 * List bus number and address of i2c accessible devices.
 * Works with both /dev/i2c interface, and with EEPROM driver.
+
+[[v3.2.0]]
+[v3.2.0]: https://github.com/compulab/eeprom-util/compare/v3.1.0…v3.2.0
 
 [[v3.1.0]]
 [v3.1.0]: https://github.com/compulab/eeprom-util/compare/v3.0.1…v3.1.0
