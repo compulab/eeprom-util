@@ -22,6 +22,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <errno.h>
+#include "lib/parson.h"
 #include "layout.h"
 #include "common.h"
 #include "field.h"
@@ -118,6 +119,93 @@ struct field layout_unknown[1] = {
 	{ NO_LAYOUT_FIELDS, "raw", 256, FIELD_RAW },
 };
 
+char* field_names[] = {
+	[FIELD_BINARY]		= "binary",
+	[FIELD_REVERSED]	= "reversed",
+	[FIELD_VERSION]		= "version",
+	[FIELD_ASCII]		= "ascii",
+	[FIELD_MAC]		= "mac",
+	[FIELD_DATE]		= "date",
+	[FIELD_RESERVED]	= "reserved",
+	[FIELD_RAW]		= "raw"
+};
+
+/*
+ * parse_layout_json - parse external layout from JSON
+ *
+ * Set layout values according to the layout's JSON.
+ * Allocate and initialize a struct field array.
+ *
+ * @layout	A pointer to the layout to update
+ *
+ * Returns:	0 on success. EINVAL or ENOMEM on failure.
+ */
+static int parse_layout_json(struct layout *layout)
+{
+	ASSERT(layout->layout_json);
+
+	JSON_Value *root_value = layout->layout_json;
+	JSON_Object *root_object = json_value_get_object(root_value);
+
+	//const char *version = json_object_get_string(root_object, "version");
+	JSON_Array *fields_array = json_object_get_array(root_object, "fields");
+
+	int num_of_fields = json_array_get_count(fields_array);
+	struct field *fields = malloc(sizeof(struct field) * num_of_fields);
+	if (!fields) {
+		perror("Out of memory");
+		return -ENOMEM;
+	}
+
+	const char *type;
+	int i, j, offset = 0;
+	double size;
+
+	for (i = 0; i < num_of_fields; i++) {
+		JSON_Object *field_object = json_array_get_object(fields_array, i);
+		fields[i].name = json_object_get_string(field_object, "name");
+		fields[i].short_name = json_object_get_string(field_object, "short_name");
+
+		size = json_object_get_number(field_object, "size");
+		if (size != (int)size) {
+			leprintf("Size must be integer in field \"%s\"", fields[i].name);
+			free(fields);
+			return -EINVAL;
+		}
+
+		fields[i].data_size = (int)size;
+
+		type = json_object_get_string(field_object, "type");
+
+		for (j = 0; j < FIELD_END; j++) {
+			if (strcmp(type, field_names[j]) == 0) {
+				fields[i].type = j;
+				break;
+			}
+		}
+
+		if (j == FIELD_END) {
+			leprintf("Unknown type for field \"%s\"", fields[i].name);
+			free(fields);
+			return -EINVAL;
+		}
+
+		offset += size;
+	}
+
+	if (offset > EEPROM_SIZE) {
+		leprintf("Can't fit a %d bytes layout on a %d bytes EEPROM", \
+			offset, EEPROM_SIZE);
+		free(fields);
+		return -EINVAL;
+	}
+
+	layout->fields = fields;
+	layout->num_of_fields = num_of_fields;
+	return 0;
+}
+
+
 /*
  * detect_layout() - detect layout based on the contents of the data.
  * @data: Pointer to the data to be analyzed.
@@ -150,7 +238,7 @@ static enum layout_version detect_layout(unsigned char *data)
  * build_layout() - Detect layout and build it with a predefined array
  * @layout:	An allocated layout
  */
-static void build_layout(struct layout *layout)
+static int build_layout(struct layout *layout)
 {
 	if (layout->layout_version == LAYOUT_AUTODETECT)
 		layout->layout_version = detect_layout(layout->data);
@@ -176,10 +264,14 @@ static void build_layout(struct layout *layout)
 		layout->fields = layout_v4;
 		layout->num_of_fields = ARRAY_LEN(layout_v4);
 		break;
+	case LAYOUT_JSON:
+		return parse_layout_json(layout);
 	default:
 		layout->fields = layout_unknown;
 		layout->num_of_fields = ARRAY_LEN(layout_unknown);
 	}
+
+	return 0;
 }
 
 /*
@@ -398,7 +490,8 @@ static int clear_fields(struct layout *layout, struct data_array *data)
  */
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 			  enum layout_version layout_version,
-			  enum print_format print_format)
+			  enum print_format print_format,
+			  JSON_Value *layout_json)
 {
 	ASSERT(buf);
 
@@ -407,10 +500,12 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 		return NULL;
 
 	layout->layout_version = layout_version;
+	layout->layout_json = layout_json;
 	layout->data = buf;
 	layout->data_size = buf_size;
 
-	build_layout(layout);
+	if (build_layout(layout))
+		return NULL;
 
 	for (int i = 0; i < layout->num_of_fields; i++) {
 		struct field *field = &layout->fields[i];
@@ -433,5 +528,8 @@ struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
  */
 void free_layout(struct layout *layout)
 {
+	if (layout->layout_version == LAYOUT_JSON) {
+		free(layout->fields);
+	}
 	free(layout);
 }

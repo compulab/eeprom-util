@@ -76,7 +76,8 @@ static void print_help(void)
 	       "   The following values can be provided with the -l option:\n"
 	       "      auto			use auto-detection to print layout\n"
 	       "      legacy, 1, 2, 3, 4	print according to layout version\n"
-	       "      raw			print raw data\n");
+	       "      raw			print raw data\n"
+	       "      *.json			print according to the provided layout from a JSON file\n");
 	printf("\n"
 	       "PRINT FORMAT\n"
 	       "   The following values can be provided with the -f option:\n"
@@ -214,6 +215,82 @@ static enum layout_version parse_layout_version(char *str)
 
 	return (enum layout_version)layout;
 }
+
+#define LAYOUT_SCHEMA "{ \"version\":\"\", \"fields\":[{ \"name\":\"\", " \
+	"\"short_name\":\"\", \"size\":0, \"type\":\"\" }] }"
+/*
+ * parse_layout_json_file - parse layout input from a JSON file
+ *
+ * @file:	The name of the external layout JSON file.
+ * @options	A pointer to the options struct
+ *
+ * Returns:	0 on success. -EINVAL or -ENOMEM on failure.
+ */
+static int parse_layout_json_file(char *file, struct options *options)
+{
+	if (access(file, R_OK)) {
+		leprintf("Cannot open %s: %s", file, strerror(errno));
+		return -EINVAL;
+	}
+
+	JSON_Value *schema = json_parse_string(LAYOUT_SCHEMA);
+	JSON_Value *layout_json = json_parse_file_with_comments(file);
+
+	if (!layout_json || !schema) {
+		if (errno == ENOMEM) {
+			perror("Out of memory!");
+			return -ENOMEM;
+		}
+
+		leprintf("Error while parsing file %s", file);
+		goto layout_error;
+	}
+
+	if (json_validate(schema, layout_json) != JSONSuccess) {
+		leprintf("JSON doesn't match schema");
+		eprintf("Layout schema: %s\n",LAYOUT_SCHEMA);
+		goto layout_error;
+	}
+
+	options->layout_json = layout_json;
+	options->layout_ver = LAYOUT_JSON;
+
+	json_value_free(schema);
+	return 0;
+
+layout_error:
+	json_value_free(schema);
+	json_value_free(layout_json);
+	return -EINVAL;
+}
+
+
+/*
+ * parse_layout - parse layout version or external from file
+ *
+ * @str:	The input version or file name from the user.
+ * @options	A pointer to the options struct
+ *
+ * Returns:	0 on success. -EINVAL or -ENOMEM on failure.
+ */
+static int parse_layout(char *str, struct options *options)
+{
+	ASSERT(str && options);
+
+	// If a layout was already selected - do nothing
+	if (options->layout_ver != LAYOUT_AUTODETECT)
+		return 0;
+
+	char *suffix = strrchr(str, '.');
+	if (suffix && !strcmp(suffix, ".json"))
+		return parse_layout_json_file(str, options);
+
+	options->layout_ver = parse_layout_version(str);
+
+	return 0;
+
+}
+
 
 static enum print_format parse_print_format(char *str)
 {
@@ -727,7 +804,8 @@ int main(int argc, char *argv[])
 		case 'l':
 			NEXT_PARAM(argc, argv);
 			cond_usage_exit(argc < 1, "Missing layout version!\n");
-			options.layout_ver = parse_layout_version(argv[0]);
+			if (parse_layout(argv[0], &options))
+				return 1;
 			break;
 		case 'f':
 			NEXT_PARAM(argc, argv);
@@ -798,6 +876,10 @@ clean_input:
 		for (int i = argc; i < input_size; i++)
 			free(input[i]);
 		free(input);
+	}
+
+	if (options.layout_ver == LAYOUT_JSON) {
+		json_value_free(options.layout_json);
 	}
 
 	return ret ? 1 : 0;

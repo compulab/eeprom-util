@@ -56,7 +56,7 @@ static struct layout *prepare_layout(struct command *cmd)
 
 	struct layout *layout = NULL;
 	layout = new_layout(buf, EEPROM_SIZE, cmd->opts->layout_ver,
-			    cmd->opts->print_format);
+			    cmd->opts->print_format, cmd->opts->layout_json);
 
 	if (!layout)
 		api.system_error("Memory allocation error");

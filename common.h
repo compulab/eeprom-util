@@ -37,6 +37,9 @@
 // Macro for printing input error messages
 #define ie_fmt(fmt) "Input error: " fmt " - Operation Aborted!\n"
 #define ieprintf(fmt, ...) eprintf(ie_fmt(fmt), ##__VA_ARGS__)
+// Macro for printing layout error messages
+#define le_fmt(fmt) "Layout error: " fmt " - Operation Aborted!\n"
+#define leprintf(fmt, ...) eprintf(le_fmt(fmt), ##__VA_ARGS__)
 
 // Macro for handling debug checks
 #ifndef DEBUG

@@ -39,6 +39,7 @@ struct options {
 	int i2c_addr;
 	enum layout_version layout_ver;
 	enum print_format print_format;
+	JSON_Value *layout_json;
 };
 
 struct command {

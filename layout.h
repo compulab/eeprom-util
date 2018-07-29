@@ -20,6 +20,7 @@
 #ifndef _LAYOUT_
 #define _LAYOUT_
 
+#include "lib/parson.h"
 #include "common.h"
 #include "field.h"
 
@@ -34,12 +35,14 @@ enum layout_version {
 	LAYOUT_VER4,
 	LAYOUT_UNRECOGNIZED, /* marks the end of the layout versions */
 	RAW_DATA,
+	LAYOUT_JSON,
 };
 
 struct layout {
 	struct field *fields;
 	int num_of_fields;
 	enum layout_version layout_version;
+	JSON_Value *layout_json;
 	unsigned char *data;
 	int data_size;
 	void (*print)(const struct layout *layout);
@@ -55,7 +58,8 @@ struct layout {
 
 struct layout *new_layout(unsigned char *buf, unsigned int buf_size,
 			  enum layout_version layout_version,
-			  enum print_format print_format);
+			  enum print_format print_format,
+			  JSON_Value *layout_json);
 void free_layout(struct layout *layout);
 
 #endif
